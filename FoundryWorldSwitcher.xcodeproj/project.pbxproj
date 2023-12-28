@@ -8,23 +8,42 @@
 
 /* Begin PBXBuildFile section */
 		AB94F3B92B3DB8C5003BA4CB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3B82B3DB8C5003BA4CB /* main.swift */; };
+		AB94F3C12B3DB91C003BA4CB /* DiscordAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C02B3DB91C003BA4CB /* DiscordAuth */; };
+		AB94F3C32B3DB91C003BA4CB /* DiscordBM in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C22B3DB91C003BA4CB /* DiscordBM */; };
+		AB94F3C52B3DB91C003BA4CB /* DiscordCore in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C42B3DB91C003BA4CB /* DiscordCore */; };
+		AB94F3C72B3DB91C003BA4CB /* DiscordGateway in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C62B3DB91C003BA4CB /* DiscordGateway */; };
+		AB94F3C92B3DB91C003BA4CB /* DiscordHTTP in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C82B3DB91C003BA4CB /* DiscordHTTP */; };
+		AB94F3CB2B3DB91C003BA4CB /* DiscordModels in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3CA2B3DB91C003BA4CB /* DiscordModels */; };
+		AB94F3CD2B3DB91C003BA4CB /* DiscordUtilities in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3CC2B3DB91C003BA4CB /* DiscordUtilities */; };
+		AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3CE2B3DB974003BA4CB /* EventHandler.swift */; };
+		AB94F3D12B3DDC25003BA4CB /* DiscordCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3D02B3DDC25003BA4CB /* DiscordCommand.swift */; };
+		AB94F3D62B3DE00D003BA4CB /* HelloCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3D52B3DE00D003BA4CB /* HelloCommand.swift */; };
+		AB94F3D92B3DE2E0003BA4CB /* JFUtils in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3D82B3DE2E0003BA4CB /* JFUtils */; };
+		AB94F3DB2B3DE38F003BA4CB /* DiscordCommandError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3DA2B3DE38F003BA4CB /* DiscordCommandError.swift */; };
+		AB94F3DD2B3E0D21003BA4CB /* BOT_TOKEN in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB94F3DC2B3E0D21003BA4CB /* BOT_TOKEN */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		AB94F3B32B3DB8C5003BA4CB /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 16;
 			files = (
+				AB94F3DD2B3E0D21003BA4CB /* BOT_TOKEN in CopyFiles */,
 			);
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		AB94F3B52B3DB8C5003BA4CB /* FoundryWorldSwitcher */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FoundryWorldSwitcher; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB94F3B82B3DB8C5003BA4CB /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		AB94F3CE2B3DB974003BA4CB /* EventHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHandler.swift; sourceTree = "<group>"; };
+		AB94F3D02B3DDC25003BA4CB /* DiscordCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscordCommand.swift; sourceTree = "<group>"; };
+		AB94F3D52B3DE00D003BA4CB /* HelloCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloCommand.swift; sourceTree = "<group>"; };
+		AB94F3DA2B3DE38F003BA4CB /* DiscordCommandError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscordCommandError.swift; sourceTree = "<group>"; };
+		AB94F3DC2B3E0D21003BA4CB /* BOT_TOKEN */ = {isa = PBXFileReference; lastKnownFileType = text; path = BOT_TOKEN; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +51,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB94F3D92B3DE2E0003BA4CB /* JFUtils in Frameworks */,
+				AB94F3C92B3DB91C003BA4CB /* DiscordHTTP in Frameworks */,
+				AB94F3CD2B3DB91C003BA4CB /* DiscordUtilities in Frameworks */,
+				AB94F3CB2B3DB91C003BA4CB /* DiscordModels in Frameworks */,
+				AB94F3C72B3DB91C003BA4CB /* DiscordGateway in Frameworks */,
+				AB94F3C52B3DB91C003BA4CB /* DiscordCore in Frameworks */,
+				AB94F3C32B3DB91C003BA4CB /* DiscordBM in Frameworks */,
+				AB94F3C12B3DB91C003BA4CB /* DiscordAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +68,7 @@
 		AB94F3AC2B3DB8C5003BA4CB = {
 			isa = PBXGroup;
 			children = (
+				AB94F3DC2B3E0D21003BA4CB /* BOT_TOKEN */,
 				AB94F3B72B3DB8C5003BA4CB /* FoundryWorldSwitcher */,
 				AB94F3B62B3DB8C5003BA4CB /* Products */,
 			);
@@ -58,8 +86,20 @@
 			isa = PBXGroup;
 			children = (
 				AB94F3B82B3DB8C5003BA4CB /* main.swift */,
+				AB94F3CE2B3DB974003BA4CB /* EventHandler.swift */,
+				AB94F3DA2B3DE38F003BA4CB /* DiscordCommandError.swift */,
+				AB94F3D22B3DDC9E003BA4CB /* Commands */,
 			);
 			path = FoundryWorldSwitcher;
+			sourceTree = "<group>";
+		};
+		AB94F3D22B3DDC9E003BA4CB /* Commands */ = {
+			isa = PBXGroup;
+			children = (
+				AB94F3D02B3DDC25003BA4CB /* DiscordCommand.swift */,
+				AB94F3D52B3DE00D003BA4CB /* HelloCommand.swift */,
+			);
+			path = Commands;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -78,6 +118,16 @@
 			dependencies = (
 			);
 			name = FoundryWorldSwitcher;
+			packageProductDependencies = (
+				AB94F3C02B3DB91C003BA4CB /* DiscordAuth */,
+				AB94F3C22B3DB91C003BA4CB /* DiscordBM */,
+				AB94F3C42B3DB91C003BA4CB /* DiscordCore */,
+				AB94F3C62B3DB91C003BA4CB /* DiscordGateway */,
+				AB94F3C82B3DB91C003BA4CB /* DiscordHTTP */,
+				AB94F3CA2B3DB91C003BA4CB /* DiscordModels */,
+				AB94F3CC2B3DB91C003BA4CB /* DiscordUtilities */,
+				AB94F3D82B3DE2E0003BA4CB /* JFUtils */,
+			);
 			productName = FoundryWorldSwitcher;
 			productReference = AB94F3B52B3DB8C5003BA4CB /* FoundryWorldSwitcher */;
 			productType = "com.apple.product-type.tool";
@@ -106,6 +156,10 @@
 				Base,
 			);
 			mainGroup = AB94F3AC2B3DB8C5003BA4CB;
+			packageReferences = (
+				AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */,
+				AB94F3D72B3DE2E0003BA4CB /* XCRemoteSwiftPackageReference "JFUtils" */,
+			);
 			productRefGroup = AB94F3B62B3DB8C5003BA4CB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -120,7 +174,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB94F3D62B3DE00D003BA4CB /* HelloCommand.swift in Sources */,
 				AB94F3B92B3DB8C5003BA4CB /* main.swift in Sources */,
+				AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */,
+				AB94F3DB2B3DE38F003BA4CB /* DiscordCommandError.swift in Sources */,
+				AB94F3D12B3DDC25003BA4CB /* DiscordCommand.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,6 +347,68 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/DiscordBM/DiscordBM#Apache-2.0-1-ov-file";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+		AB94F3D72B3DE2E0003BA4CB /* XCRemoteSwiftPackageReference "JFUtils" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/iComputerfreak/JFUtils";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.9.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AB94F3C02B3DB91C003BA4CB /* DiscordAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordAuth;
+		};
+		AB94F3C22B3DB91C003BA4CB /* DiscordBM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordBM;
+		};
+		AB94F3C42B3DB91C003BA4CB /* DiscordCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordCore;
+		};
+		AB94F3C62B3DB91C003BA4CB /* DiscordGateway */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordGateway;
+		};
+		AB94F3C82B3DB91C003BA4CB /* DiscordHTTP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordHTTP;
+		};
+		AB94F3CA2B3DB91C003BA4CB /* DiscordModels */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordModels;
+		};
+		AB94F3CC2B3DB91C003BA4CB /* DiscordUtilities */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordUtilities;
+		};
+		AB94F3D82B3DE2E0003BA4CB /* JFUtils */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB94F3D72B3DE2E0003BA4CB /* XCRemoteSwiftPackageReference "JFUtils" */;
+			productName = JFUtils;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AB94F3AD2B3DB8C5003BA4CB /* Project object */;
 }
