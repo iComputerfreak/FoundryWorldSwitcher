@@ -21,47 +21,14 @@ struct HelloCommand: DiscordCommand {
         try await client.updateOriginalInteractionResponse(
             token: interaction.token,
             payload: Payloads.EditWebhookMessage(
-                content: "Hello, You wanted me to echo something!",
+                content: "Hello, I am listening!",
                 embeds: [Embed(
                     title: "This is an embed",
-                    description: """
-                        You sent this, so I'll echo it to you!
-                        
-                        > \(DiscordUtils.escapingSpecialCharacters("echo"))
-                        """,
+                    description: "Description body.",
                     timestamp: Date(),
                     color: .init(value: .random(in: 0 ..< (1 << 24) )),
                     footer: .init(text: "Footer!"),
-                    author: .init(name: "Authored by DiscordBM!"),
-                    fields: [
-                        .init(name: "field name!", value: "field value!")
-                    ]
-                )],
-                components: [[.button(.init(
-                    label: "Open DiscordBM!",
-                    url: "https://github.com/DiscordBM/DiscordBM"
-                ))]]
-            )
-        ).guardSuccess()
-        
-        
-        /// Edits the interaction response.
-        /// This response is intentionally too fancy just so you see what's possible :)
-        try await client.updateOriginalInteractionResponse(
-            token: interaction.token,
-            payload: Payloads.EditWebhookMessage(
-                content: "Hello, You wanted me to echo something!",
-                embeds: [Embed(
-                    title: "This is an embed",
-                    description: """
-                            You sent this, so I'll echo it to you!
-                            
-                            > \(DiscordUtils.escapingSpecialCharacters(""))
-                            """,
-                    timestamp: Date(),
-                    color: .init(value: .random(in: 0 ..< (1 << 24) )),
-                    footer: .init(text: "Footer!"),
-                    author: .init(name: "Authored by DiscordBM!"),
+                    author: .init(name: "Author"),
                     fields: [
                         .init(name: "field name!", value: "field value!")
                     ]

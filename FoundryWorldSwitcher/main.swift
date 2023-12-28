@@ -12,6 +12,7 @@ import Logging
 
 enum DiscordBotError: Error {
     case errorFindingAppDirectory
+    case errorReadingPermissions
 }
 
 let logger = Logger(label: "Main")
