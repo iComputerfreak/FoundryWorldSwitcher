@@ -5,10 +5,14 @@
 //  Created by Jonas Frey on 28.12.23.
 //
 
-enum BotPermissionLevel: CustomStringConvertible, Codable {
-    case user
-    case dungeonMaster
-    case admin
+enum BotPermissionLevel: Int, CustomStringConvertible, Codable, Comparable {
+    case user = 0
+    case dungeonMaster = 1
+    case admin = 2
+    
+    static func < (lhs: BotPermissionLevel, rhs: BotPermissionLevel) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
     
     var description: String {
         switch self {

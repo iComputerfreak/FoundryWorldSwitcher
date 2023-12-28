@@ -11,7 +11,6 @@ import Foundation
 struct HelloCommand: DiscordCommand {
     let name = "hello"
     let description = "Returns a simple message to show that the bot is working."
-    let options: [ApplicationCommand.Option]? = nil
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

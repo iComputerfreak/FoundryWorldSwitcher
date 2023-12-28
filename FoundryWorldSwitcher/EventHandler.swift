@@ -27,10 +27,6 @@ struct EventHandler: GatewayEventHandler {
             payload: .deferredChannelMessageWithSource()
         ).guardSuccess()
 
-        // TODO: Delete
-        /// Delete this if you want. Just here so you notice the loading indicator :)
-        try await Task.sleep(for: .seconds(1))
-
         /// Handle the interaction data
         switch interaction.data {
         case let .applicationCommand(applicationCommand):
@@ -38,7 +34,15 @@ struct EventHandler: GatewayEventHandler {
             guard let command = commands.first(where: \.name, equals: applicationCommand.name) else {
                 throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
             }
-            try await command.handle(applicationCommand, interaction: interaction, client: client)
+            do {
+                try await command.handle(applicationCommand, interaction: interaction, client: client)
+            } catch {
+                logger.error("Error handling command /\(command.name): \(error)")
+                try await client.updateOriginalInteractionResponse(
+                    token: interaction.token,
+                    payload: Payloads.EditWebhookMessage(content: "There was an error running your command.")
+                ).guardSuccess()
+            }
         default: break
         }
     }

@@ -13,6 +13,7 @@ import Logging
 enum DiscordBotError: Error {
     case errorFindingAppDirectory
     case errorReadingPermissions
+    case noUser
 }
 
 let logger = Logger(label: "Main")
@@ -64,9 +65,24 @@ let bot = await BotGatewayManager(
 /// Tell the manager to connect to Discord. Use a `Task { }` because it
 /// might take a few seconds, or even minutes under bad network connections
 /// Don't use `Task { }` if you care and want to wait
-Task { await bot.connect() }
+Task {
+    await bot.connect()
+    
+    // Give the bot owner admin permissions
+    do {
+        let botApplication = try await bot.client.getOwnApplication().decode()
+        guard let ownerID = botApplication.owner?.id else {
+            logger.warning("Error determining the bot owner. Will not give the bot owner admin permissions.")
+            return
+        }
+        Permissions.shared.setUserPermissionLevel(of: ownerID, to: .admin)
+    } catch {
+        logger.warning("Error determining the bot owner. Will not give the bot owner admin permissions. \(error)")
+    }
+}
 
-let commands: [DiscordCommand] = [HelloCommand()]
+/// Register commands
+let commands: [DiscordCommand] = [HelloCommand(), MyPermissionsCommand()]
 
 try await bot.client
     .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )

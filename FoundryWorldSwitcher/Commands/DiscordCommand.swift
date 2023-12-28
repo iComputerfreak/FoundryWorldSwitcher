@@ -23,6 +23,10 @@ protocol DiscordCommand {
 }
 
 extension DiscordCommand {
+    var options: [ApplicationCommand.Option]? {
+        nil
+    }
+    
     var logger: Logger {
         Logger(label: "\(String(describing: Self.self))")
     }

@@ -23,6 +23,7 @@
 		AB94F3DD2B3E0D21003BA4CB /* BOT_TOKEN in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB94F3DC2B3E0D21003BA4CB /* BOT_TOKEN */; };
 		AB94F3DF2B3E105E003BA4CB /* BotPermissionLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3DE2B3E105E003BA4CB /* BotPermissionLevel.swift */; };
 		AB94F3E12B3E1220003BA4CB /* Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E02B3E1220003BA4CB /* Permissions.swift */; };
+		AB94F3E32B3E15BB003BA4CB /* MyPermissionsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E22B3E15BB003BA4CB /* MyPermissionsCommand.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,6 +49,7 @@
 		AB94F3DC2B3E0D21003BA4CB /* BOT_TOKEN */ = {isa = PBXFileReference; lastKnownFileType = text; path = BOT_TOKEN; sourceTree = "<group>"; };
 		AB94F3DE2B3E105E003BA4CB /* BotPermissionLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotPermissionLevel.swift; sourceTree = "<group>"; };
 		AB94F3E02B3E1220003BA4CB /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
+		AB94F3E22B3E15BB003BA4CB /* MyPermissionsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPermissionsCommand.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +106,7 @@
 			children = (
 				AB94F3D02B3DDC25003BA4CB /* DiscordCommand.swift */,
 				AB94F3D52B3DE00D003BA4CB /* HelloCommand.swift */,
+				AB94F3E22B3E15BB003BA4CB /* MyPermissionsCommand.swift */,
 			);
 			path = Commands;
 			sourceTree = "<group>";
@@ -186,6 +189,7 @@
 				AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */,
 				AB94F3DB2B3DE38F003BA4CB /* DiscordCommandError.swift in Sources */,
 				AB94F3DF2B3E105E003BA4CB /* BotPermissionLevel.swift in Sources */,
+				AB94F3E32B3E15BB003BA4CB /* MyPermissionsCommand.swift in Sources */,
 				AB94F3D12B3DDC25003BA4CB /* DiscordCommand.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -6,35 +6,41 @@
 //
 
 import Foundation
+import DiscordBM
 
 struct Permissions: Codable {
-    private var userMap: [Int: BotPermissionLevel]
-    private var roleMap: [Int: BotPermissionLevel]
+    private var userMap: [UserSnowflake: BotPermissionLevel]
+    private var roleMap: [RoleSnowflake: BotPermissionLevel]
     
     init() {
         self.userMap = [:]
         self.roleMap = [:]
     }
     
-    func userPermissionLevel(of user: Int) -> BotPermissionLevel {
+    func userPermissionLevel(of user: UserSnowflake) -> BotPermissionLevel {
         return userMap[user, default: .user]
     }
     
-    func rolePermissionLevel(of role: Int) -> BotPermissionLevel {
+    func rolePermissionLevel(of role: RoleSnowflake) -> BotPermissionLevel {
         return roleMap[role, default: .user]
     }
     
-    mutating func setUserPermissionLevel(of user: Int, to level: BotPermissionLevel) {
+    func permissionsLevel(of user: UserSnowflake, roles: [RoleSnowflake]) -> BotPermissionLevel {
+        let permissions =  [userPermissionLevel(of: user)] + roles.map { rolePermissionLevel(of: $0) }
+        return permissions.max(by: <) ?? .user
+    }
+    
+    mutating func setUserPermissionLevel(of user: UserSnowflake, to level: BotPermissionLevel) {
         userMap[user] = level
     }
     
-    mutating func setRolePermissionLevel(of role: Int, to level: BotPermissionLevel) {
+    mutating func setRolePermissionLevel(of role: RoleSnowflake, to level: BotPermissionLevel) {
         roleMap[role] = level
     }
     
     // MARK: - Persisting
     
-    static let shared: Self = {
+    static var shared: Self = {
         do {
             return try Self.load()
         } catch {
