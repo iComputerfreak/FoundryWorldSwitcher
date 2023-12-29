@@ -12,6 +12,7 @@ protocol DiscordCommand {
     var name: String { get }
     var description: String { get }
     var options: [ApplicationCommand.Option]? { get }
+    var permissionsLevel: BotPermissionLevel { get }
     var logger: Logger { get }
     
     func createApplicationCommand() -> Payloads.ApplicationCommandCreate
@@ -39,21 +40,3 @@ extension DiscordCommand {
         )
     }
 }
-
-
-
-
-//            return [ApplicationCommand.Option(
-//                type: .string,
-//                name: "text",
-//                description: "What to echo :)"
-//            )]
-//        case .link:
-//            return LinkSubCommand.allCases.map { subCommand in
-//                return ApplicationCommand.Option(
-//                    type: .subCommand,
-//                    name: subCommand.rawValue,
-//                    description: subCommand.description,
-//                    options: subCommand.options
-//                )
-//            }

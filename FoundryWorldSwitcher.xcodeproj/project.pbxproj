@@ -27,6 +27,8 @@
 		AB94F3E62B3EE787003BA4CB /* SetPermissionLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */; };
 		AB94F3E82B3EFAAF003BA4CB /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E72B3EFAAF003BA4CB /* Utils.swift */; };
 		AB94F3EA2B3F1DFF003BA4CB /* ShowPermissionsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */; };
+		AB94F3EC2B3F23C8003BA4CB /* DiscordBotError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3EB2B3F23C8003BA4CB /* DiscordBotError.swift */; };
+		AB94F3EE2B3F2412003BA4CB /* PermissionsHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3ED2B3F2412003BA4CB /* PermissionsHandler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -57,6 +59,8 @@
 		AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetPermissionLevel.swift; sourceTree = "<group>"; };
 		AB94F3E72B3EFAAF003BA4CB /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowPermissionsCommand.swift; sourceTree = "<group>"; };
+		AB94F3EB2B3F23C8003BA4CB /* DiscordBotError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscordBotError.swift; sourceTree = "<group>"; };
+		AB94F3ED2B3F2412003BA4CB /* PermissionsHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsHandler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,9 +105,11 @@
 			children = (
 				AB94F3B82B3DB8C5003BA4CB /* main.swift */,
 				AB94F3CE2B3DB974003BA4CB /* EventHandler.swift */,
+				AB94F3EB2B3F23C8003BA4CB /* DiscordBotError.swift */,
 				AB94F3DA2B3DE38F003BA4CB /* DiscordCommandError.swift */,
 				AB94F3DE2B3E105E003BA4CB /* BotPermissionLevel.swift */,
 				AB94F3E02B3E1220003BA4CB /* Permissions.swift */,
+				AB94F3ED2B3F2412003BA4CB /* PermissionsHandler.swift */,
 				AB94F3E72B3EFAAF003BA4CB /* Utils.swift */,
 				AB94F3D22B3DDC9E003BA4CB /* Commands */,
 			);
@@ -195,6 +201,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB94F3E12B3E1220003BA4CB /* Permissions.swift in Sources */,
+				AB94F3EE2B3F2412003BA4CB /* PermissionsHandler.swift in Sources */,
 				AB94F3D62B3DE00D003BA4CB /* HelloCommand.swift in Sources */,
 				AB94F3B92B3DB8C5003BA4CB /* main.swift in Sources */,
 				AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */,
@@ -205,6 +212,7 @@
 				AB94F3E32B3E15BB003BA4CB /* MyPermissionsCommand.swift in Sources */,
 				AB94F3D12B3DDC25003BA4CB /* DiscordCommand.swift in Sources */,
 				AB94F3E62B3EE787003BA4CB /* SetPermissionLevel.swift in Sources */,
+				AB94F3EC2B3F23C8003BA4CB /* DiscordBotError.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

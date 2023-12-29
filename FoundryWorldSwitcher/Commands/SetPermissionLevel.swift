@@ -12,6 +12,7 @@ import Logging
 struct SetPermissionLevel: DiscordCommand {
     let name = "setpermissionlevel"
     let description = "Sets a permission level for a user or a role."
+    let permissionsLevel: BotPermissionLevel = .admin
     
     static let permissionLevelOption = ApplicationCommand.Option(
         type: .integer,

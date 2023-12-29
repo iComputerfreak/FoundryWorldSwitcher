@@ -15,6 +15,7 @@ struct EventHandler: GatewayEventHandler {
     let event: Gateway.Event
     let client: any DiscordClient
     let logger = Logger(label: "EventHandler")
+    let permissionsHandler: PermissionsHandler
 
     /// Handle Interactions.
     func onInteractionCreate(_ interaction: Interaction) async throws {
@@ -31,13 +32,29 @@ struct EventHandler: GatewayEventHandler {
         switch interaction.data {
         case let .applicationCommand(applicationCommand):
             // Use the commands defined in main.swift
-            guard let command = commands.first(where: \.name, equals: applicationCommand.name) else {
-                throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
-            }
             do {
-                try await command.handle(applicationCommand, interaction: interaction, client: client)
+                guard let command = commands.first(where: \.name, equals: applicationCommand.name) else {
+                    throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
+                }
+                guard let member = interaction.member else {
+                    throw DiscordCommandError.noMember
+                }
+                guard let username = member.user?.username else {
+                    throw DiscordCommandError.noUser
+                }
+                do {
+                    // Check user permissions
+                    try permissionsHandler.checkAuthorization(of: member, for: command)
+                    try await command.handle(applicationCommand, interaction: interaction, client: client)
+                } catch DiscordCommandError.unauthorized {
+                    logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions.")
+                    try await client.updateOriginalInteractionResponse(
+                        token: interaction.token,
+                        payload: .init(content: "You need at least permission level `\(command.permissionsLevel)` to execute this command.")
+                    ).guardSuccess()
+                }
             } catch {
-                logger.error("Error handling command /\(command.name): \(error)")
+                logger.error("Error handling command /\(applicationCommand.name): \(error)")
                 try await client.updateOriginalInteractionResponse(
                     token: interaction.token,
                     payload: Payloads.EditWebhookMessage(content: "There was an error running your command.")
