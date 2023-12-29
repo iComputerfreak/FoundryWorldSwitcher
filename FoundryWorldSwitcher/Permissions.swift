@@ -7,10 +7,40 @@
 
 import Foundation
 import DiscordBM
+import JFUtils
 
 struct Permissions: Codable {
     private var userMap: [UserSnowflake: BotPermissionLevel]
     private var roleMap: [RoleSnowflake: BotPermissionLevel]
+    
+    var adminUsers: [UserSnowflake] {
+        filter(userMap, level: .admin)
+    }
+    
+    var adminRoles: [RoleSnowflake] {
+        filter(roleMap, level: .admin)
+    }
+    
+    var dungeonMasterUsers: [UserSnowflake] {
+        filter(userMap, level: .dungeonMaster)
+    }
+    
+    var dungeonMasterRoles: [RoleSnowflake] {
+        filter(roleMap, level: .dungeonMaster)
+    }
+    
+    private func filter<SnowflakeType: SnowflakeProtocol>(
+        _ dict: [SnowflakeType: BotPermissionLevel],
+        level: BotPermissionLevel
+    ) -> [SnowflakeType] {
+        dict.filter { (_, value: BotPermissionLevel) in
+            value == level
+        }
+        .map { (key, _) in
+            key
+        }
+        .sorted(on: \.rawValue, by: <)
+    }
     
     init() {
         self.userMap = [:]

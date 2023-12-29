@@ -83,7 +83,12 @@ Task {
 }
 
 /// Register commands
-let commands: [DiscordCommand] = [HelloCommand(), MyPermissionsCommand(), SetPermissionLevel()]
+let commands: [DiscordCommand] = [
+    HelloCommand(),
+    MyPermissionsCommand(),
+    SetPermissionLevel(),
+    ShowPermissionsCommand()
+]
 
 try await bot.client
     .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )

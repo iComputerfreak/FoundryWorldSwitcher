@@ -26,6 +26,7 @@
 		AB94F3E32B3E15BB003BA4CB /* MyPermissionsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E22B3E15BB003BA4CB /* MyPermissionsCommand.swift */; };
 		AB94F3E62B3EE787003BA4CB /* SetPermissionLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */; };
 		AB94F3E82B3EFAAF003BA4CB /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E72B3EFAAF003BA4CB /* Utils.swift */; };
+		AB94F3EA2B3F1DFF003BA4CB /* ShowPermissionsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -55,6 +56,7 @@
 		AB94F3E42B3E1D4D003BA4CB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetPermissionLevel.swift; sourceTree = "<group>"; };
 		AB94F3E72B3EFAAF003BA4CB /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowPermissionsCommand.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +117,7 @@
 				AB94F3D52B3DE00D003BA4CB /* HelloCommand.swift */,
 				AB94F3E22B3E15BB003BA4CB /* MyPermissionsCommand.swift */,
 				AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */,
+				AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */,
 			);
 			path = Commands;
 			sourceTree = "<group>";
@@ -197,6 +200,7 @@
 				AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */,
 				AB94F3DB2B3DE38F003BA4CB /* DiscordCommandError.swift in Sources */,
 				AB94F3E82B3EFAAF003BA4CB /* Utils.swift in Sources */,
+				AB94F3EA2B3F1DFF003BA4CB /* ShowPermissionsCommand.swift in Sources */,
 				AB94F3DF2B3E105E003BA4CB /* BotPermissionLevel.swift in Sources */,
 				AB94F3E32B3E15BB003BA4CB /* MyPermissionsCommand.swift in Sources */,
 				AB94F3D12B3DDC25003BA4CB /* DiscordCommand.swift in Sources */,
