@@ -32,10 +32,20 @@ struct Permissions: Codable {
     
     mutating func setUserPermissionLevel(of user: UserSnowflake, to level: BotPermissionLevel) {
         userMap[user] = level
+        self.save()
     }
     
     mutating func setRolePermissionLevel(of role: RoleSnowflake, to level: BotPermissionLevel) {
         roleMap[role] = level
+        self.save()
+    }
+    
+    mutating func setPermissionLevel(of user: UserSnowflake, to level: BotPermissionLevel) {
+        setUserPermissionLevel(of: user, to: level)
+    }
+    
+    mutating func setPermissionLevel(of role: RoleSnowflake, to level: BotPermissionLevel) {
+        setRolePermissionLevel(of: role, to: level)
     }
     
     // MARK: - Persisting
@@ -61,11 +71,16 @@ struct Permissions: Codable {
         return try JSONDecoder().decode(Self.self, from: data)
     }
     
-    func save() throws {
+    func save() {
         guard let permissionsFile = Self.permissionsFile else {
-            throw DiscordBotError.errorReadingPermissions
+            logger.error("Cannot create path for permissions file. Unable to save permissions.")
+            return
         }
-        let data = try JSONEncoder().encode(self)
-        try data.write(to: permissionsFile)
+        do {
+            let data = try JSONEncoder().encode(self)
+            try data.write(to: permissionsFile)
+        } catch {
+            logger.error("Error saving permissions: \(error)")
+        }
     }
 }

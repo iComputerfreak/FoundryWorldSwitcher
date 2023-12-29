@@ -14,6 +14,7 @@ enum DiscordBotError: Error {
     case errorFindingAppDirectory
     case errorReadingPermissions
     case noUser
+    case unableToCreateMention(snowflake: any SnowflakeProtocol)
 }
 
 let logger = Logger(label: "Main")
@@ -82,7 +83,7 @@ Task {
 }
 
 /// Register commands
-let commands: [DiscordCommand] = [HelloCommand(), MyPermissionsCommand()]
+let commands: [DiscordCommand] = [HelloCommand(), MyPermissionsCommand(), SetPermissionLevel()]
 
 try await bot.client
     .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )

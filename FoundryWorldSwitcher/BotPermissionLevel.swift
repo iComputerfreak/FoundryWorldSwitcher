@@ -5,7 +5,7 @@
 //  Created by Jonas Frey on 28.12.23.
 //
 
-enum BotPermissionLevel: Int, CustomStringConvertible, Codable, Comparable {
+enum BotPermissionLevel: Int, CustomStringConvertible, Codable, Comparable, CaseIterable {
     case user = 0
     case dungeonMaster = 1
     case admin = 2

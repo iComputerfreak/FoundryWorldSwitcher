@@ -7,4 +7,5 @@
 
 enum DiscordCommandError: Error {
     case unknownCommand(commandName: String)
+    case missingArgument(argumentName: String)
 }
