@@ -9,7 +9,6 @@ import Foundation
 import DiscordBM
 
 enum DiscordBotError: Error {
-    case errorFindingAppDirectory
     case errorReadingPermissions
     case noUser
     case noToken

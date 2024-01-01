@@ -10,47 +10,15 @@ import DiscordBM
 import AsyncHTTPClient
 import Logging
 
+// TODO: Remove this or make it fileprivate to prevent using it in other structs
 let logger = Logger(label: "Main")
-
-func loadBotToken() throws -> String {
-    // We read the bot token from a file called `BOT_TOKEN` or an environment variable called `FOUNDRY_BOT_TOKEN`
-    guard let appDirectory = Bundle.main.executableURL?.deletingLastPathComponent() else {
-        throw DiscordBotError.errorFindingAppDirectory
-    }
-    logger.debug("App directory: \(appDirectory.path())")
-    let tokenFile = appDirectory.appending(component: "BOT_TOKEN").path()
-
-    if FileManager.default.fileExists(atPath: tokenFile) {
-        do {
-            let token = try String(contentsOfFile: tokenFile).components(separatedBy: .newlines).first
-            if let token, !token.isEmpty {
-                return token
-            }
-        } catch {
-            logger.error("Error reading BOT_TOKEN file. Falling back to environment variable.\n\(error)")
-        }
-    }
-    // We read the environment variable if reading the BOT_TOKEN file failed
-    let token = ProcessInfo.processInfo.environment["FOUNDRY_BOT_TOKEN"]
-
-    guard let botToken = token?.components(separatedBy: .newlines).first else {
-        logger.error(
-            "Error reading bot token. Please provide the bot's token in a file called `BOT_TOKEN` next to the executable or in an environment variable called `FOUNDRY_BOT_TOKEN`."
-        )
-        throw DiscordBotError.noToken
-    }
-    
-    return botToken
-}
-
-let botToken = try loadBotToken()
 
 let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
 
 let bot = await BotGatewayManager(
     eventLoopGroup: httpClient.eventLoopGroup,
     httpClient: httpClient,
-    token: botToken,
+    token: Secrets.shared.botToken,
     presence: .init(
         /// Will show up as "Playing Foundry VTT"
         activities: [.init(name: "Foundry VTT", type: .game)],
@@ -97,6 +65,9 @@ let cache = await DiscordCache(
     messageCachingPolicy: .normal
 )
 
+// TODO: Load API Key
+let pterodactylAPI = PterodactylAPI()
+
 let permissionsHandler = PermissionsHandler(cache: cache)
 
 /// Register commands
@@ -104,7 +75,8 @@ let commands: [DiscordCommand] = [
     HelloCommand(),
     MyPermissionsCommand(),
     SetPermissionLevel(),
-    ShowPermissionsCommand()
+    ShowPermissionsCommand(),
+    ListWorldsCommand()
 ]
 
 try await bot.client

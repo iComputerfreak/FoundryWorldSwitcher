@@ -11,7 +11,7 @@ import DiscordBM
 struct ShowPermissionsCommand: DiscordCommand {
     let name = "showpermissions"
     let description = "Shows all assigned permission levels."
-    let permissionsLevel: BotPermissionLevel = .user
+    let permissionsLevel: BotPermissionLevel = .admin
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

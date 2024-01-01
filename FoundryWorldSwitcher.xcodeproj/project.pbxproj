@@ -29,6 +29,15 @@
 		AB94F3EA2B3F1DFF003BA4CB /* ShowPermissionsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */; };
 		AB94F3EC2B3F23C8003BA4CB /* DiscordBotError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3EB2B3F23C8003BA4CB /* DiscordBotError.swift */; };
 		AB94F3EE2B3F2412003BA4CB /* PermissionsHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3ED2B3F2412003BA4CB /* PermissionsHandler.swift */; };
+		AB94F3F02B3F3536003BA4CB /* ListWorldsCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3EF2B3F3536003BA4CB /* ListWorldsCommand.swift */; };
+		AB94F3F22B3F35C2003BA4CB /* PterodactylAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3F12B3F35C2003BA4CB /* PterodactylAPI.swift */; };
+		AB94F3F52B3F35EF003BA4CB /* FoundryWorld.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3F42B3F35EF003BA4CB /* FoundryWorld.swift */; };
+		AB94F3F72B3F63AE003BA4CB /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3F62B3F63AE003BA4CB /* Secrets.swift */; };
+		AB94F3F92B3F64A4003BA4CB /* SecretsError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3F82B3F64A4003BA4CB /* SecretsError.swift */; };
+		AB94F3FB2B3F69A4003BA4CB /* PTERODACTYL_API_KEY in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB94F3FA2B3F69A4003BA4CB /* PTERODACTYL_API_KEY */; };
+		AB94F3FD2B3F6BD8003BA4CB /* FileListResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */; };
+		AB94F3FF2B3F6D55003BA4CB /* BotConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3FE2B3F6D55003BA4CB /* BotConfig.swift */; };
+		AB94F4012B4336E0003BA4CB /* Savable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F4002B4336E0003BA4CB /* Savable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -38,6 +47,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
+				AB94F3FB2B3F69A4003BA4CB /* PTERODACTYL_API_KEY in CopyFiles */,
 				AB94F3DD2B3E0D21003BA4CB /* BOT_TOKEN in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -61,6 +71,15 @@
 		AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowPermissionsCommand.swift; sourceTree = "<group>"; };
 		AB94F3EB2B3F23C8003BA4CB /* DiscordBotError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscordBotError.swift; sourceTree = "<group>"; };
 		AB94F3ED2B3F2412003BA4CB /* PermissionsHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsHandler.swift; sourceTree = "<group>"; };
+		AB94F3EF2B3F3536003BA4CB /* ListWorldsCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListWorldsCommand.swift; sourceTree = "<group>"; };
+		AB94F3F12B3F35C2003BA4CB /* PterodactylAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PterodactylAPI.swift; sourceTree = "<group>"; };
+		AB94F3F42B3F35EF003BA4CB /* FoundryWorld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundryWorld.swift; sourceTree = "<group>"; };
+		AB94F3F62B3F63AE003BA4CB /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		AB94F3F82B3F64A4003BA4CB /* SecretsError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretsError.swift; sourceTree = "<group>"; };
+		AB94F3FA2B3F69A4003BA4CB /* PTERODACTYL_API_KEY */ = {isa = PBXFileReference; lastKnownFileType = text; path = PTERODACTYL_API_KEY; sourceTree = "<group>"; };
+		AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListResponse.swift; sourceTree = "<group>"; };
+		AB94F3FE2B3F6D55003BA4CB /* BotConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotConfig.swift; sourceTree = "<group>"; };
+		AB94F4002B4336E0003BA4CB /* Savable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Savable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +104,7 @@
 		AB94F3AC2B3DB8C5003BA4CB = {
 			isa = PBXGroup;
 			children = (
+				AB94F3FA2B3F69A4003BA4CB /* PTERODACTYL_API_KEY */,
 				AB94F3E42B3E1D4D003BA4CB /* README.md */,
 				AB94F3DC2B3E0D21003BA4CB /* BOT_TOKEN */,
 				AB94F3B72B3DB8C5003BA4CB /* FoundryWorldSwitcher */,
@@ -104,6 +124,8 @@
 			isa = PBXGroup;
 			children = (
 				AB94F3B82B3DB8C5003BA4CB /* main.swift */,
+				AB94F3F62B3F63AE003BA4CB /* Secrets.swift */,
+				AB94F3F82B3F64A4003BA4CB /* SecretsError.swift */,
 				AB94F3CE2B3DB974003BA4CB /* EventHandler.swift */,
 				AB94F3EB2B3F23C8003BA4CB /* DiscordBotError.swift */,
 				AB94F3DA2B3DE38F003BA4CB /* DiscordCommandError.swift */,
@@ -111,6 +133,9 @@
 				AB94F3E02B3E1220003BA4CB /* Permissions.swift */,
 				AB94F3ED2B3F2412003BA4CB /* PermissionsHandler.swift */,
 				AB94F3E72B3EFAAF003BA4CB /* Utils.swift */,
+				AB94F3FE2B3F6D55003BA4CB /* BotConfig.swift */,
+				AB94F4002B4336E0003BA4CB /* Savable.swift */,
+				AB94F3F32B3F35E0003BA4CB /* Pterodactyl API */,
 				AB94F3D22B3DDC9E003BA4CB /* Commands */,
 			);
 			path = FoundryWorldSwitcher;
@@ -124,8 +149,19 @@
 				AB94F3E22B3E15BB003BA4CB /* MyPermissionsCommand.swift */,
 				AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */,
 				AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */,
+				AB94F3EF2B3F3536003BA4CB /* ListWorldsCommand.swift */,
 			);
 			path = Commands;
+			sourceTree = "<group>";
+		};
+		AB94F3F32B3F35E0003BA4CB /* Pterodactyl API */ = {
+			isa = PBXGroup;
+			children = (
+				AB94F3F12B3F35C2003BA4CB /* PterodactylAPI.swift */,
+				AB94F3F42B3F35EF003BA4CB /* FoundryWorld.swift */,
+				AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */,
+			);
+			path = "Pterodactyl API";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -201,15 +237,23 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB94F3E12B3E1220003BA4CB /* Permissions.swift in Sources */,
+				AB94F3FF2B3F6D55003BA4CB /* BotConfig.swift in Sources */,
 				AB94F3EE2B3F2412003BA4CB /* PermissionsHandler.swift in Sources */,
+				AB94F3F02B3F3536003BA4CB /* ListWorldsCommand.swift in Sources */,
 				AB94F3D62B3DE00D003BA4CB /* HelloCommand.swift in Sources */,
 				AB94F3B92B3DB8C5003BA4CB /* main.swift in Sources */,
+				AB94F3FD2B3F6BD8003BA4CB /* FileListResponse.swift in Sources */,
+				AB94F4012B4336E0003BA4CB /* Savable.swift in Sources */,
+				AB94F3F72B3F63AE003BA4CB /* Secrets.swift in Sources */,
 				AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */,
+				AB94F3F22B3F35C2003BA4CB /* PterodactylAPI.swift in Sources */,
 				AB94F3DB2B3DE38F003BA4CB /* DiscordCommandError.swift in Sources */,
 				AB94F3E82B3EFAAF003BA4CB /* Utils.swift in Sources */,
 				AB94F3EA2B3F1DFF003BA4CB /* ShowPermissionsCommand.swift in Sources */,
 				AB94F3DF2B3E105E003BA4CB /* BotPermissionLevel.swift in Sources */,
 				AB94F3E32B3E15BB003BA4CB /* MyPermissionsCommand.swift in Sources */,
+				AB94F3F52B3F35EF003BA4CB /* FoundryWorld.swift in Sources */,
+				AB94F3F92B3F64A4003BA4CB /* SecretsError.swift in Sources */,
 				AB94F3D12B3DDC25003BA4CB /* DiscordCommand.swift in Sources */,
 				AB94F3E62B3EE787003BA4CB /* SetPermissionLevel.swift in Sources */,
 				AB94F3EC2B3F23C8003BA4CB /* DiscordBotError.swift in Sources */,

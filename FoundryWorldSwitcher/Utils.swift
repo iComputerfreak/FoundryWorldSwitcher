@@ -20,4 +20,11 @@ enum Utils {
             throw DiscordBotError.unableToCreateMention(snowflake: snowflake)
         }
     }
+    
+    static var baseURL: URL {
+        guard let baseURL = Bundle.main.executableURL?.deletingLastPathComponent() else {
+            fatalError("Unable to construct executable directory.")
+        }
+        return baseURL
+    }
 }
