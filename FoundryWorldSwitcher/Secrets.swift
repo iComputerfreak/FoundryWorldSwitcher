@@ -8,10 +8,19 @@
 import Foundation
 import Logging
 
-struct Secrets {
-    static let shared = Self.load()
+struct Secrets: Savable {
+    static var dataPath: URL = Utils.baseURL.appending(component: "secrets.json")
+    static let shared = {
+        do {
+            return try Self.load()
+        } catch {
+            logger.critical("Unable to load secrets! \(error)")
+            fatalError("The bot is missing at least one of the two required secrets. Make sure that the Discord bot token and Pterodactyl API token are both present.")
+        }
+    }()
     static let logger = Logger(label: "Secrets")
     
+    // Secrets are read-only for now.
     let botToken: String
     let pterodactylAPIKey: String
     
@@ -20,20 +29,22 @@ struct Secrets {
         self.pterodactylAPIKey = pterodactylAPIKey
     }
     
-    static func load() -> Self {
-        do {
-            // Fall back to the current working directory
-            guard let baseURL = Bundle.main.executableURL?.deletingLastPathComponent() else {
-                throw SecretsError.cannotCreateFilePath
-            }
-            return Self(
-                botToken: try loadSecret(baseURL: baseURL, fileName: "BOT_TOKEN", environmentName: "FOUNDRY_BOT_TOKEN"),
-                pterodactylAPIKey: try loadSecret(baseURL: baseURL, fileName: "PTERODACTYL_API_KEY", environmentName: "FOUNDRY_PTERODACTYL_TOKEN")
-            )
-        } catch {
-            logger.critical("Unable to load secrets! \(error)")
-            fatalError("The bot is missing at least one of the two required secrets. Make sure that the Discord bot token and Pterodactyl API token are both present.")
+    init() {
+        self.init(
+            botToken: "< PUT YOUR DISCORD BOT TOKEN HERE >",
+            pterodactylAPIKey: "< PUT YOUR PTERODACTYL API KEY HERE >"
+        )
+    }
+    
+    static func load() throws -> Self {
+        // Fall back to the current working directory
+        guard let baseURL = Bundle.main.executableURL?.deletingLastPathComponent() else {
+            throw SecretsError.cannotCreateFilePath
         }
+        return Self(
+            botToken: try loadSecret(baseURL: baseURL, fileName: "BOT_TOKEN", environmentName: "FOUNDRY_BOT_TOKEN"),
+            pterodactylAPIKey: try loadSecret(baseURL: baseURL, fileName: "PTERODACTYL_API_KEY", environmentName: "FOUNDRY_PTERODACTYL_TOKEN")
+        )
     }
     
     static func loadSecret(baseURL: URL, fileName: String, environmentName: String) throws -> String {

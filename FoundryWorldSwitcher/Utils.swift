@@ -21,6 +21,8 @@ enum Utils {
         }
     }
     
+    /// The URL pointing to the directory the executable file is in.
+    /// Crashes the program, if the app is unable to determine the base path.
     static var baseURL: URL {
         guard let baseURL = Bundle.main.executableURL?.deletingLastPathComponent() else {
             fatalError("Unable to construct executable directory.")

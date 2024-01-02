@@ -21,6 +21,8 @@ struct BotConfig: Savable {
         return Self()
     }()
     
+    // For now, we keep everything read only and let the user edit the .json.
+    // This means we don't need to save either.
     let pterodactylHost: String
     let pterodactylServerID: String
     
