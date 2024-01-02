@@ -67,17 +67,14 @@ struct PterodactylAPI {
         
     }
     
-    func currentWorld() async throws -> FoundryWorld? {
+    func currentWorld() async throws -> FoundryWorld {
         guard let worldVariable = try await startupParameters()
             .variables
             .first(where: { variable in
                 variable.name.lowercased() == "world name" || variable.envVariable.lowercased() == "world_name"
             })
         else {
-            logger.warning(
-                "Cannot find a variable with the name 'World Name' or the environment name 'WORLD_NAME' in the startup variables."
-            )
-            return nil
+            throw PterodactylAPIError.noWorldVariable
         }
         return try await world(for: worldVariable.serverValue)
     }
@@ -86,7 +83,7 @@ struct PterodactylAPI {
         return try await get(path: Paths.startupParameters())
     }
     
-    private func files(in directory: String? = nil) async throws -> [File] {
+    func files(in directory: String? = nil) async throws -> [File] {
         let response: FileListResponse = try await self.get(
             path: Paths.listFiles(),
             queryItems: [.init(name: "directory", value: directory)]
@@ -94,8 +91,16 @@ struct PterodactylAPI {
         return response.files
     }
     
+    func downloadLink(for file: String) async throws -> String {
+        let response: FileDownloadLinkResponse = try await self.get(
+            path: Paths.fileDownloadLink(),
+            queryItems: [.init(name: "file", value: file)]
+        )
+        return response.url
+    }
+    
     // Decodes as JSON or returns the contents as string
-    private func fileContents<T: Decodable>(file: String, as: T.Type = String.self) async throws -> T {
+    func fileContents<T: Decodable>(file: String, as: T.Type = String.self) async throws -> T {
         let data: Data = try await self.get(
             path: Paths.fileContents(),
             queryItems: [.init(name: "file", value: file)]
@@ -123,6 +128,10 @@ struct PterodactylAPI {
         
         static func startupParameters(serverID: String = BotConfig.shared.pterodactylServerID) -> String {
             "/servers/\(serverID)/startup"
+        }
+        
+        static func fileDownloadLink(serverID: String = BotConfig.shared.pterodactylServerID) -> String {
+            "/servers/\(serverID)/files/download"
         }
     }
     

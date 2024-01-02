@@ -14,8 +14,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/DiscordBM/DiscordBM#Apache-2.0-1-ov-file",
       "state" : {
-        "revision" : "a9ca2be186f6092d87940b09caa6ab9b35491e40",
-        "version" : "1.7.0"
+        "revision" : "0dd40633046e498afd1a958b56037511e88c9849",
+        "version" : "1.8.0"
+      }
+    },
+    {
+      "identity" : "html2markdown",
+      "kind" : "remoteSourceControl",
+      "location" : "https://gitlab.com/mflint/HTML2Markdown",
+      "state" : {
+        "revision" : "00d7a9744bbd1e7762c587bbd248775e16345a65",
+        "version" : "1.0.0"
       }
     },
     {

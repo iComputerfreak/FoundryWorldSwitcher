@@ -8,13 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		AB94F3B92B3DB8C5003BA4CB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3B82B3DB8C5003BA4CB /* main.swift */; };
-		AB94F3C12B3DB91C003BA4CB /* DiscordAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C02B3DB91C003BA4CB /* DiscordAuth */; };
-		AB94F3C32B3DB91C003BA4CB /* DiscordBM in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C22B3DB91C003BA4CB /* DiscordBM */; };
-		AB94F3C52B3DB91C003BA4CB /* DiscordCore in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C42B3DB91C003BA4CB /* DiscordCore */; };
-		AB94F3C72B3DB91C003BA4CB /* DiscordGateway in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C62B3DB91C003BA4CB /* DiscordGateway */; };
-		AB94F3C92B3DB91C003BA4CB /* DiscordHTTP in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3C82B3DB91C003BA4CB /* DiscordHTTP */; };
-		AB94F3CB2B3DB91C003BA4CB /* DiscordModels in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3CA2B3DB91C003BA4CB /* DiscordModels */; };
-		AB94F3CD2B3DB91C003BA4CB /* DiscordUtilities in Frameworks */ = {isa = PBXBuildFile; productRef = AB94F3CC2B3DB91C003BA4CB /* DiscordUtilities */; };
 		AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3CE2B3DB974003BA4CB /* EventHandler.swift */; };
 		AB94F3D12B3DDC25003BA4CB /* DiscordCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3D02B3DDC25003BA4CB /* DiscordCommand.swift */; };
 		AB94F3D62B3DE00D003BA4CB /* HelloCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3D52B3DE00D003BA4CB /* HelloCommand.swift */; };
@@ -47,6 +40,13 @@
 		AB95CA932B439A8200E98210 /* ForceSwitchWorldCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA922B439A8200E98210 /* ForceSwitchWorldCommand.swift */; };
 		AB95CA972B44657A00E98210 /* ServerStartupParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA962B44657A00E98210 /* ServerStartupParameters.swift */; };
 		AB95CA992B4465CB00E98210 /* EggVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA982B4465CB00E98210 /* EggVariable.swift */; };
+		AB95CA9D2B448C9E00E98210 /* DiscordAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AB95CA9C2B448C9E00E98210 /* DiscordAuth */; };
+		AB95CA9F2B448C9E00E98210 /* DiscordBM in Frameworks */ = {isa = PBXBuildFile; productRef = AB95CA9E2B448C9E00E98210 /* DiscordBM */; };
+		AB95CAA12B448C9E00E98210 /* DiscordCore in Frameworks */ = {isa = PBXBuildFile; productRef = AB95CAA02B448C9E00E98210 /* DiscordCore */; };
+		AB95CAA32B448C9E00E98210 /* DiscordGateway in Frameworks */ = {isa = PBXBuildFile; productRef = AB95CAA22B448C9E00E98210 /* DiscordGateway */; };
+		AB95CAA52B448C9E00E98210 /* DiscordHTTP in Frameworks */ = {isa = PBXBuildFile; productRef = AB95CAA42B448C9E00E98210 /* DiscordHTTP */; };
+		AB95CAA82B448D3F00E98210 /* HTML2Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = AB95CAA72B448D3F00E98210 /* HTML2Markdown */; };
+		AB95CAAA2B4491F500E98210 /* FileDownloadLinkResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CAA92B4491F500E98210 /* FileDownloadLinkResponse.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -99,6 +99,7 @@
 		AB95CA922B439A8200E98210 /* ForceSwitchWorldCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForceSwitchWorldCommand.swift; sourceTree = "<group>"; };
 		AB95CA962B44657A00E98210 /* ServerStartupParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerStartupParameters.swift; sourceTree = "<group>"; };
 		AB95CA982B4465CB00E98210 /* EggVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EggVariable.swift; sourceTree = "<group>"; };
+		AB95CAA92B4491F500E98210 /* FileDownloadLinkResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDownloadLinkResponse.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,14 +107,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB95CAA82B448D3F00E98210 /* HTML2Markdown in Frameworks */,
+				AB95CAA12B448C9E00E98210 /* DiscordCore in Frameworks */,
 				AB94F3D92B3DE2E0003BA4CB /* JFUtils in Frameworks */,
-				AB94F3C92B3DB91C003BA4CB /* DiscordHTTP in Frameworks */,
-				AB94F3CD2B3DB91C003BA4CB /* DiscordUtilities in Frameworks */,
-				AB94F3CB2B3DB91C003BA4CB /* DiscordModels in Frameworks */,
-				AB94F3C72B3DB91C003BA4CB /* DiscordGateway in Frameworks */,
-				AB94F3C52B3DB91C003BA4CB /* DiscordCore in Frameworks */,
-				AB94F3C32B3DB91C003BA4CB /* DiscordBM in Frameworks */,
-				AB94F3C12B3DB91C003BA4CB /* DiscordAuth in Frameworks */,
+				AB95CA9D2B448C9E00E98210 /* DiscordAuth in Frameworks */,
+				AB95CAA52B448C9E00E98210 /* DiscordHTTP in Frameworks */,
+				AB95CAA32B448C9E00E98210 /* DiscordGateway in Frameworks */,
+				AB95CA9F2B448C9E00E98210 /* DiscordBM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -129,6 +129,7 @@
 				AB95CA882B43973000E98210 /* botConfig.json */,
 				AB94F3B72B3DB8C5003BA4CB /* FoundryWorldSwitcher */,
 				AB94F3B62B3DB8C5003BA4CB /* Products */,
+				AB95CAA62B448D3F00E98210 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -188,8 +189,16 @@
 				AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */,
 				AB95CA962B44657A00E98210 /* ServerStartupParameters.swift */,
 				AB95CA982B4465CB00E98210 /* EggVariable.swift */,
+				AB95CAA92B4491F500E98210 /* FileDownloadLinkResponse.swift */,
 			);
 			path = "Pterodactyl API";
+			sourceTree = "<group>";
+		};
+		AB95CAA62B448D3F00E98210 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -209,14 +218,13 @@
 			);
 			name = FoundryWorldSwitcher;
 			packageProductDependencies = (
-				AB94F3C02B3DB91C003BA4CB /* DiscordAuth */,
-				AB94F3C22B3DB91C003BA4CB /* DiscordBM */,
-				AB94F3C42B3DB91C003BA4CB /* DiscordCore */,
-				AB94F3C62B3DB91C003BA4CB /* DiscordGateway */,
-				AB94F3C82B3DB91C003BA4CB /* DiscordHTTP */,
-				AB94F3CA2B3DB91C003BA4CB /* DiscordModels */,
-				AB94F3CC2B3DB91C003BA4CB /* DiscordUtilities */,
 				AB94F3D82B3DE2E0003BA4CB /* JFUtils */,
+				AB95CA9C2B448C9E00E98210 /* DiscordAuth */,
+				AB95CA9E2B448C9E00E98210 /* DiscordBM */,
+				AB95CAA02B448C9E00E98210 /* DiscordCore */,
+				AB95CAA22B448C9E00E98210 /* DiscordGateway */,
+				AB95CAA42B448C9E00E98210 /* DiscordHTTP */,
+				AB95CAA72B448D3F00E98210 /* HTML2Markdown */,
 			);
 			productName = FoundryWorldSwitcher;
 			productReference = AB94F3B52B3DB8C5003BA4CB /* FoundryWorldSwitcher */;
@@ -247,8 +255,9 @@
 			);
 			mainGroup = AB94F3AC2B3DB8C5003BA4CB;
 			packageReferences = (
-				AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */,
 				AB94F3D72B3DE2E0003BA4CB /* XCRemoteSwiftPackageReference "JFUtils" */,
+				AB95CA9A2B448C5B00E98210 /* XCRemoteSwiftPackageReference "HTML2Markdown" */,
+				AB95CA9B2B448C9E00E98210 /* XCRemoteSwiftPackageReference "DiscordBM" */,
 			);
 			productRefGroup = AB94F3B62B3DB8C5003BA4CB /* Products */;
 			projectDirPath = "";
@@ -276,6 +285,7 @@
 				AB94F4012B4336E0003BA4CB /* Savable.swift in Sources */,
 				AB95CA972B44657A00E98210 /* ServerStartupParameters.swift in Sources */,
 				AB95CA8F2B439A3500E98210 /* WorldInfoCommand.swift in Sources */,
+				AB95CAAA2B4491F500E98210 /* FileDownloadLinkResponse.swift in Sources */,
 				AB94F3F72B3F63AE003BA4CB /* Secrets.swift in Sources */,
 				AB95CA912B439A4F00E98210 /* RestartWorldCommand.swift in Sources */,
 				AB95CA932B439A8200E98210 /* ForceSwitchWorldCommand.swift in Sources */,
@@ -463,14 +473,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/DiscordBM/DiscordBM#Apache-2.0-1-ov-file";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
-		};
 		AB94F3D72B3DE2E0003BA4CB /* XCRemoteSwiftPackageReference "JFUtils" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/iComputerfreak/JFUtils";
@@ -479,48 +481,59 @@
 				minimumVersion = 1.9.2;
 			};
 		};
+		AB95CA9A2B448C5B00E98210 /* XCRemoteSwiftPackageReference "HTML2Markdown" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://gitlab.com/mflint/HTML2Markdown";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+		AB95CA9B2B448C9E00E98210 /* XCRemoteSwiftPackageReference "DiscordBM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/DiscordBM/DiscordBM#Apache-2.0-1-ov-file";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AB94F3C02B3DB91C003BA4CB /* DiscordAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
-			productName = DiscordAuth;
-		};
-		AB94F3C22B3DB91C003BA4CB /* DiscordBM */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
-			productName = DiscordBM;
-		};
-		AB94F3C42B3DB91C003BA4CB /* DiscordCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
-			productName = DiscordCore;
-		};
-		AB94F3C62B3DB91C003BA4CB /* DiscordGateway */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
-			productName = DiscordGateway;
-		};
-		AB94F3C82B3DB91C003BA4CB /* DiscordHTTP */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
-			productName = DiscordHTTP;
-		};
-		AB94F3CA2B3DB91C003BA4CB /* DiscordModels */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
-			productName = DiscordModels;
-		};
-		AB94F3CC2B3DB91C003BA4CB /* DiscordUtilities */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = AB94F3BF2B3DB91C003BA4CB /* XCRemoteSwiftPackageReference "DiscordBM" */;
-			productName = DiscordUtilities;
-		};
 		AB94F3D82B3DE2E0003BA4CB /* JFUtils */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AB94F3D72B3DE2E0003BA4CB /* XCRemoteSwiftPackageReference "JFUtils" */;
 			productName = JFUtils;
+		};
+		AB95CA9C2B448C9E00E98210 /* DiscordAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB95CA9B2B448C9E00E98210 /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordAuth;
+		};
+		AB95CA9E2B448C9E00E98210 /* DiscordBM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB95CA9B2B448C9E00E98210 /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordBM;
+		};
+		AB95CAA02B448C9E00E98210 /* DiscordCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB95CA9B2B448C9E00E98210 /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordCore;
+		};
+		AB95CAA22B448C9E00E98210 /* DiscordGateway */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB95CA9B2B448C9E00E98210 /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordGateway;
+		};
+		AB95CAA42B448C9E00E98210 /* DiscordHTTP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB95CA9B2B448C9E00E98210 /* XCRemoteSwiftPackageReference "DiscordBM" */;
+			productName = DiscordHTTP;
+		};
+		AB95CAA72B448D3F00E98210 /* HTML2Markdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB95CA9A2B448C5B00E98210 /* XCRemoteSwiftPackageReference "HTML2Markdown" */;
+			productName = HTML2Markdown;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
