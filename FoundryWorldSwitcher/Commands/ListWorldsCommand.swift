@@ -31,12 +31,12 @@ struct ListWorldsCommand: DiscordCommand {
             .joined(separator: "\n")
         }
         
-        try await client.updateOriginalInteractionResponse(
+        try await client.respond(
             token: interaction.token,
-            payload: .init(content: """
+            message: """
             ## Worlds
             \(formattedWorlds())
-            """)
-        ).guardSuccess()
+            """
+        )
     }
 }

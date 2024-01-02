@@ -20,18 +20,19 @@ struct MyPermissionsCommand: DiscordCommand {
         interaction: Interaction,
         client: DiscordClient
     ) async throws {
-        guard let userID = interaction.member?.user?.id else {
+        guard
+            let member = interaction.member,
+            let userID = member.user?.id
+        else {
             throw DiscordBotError.noUser
         }
-        // TODO: Get all roles of the user
-        let roles: [RoleSnowflake] = []
+        // Get all roles of the user
+        let roles: [RoleSnowflake] = member.roles
         
         let userPermissions = Permissions.shared.permissionsLevel(of: userID, roles: roles)
-        try await client.updateOriginalInteractionResponse(
+        try await client.respond(
             token: interaction.token,
-            payload: Payloads.EditWebhookMessage(
-                content: "Your current permission level is `\(userPermissions)`"
-            )
-        ).guardSuccess()
+            message: "Your current permission level is `\(userPermissions)`"
+        )
     }
 }

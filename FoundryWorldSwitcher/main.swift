@@ -10,8 +10,7 @@ import DiscordBM
 import AsyncHTTPClient
 import Logging
 
-// TODO: Remove this or make it fileprivate to prevent using it in other structs
-let logger = Logger(label: "Main")
+fileprivate let logger = Logger(label: "Main")
 
 let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
 
@@ -75,7 +74,8 @@ let commands: [DiscordCommand] = [
     ShowPermissionsCommand(),
     ListWorldsCommand(),
     WorldInfoCommand(),
-    RestartWorldCommand()
+    RestartWorldCommand(),
+    SwitchWorldCommand()
 ]
 
 try await bot.client

@@ -37,15 +37,15 @@ struct ShowPermissionsCommand: DiscordCommand {
             return mentions.map { "* \($0)" }.joined(separator: "\n")
         }
         
-        try await client.updateOriginalInteractionResponse(
+        try await client.respond(
             token: interaction.token,
-            payload: .init(content: """
+            message: """
             ## Admin Permissions
             \(formatMentions(admins))
             
             ## Dungeon Master Permissions
             \(formatMentions(dms))
-            """)
-        ).guardSuccess()
+            """
+        )
     }
 }

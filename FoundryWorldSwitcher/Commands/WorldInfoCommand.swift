@@ -29,37 +29,35 @@ struct WorldInfoCommand: DiscordCommand {
         interaction: Interaction,
         client: DiscordClient
     ) async throws {
-        let world: FoundryWorld
-        let isCurrentWorld: Bool?
+        var world: FoundryWorld?
+        var isCurrentWorld: Bool? = nil
         
         // MARK: Get the world
-        if let worldArg = try applicationCommand.option(named: "world_id")?.value?.requireString() {
-            do {
-                world = try await PterodactylAPI.shared.world(for: worldArg)
-            } catch PterodactylAPIError.invalidResponseCode(let code) {
-                // If we get a 500 error, maybe the world ID does not exist.
-                guard code == 500 else {
-                    throw PterodactylAPIError.invalidResponseCode(code)
-                }
-                try await client.updateOriginalInteractionResponse(
-                    token: interaction.token,
-                    payload: .init(content: "There was an error trying to get information about the world. Are you sure a world with the ID `\(worldArg)` exists?")
-                ).guardSuccess()
-                logger.error("Error getting world information for world '\(worldArg)'. HTTP Request returned code \(code)")
-                return
+        do {
+            world = try await Utils.parseWorld(from: applicationCommand)
+        } catch PterodactylAPIError.cannotFindWorld(let worldID) {
+            try await client.respond(
+                token: interaction.token,
+                message: "There was an error trying to get information about the world. Are you sure a world with the ID `\(worldID)` exists?"
+            )
+            return
+        }
+        do {
+            let currentWorld = try await PterodactylAPI.shared.currentWorld()
+            if world == nil {
+                // If we did not get a world as an argument, we use the current one
+                world = currentWorld
             }
-            // We try getting the current world, but if we fail, it is okay
-            do {
-                let currentWorldID = try await PterodactylAPI.shared.currentWorld().id
-                isCurrentWorld = currentWorldID == world.id
-            } catch {
-                // Error getting the current world. We just set isCurrentWorld to nil for 'unknown' and continue
-                isCurrentWorld = nil
+            isCurrentWorld = world?.id == currentWorld.id
+        } catch {
+            // If we already have a valid world, we don't care about this error, otherwise, we throw the error
+            if world == nil {
+                throw error
             }
-        } else {
-            // Use the current world
-            world = try await PterodactylAPI.shared.currentWorld()
-            isCurrentWorld = true
+        }
+        
+        guard let world else {
+            throw DiscordBotError.unexpected("Error getting a valid world.")
         }
         
         // MARK: Determine the message color

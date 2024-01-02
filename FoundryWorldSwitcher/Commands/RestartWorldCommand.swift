@@ -22,9 +22,9 @@ struct RestartWorldCommand: DiscordCommand {
     ) async throws {
         // Send the restart command
         try await PterodactylAPI.shared.restartServer()
-        try await client.updateOriginalInteractionResponse(
+        try await client.respond(
             token: interaction.token,
-            payload: .init(content: "Restaring the Foundry VTT server. This should just take a second.")
-        ).guardSuccess()
+            message: "Restaring the Foundry VTT server. This should just take a second."
+        )
     }
 }

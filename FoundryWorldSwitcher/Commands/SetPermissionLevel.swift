@@ -112,10 +112,10 @@ struct SetPermissionLevel: DiscordCommand {
         newPermissionLevel: BotPermissionLevel
     ) async throws {
         let mention = try Utils.mention(of: user)
-        try await client.updateOriginalInteractionResponse(
+        try await client.respond(
             token: interaction.token,
-            payload: .init(content: "User \(mention) now has permission level `\(newPermissionLevel.description)`.")
-        ).guardSuccess()
+            message: "User \(mention) now has permission level `\(newPermissionLevel.description)`."
+        )
     }
     
     private func sendSuccessMessage(
@@ -125,9 +125,9 @@ struct SetPermissionLevel: DiscordCommand {
         newPermissionLevel: BotPermissionLevel
     ) async throws {
         let mention = try Utils.mention(of: role)
-        try await client.updateOriginalInteractionResponse(
+        try await client.respond(
             token: interaction.token,
-            payload: .init(content: "Role \(mention) now has `\(newPermissionLevel.description)` permissions.")
-        ).guardSuccess()
+            message: "Role \(mention) now has `\(newPermissionLevel.description)` permissions."
+        )
     }
 }

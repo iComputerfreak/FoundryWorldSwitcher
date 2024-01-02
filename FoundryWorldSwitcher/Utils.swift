@@ -7,8 +7,11 @@
 
 import Foundation
 import DiscordBM
+import Logging
 
 enum Utils {
+    private static let logger = Logger(label: "Utils")
+    
     static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
@@ -34,5 +37,25 @@ enum Utils {
             fatalError("Unable to construct executable directory.")
         }
         return baseURL
+    }
+    
+    /// Tries to parse and return a `FoundryWorld` from the given command's arguments.
+    /// Returns `nil`, if no argument is present or the argument's value is empty
+    static func parseWorld(from command: Interaction.ApplicationCommand, optionName: String = "world_id") async throws -> FoundryWorld? {
+        guard let worldArg = command.option(named: optionName)?.value, !worldArg.asString.isEmpty else {
+            // No argument given or argument is empty
+            return nil
+        }
+        let worldID = try worldArg.requireString()
+        do {
+            return try await PterodactylAPI.shared.world(for: worldID)
+        } catch PterodactylAPIError.invalidResponseCode(let code) {
+            // If we get a 500 error, maybe the world ID does not exist.
+            guard code == 500 else {
+                throw PterodactylAPIError.invalidResponseCode(code)
+            }
+            Self.logger.error("Error getting world information for world '\(worldArg)'. HTTP Request returned code \(code)")
+            throw PterodactylAPIError.cannotFindWorld(worldID)
+        }
     }
 }

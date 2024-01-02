@@ -13,6 +13,7 @@ enum PterodactylAPIError: Error, LocalizedError {
     case invalidResponseCode(Int)
     case cannotDecode(Data, Any.Type)
     case noWorldVariable
+    case cannotFindWorld(String)
     
     var errorDescription: String? {
         switch self {
@@ -26,6 +27,8 @@ enum PterodactylAPIError: Error, LocalizedError {
             return "Unable to decode the following data as type \(String(describing: type)):\n\(String(data: data, encoding: .utf8) ?? "nil")"
         case .noWorldVariable:
             return "Cannot find a variable with the name 'World Name' or the environment name 'WORLD_NAME' in the startup variables."
+        case .cannotFindWorld(let worldID):
+            return "Cannot find a world with the ID '\(worldID)'."
         }
     }
 }

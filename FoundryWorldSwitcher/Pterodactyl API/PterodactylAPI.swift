@@ -68,7 +68,10 @@ struct PterodactylAPI {
     }
     
     func changeWorld(to worldID: String) async throws {
-        
+        let _: Data = try await put(path: Paths.modifyStartupVariable(), body: [
+            "key": "WORLD_NAME",
+            "value": worldID
+        ])
     }
     
     func currentWorld() async throws -> FoundryWorld {
@@ -140,6 +143,10 @@ struct PterodactylAPI {
         
         static func serverPowerAction(serverID: String = BotConfig.shared.pterodactylServerID) -> String {
             "/servers/\(serverID)/power"
+        }
+        
+        static func modifyStartupVariable(serverID: String = BotConfig.shared.pterodactylServerID) -> String {
+            "/servers/\(serverID)/startup/variable"
         }
     }
     

@@ -48,17 +48,22 @@ struct EventHandler: GatewayEventHandler {
                     try await command.handle(applicationCommand, interaction: interaction, client: client)
                 } catch DiscordCommandError.unauthorized {
                     logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions.")
-                    try await client.updateOriginalInteractionResponse(
+                    try await client.respond(
                         token: interaction.token,
-                        payload: .init(content: "You need at least permission level `\(command.permissionsLevel)` to execute this command.")
-                    ).guardSuccess()
+                        message: "You need at least permission level `\(command.permissionsLevel)` to execute this command."
+                    )
+                } catch DiscordCommandError.missingArgument(argumentName: let argName) {
+                    try await client.respond(
+                        token: interaction.token,
+                        message: "Error: You need to specify the argument `\(argName)`."
+                    )
                 }
             } catch {
                 logger.error("Error handling command /\(applicationCommand.name): \(error)")
-                try await client.updateOriginalInteractionResponse(
+                try await client.respond(
                     token: interaction.token,
-                    payload: Payloads.EditWebhookMessage(content: "There was an error running your command.")
-                ).guardSuccess()
+                    message: "There was an error running your command. Please contact an administrator for more information."
+                )
             }
         default: break
         }

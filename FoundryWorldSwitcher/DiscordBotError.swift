@@ -13,4 +13,5 @@ enum DiscordBotError: Error {
     case noUser
     case noToken
     case unableToCreateMention(snowflake: any SnowflakeProtocol)
+    case unexpected(_ reason: String)
 }

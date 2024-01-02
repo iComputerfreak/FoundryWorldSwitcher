@@ -8,8 +8,10 @@
 import Foundation
 import DiscordBM
 import JFUtils
+import Logging
 
 struct Permissions: Codable {
+    private static let logger = Logger(label: "Permissions")
     private var userMap: [UserSnowflake: BotPermissionLevel]
     private var roleMap: [RoleSnowflake: BotPermissionLevel]
     
@@ -103,14 +105,14 @@ struct Permissions: Codable {
     
     func save() {
         guard let permissionsFile = Self.permissionsFile else {
-            logger.error("Cannot create path for permissions file. Unable to save permissions.")
+            Self.logger.error("Cannot create path for permissions file. Unable to save permissions.")
             return
         }
         do {
             let data = try JSONEncoder().encode(self)
             try data.write(to: permissionsFile)
         } catch {
-            logger.error("Error saving permissions: \(error)")
+            Self.logger.error("Error saving permissions: \(error)")
         }
     }
 }
