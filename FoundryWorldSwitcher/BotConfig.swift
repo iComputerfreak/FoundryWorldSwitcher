@@ -32,7 +32,7 @@ struct BotConfig: Savable {
     }
     
     init() {
-        self.init(pterodactylHost: "127.0.0.1", pterodactylServerID: "")
+        self.init(pterodactylHost: "http://127.0.0.1", pterodactylServerID: "")
     }
     
 }

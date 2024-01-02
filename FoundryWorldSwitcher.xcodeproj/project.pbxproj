@@ -38,6 +38,13 @@
 		AB94F3FD2B3F6BD8003BA4CB /* FileListResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */; };
 		AB94F3FF2B3F6D55003BA4CB /* BotConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F3FE2B3F6D55003BA4CB /* BotConfig.swift */; };
 		AB94F4012B4336E0003BA4CB /* Savable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB94F4002B4336E0003BA4CB /* Savable.swift */; };
+		AB95CA872B43920900E98210 /* PterodactylAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA862B43920900E98210 /* PterodactylAPIError.swift */; };
+		AB95CA892B43980900E98210 /* botConfig.json in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB95CA882B43973000E98210 /* botConfig.json */; };
+		AB95CA8B2B4399FC00E98210 /* ListServersCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA8A2B4399FC00E98210 /* ListServersCommand.swift */; };
+		AB95CA8D2B439A2C00E98210 /* SwitchWorldCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA8C2B439A2C00E98210 /* SwitchWorldCommand.swift */; };
+		AB95CA8F2B439A3500E98210 /* WorldInfoCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA8E2B439A3500E98210 /* WorldInfoCommand.swift */; };
+		AB95CA912B439A4F00E98210 /* RestartWorldCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA902B439A4F00E98210 /* RestartWorldCommand.swift */; };
+		AB95CA932B439A8200E98210 /* ForceSwitchWorldCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA922B439A8200E98210 /* ForceSwitchWorldCommand.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -47,6 +54,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
+				AB95CA892B43980900E98210 /* botConfig.json in CopyFiles */,
 				AB94F3FB2B3F69A4003BA4CB /* PTERODACTYL_API_KEY in CopyFiles */,
 				AB94F3DD2B3E0D21003BA4CB /* BOT_TOKEN in CopyFiles */,
 			);
@@ -80,6 +88,13 @@
 		AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListResponse.swift; sourceTree = "<group>"; };
 		AB94F3FE2B3F6D55003BA4CB /* BotConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotConfig.swift; sourceTree = "<group>"; };
 		AB94F4002B4336E0003BA4CB /* Savable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Savable.swift; sourceTree = "<group>"; };
+		AB95CA862B43920900E98210 /* PterodactylAPIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PterodactylAPIError.swift; sourceTree = "<group>"; };
+		AB95CA882B43973000E98210 /* botConfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = botConfig.json; sourceTree = "<group>"; };
+		AB95CA8A2B4399FC00E98210 /* ListServersCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListServersCommand.swift; sourceTree = "<group>"; };
+		AB95CA8C2B439A2C00E98210 /* SwitchWorldCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchWorldCommand.swift; sourceTree = "<group>"; };
+		AB95CA8E2B439A3500E98210 /* WorldInfoCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldInfoCommand.swift; sourceTree = "<group>"; };
+		AB95CA902B439A4F00E98210 /* RestartWorldCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestartWorldCommand.swift; sourceTree = "<group>"; };
+		AB95CA922B439A8200E98210 /* ForceSwitchWorldCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForceSwitchWorldCommand.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +122,7 @@
 				AB94F3FA2B3F69A4003BA4CB /* PTERODACTYL_API_KEY */,
 				AB94F3E42B3E1D4D003BA4CB /* README.md */,
 				AB94F3DC2B3E0D21003BA4CB /* BOT_TOKEN */,
+				AB95CA882B43973000E98210 /* botConfig.json */,
 				AB94F3B72B3DB8C5003BA4CB /* FoundryWorldSwitcher */,
 				AB94F3B62B3DB8C5003BA4CB /* Products */,
 			);
@@ -150,6 +166,11 @@
 				AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */,
 				AB94F3E92B3F1DFF003BA4CB /* ShowPermissionsCommand.swift */,
 				AB94F3EF2B3F3536003BA4CB /* ListWorldsCommand.swift */,
+				AB95CA8A2B4399FC00E98210 /* ListServersCommand.swift */,
+				AB95CA8C2B439A2C00E98210 /* SwitchWorldCommand.swift */,
+				AB95CA8E2B439A3500E98210 /* WorldInfoCommand.swift */,
+				AB95CA902B439A4F00E98210 /* RestartWorldCommand.swift */,
+				AB95CA922B439A8200E98210 /* ForceSwitchWorldCommand.swift */,
 			);
 			path = Commands;
 			sourceTree = "<group>";
@@ -158,6 +179,7 @@
 			isa = PBXGroup;
 			children = (
 				AB94F3F12B3F35C2003BA4CB /* PterodactylAPI.swift */,
+				AB95CA862B43920900E98210 /* PterodactylAPIError.swift */,
 				AB94F3F42B3F35EF003BA4CB /* FoundryWorld.swift */,
 				AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */,
 			);
@@ -240,11 +262,17 @@
 				AB94F3FF2B3F6D55003BA4CB /* BotConfig.swift in Sources */,
 				AB94F3EE2B3F2412003BA4CB /* PermissionsHandler.swift in Sources */,
 				AB94F3F02B3F3536003BA4CB /* ListWorldsCommand.swift in Sources */,
+				AB95CA8D2B439A2C00E98210 /* SwitchWorldCommand.swift in Sources */,
 				AB94F3D62B3DE00D003BA4CB /* HelloCommand.swift in Sources */,
+				AB95CA8B2B4399FC00E98210 /* ListServersCommand.swift in Sources */,
 				AB94F3B92B3DB8C5003BA4CB /* main.swift in Sources */,
 				AB94F3FD2B3F6BD8003BA4CB /* FileListResponse.swift in Sources */,
 				AB94F4012B4336E0003BA4CB /* Savable.swift in Sources */,
+				AB95CA8F2B439A3500E98210 /* WorldInfoCommand.swift in Sources */,
 				AB94F3F72B3F63AE003BA4CB /* Secrets.swift in Sources */,
+				AB95CA912B439A4F00E98210 /* RestartWorldCommand.swift in Sources */,
+				AB95CA932B439A8200E98210 /* ForceSwitchWorldCommand.swift in Sources */,
+				AB95CA872B43920900E98210 /* PterodactylAPIError.swift in Sources */,
 				AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */,
 				AB94F3F22B3F35C2003BA4CB /* PterodactylAPI.swift in Sources */,
 				AB94F3DB2B3DE38F003BA4CB /* DiscordCommandError.swift in Sources */,

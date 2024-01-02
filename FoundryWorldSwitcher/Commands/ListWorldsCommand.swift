@@ -18,12 +18,15 @@ struct ListWorldsCommand: DiscordCommand {
         interaction: Interaction,
         client: DiscordClient
     ) async throws {
-        let worlds: [FoundryWorld] = try await pterodactylAPI.worlds()
+        let worlds: [FoundryWorld] = try await PterodactylAPI.shared.worlds()
         func formattedWorlds() -> String {
             if worlds.isEmpty {
                 return "*None*"
             }
-            return worlds.map { "* \($0)" }.joined(separator: "\n")
+            return worlds.map { world in
+                "* \(world.name) (`\(world.id)`)"
+            }
+            .joined(separator: "\n")
         }
         
         try await client.updateOriginalInteractionResponse(

@@ -8,7 +8,11 @@
 import Foundation
 
 struct FileListResponse: Decodable {
-    let data: [File]
+    let files: [File]
+    
+    enum CodingKeys: String, CodingKey {
+        case files = "data"
+    }
 }
 
 struct File: Decodable {

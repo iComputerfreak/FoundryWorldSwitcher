@@ -65,9 +65,6 @@ let cache = await DiscordCache(
     messageCachingPolicy: .normal
 )
 
-// TODO: Load API Key
-let pterodactylAPI = PterodactylAPI()
-
 let permissionsHandler = PermissionsHandler(cache: cache)
 
 /// Register commands
