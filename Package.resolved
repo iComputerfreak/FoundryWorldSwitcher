@@ -10,9 +10,9 @@
       }
     },
     {
-      "identity" : "discordbm#apache-2.0-1-ov-file",
+      "identity" : "discordbm",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/DiscordBM/DiscordBM#Apache-2.0-1-ov-file",
+      "location" : "https://github.com/DiscordBM/DiscordBM",
       "state" : {
         "revision" : "0dd40633046e498afd1a958b56037511e88c9849",
         "version" : "1.8.0"
