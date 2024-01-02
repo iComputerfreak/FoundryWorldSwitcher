@@ -75,7 +75,8 @@ let commands: [DiscordCommand] = [
     ListWorldsCommand(),
     WorldInfoCommand(),
     RestartWorldCommand(),
-    SwitchWorldCommand()
+    SwitchWorldCommand(),
+    HelpCommand()
 ]
 
 try await bot.client

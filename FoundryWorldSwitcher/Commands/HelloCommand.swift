@@ -20,26 +20,9 @@ struct HelloCommand: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        try await client.updateOriginalInteractionResponse(
+        try await client.respond(
             token: interaction.token,
-            payload: Payloads.EditWebhookMessage(
-                content: "Hello, I am listening!",
-                embeds: [Embed(
-                    title: "This is an embed",
-                    description: "Description body.",
-                    timestamp: Date(),
-                    color: .init(value: .random(in: 0 ..< (1 << 24) )),
-                    footer: .init(text: "Footer!"),
-                    author: .init(name: "Author"),
-                    fields: [
-                        .init(name: "field name!", value: "field value!")
-                    ]
-                )],
-                components: [[.button(.init(
-                    label: "Open DiscordBM!",
-                    url: "https://github.com/DiscordBM/DiscordBM"
-                ))]]
-            )
-        ).guardSuccess()
+            message: "Hello, I am listening!"
+        )
     }
 }
