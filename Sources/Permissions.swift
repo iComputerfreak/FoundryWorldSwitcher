@@ -7,7 +7,6 @@
 
 import Foundation
 import DiscordBM
-import JFUtils
 import Logging
 
 struct Permissions: Codable {
@@ -41,7 +40,7 @@ struct Permissions: Codable {
         .map { (key, _) in
             key
         }
-        .sorted(on: \.rawValue, by: <)
+        .sorted { $0.rawValue < $1.rawValue }
     }
     
     init() {

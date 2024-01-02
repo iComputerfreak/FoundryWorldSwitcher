@@ -15,7 +15,6 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/iComputerfreak/JFUtils", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/DiscordBM/DiscordBM", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://gitlab.com/mflint/HTML2Markdown", .upToNextMajor(from: "1.0.0")),
     ],
@@ -24,7 +23,7 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .executableTarget(
         	name: "FoundryWorldSwitcher",
-        	dependencies: ["DiscordBM", "JFUtils", "HTML2Markdown"]
+        	dependencies: ["DiscordBM", "HTML2Markdown"]
         ),
     ]
 )

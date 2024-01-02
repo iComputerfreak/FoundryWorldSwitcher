@@ -7,7 +7,6 @@
 
 import Foundation
 import Logging
-import JFUtils
 
 struct PterodactylAPI {
     static let shared: Self = {
