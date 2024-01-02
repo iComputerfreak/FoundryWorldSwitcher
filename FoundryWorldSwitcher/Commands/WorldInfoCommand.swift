@@ -11,6 +11,7 @@ import DiscordBM
 import HTML2Markdown
 
 struct WorldInfoCommand: DiscordCommand {
+    let logger: Logger = .init(label: String(describing: Self.self))
     let name = "worldinfo"
     let description = "Displays information about the current world or a given world ID."
     let permissionsLevel: BotPermissionLevel = .user

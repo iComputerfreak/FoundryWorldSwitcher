@@ -165,7 +165,6 @@
 		AB94F3D22B3DDC9E003BA4CB /* Commands */ = {
 			isa = PBXGroup;
 			children = (
-				AB94F3D02B3DDC25003BA4CB /* DiscordCommand.swift */,
 				AB94F3D52B3DE00D003BA4CB /* HelloCommand.swift */,
 				AB94F3E22B3E15BB003BA4CB /* MyPermissionsCommand.swift */,
 				AB94F3E52B3EE787003BA4CB /* SetPermissionLevel.swift */,
@@ -190,6 +189,7 @@
 				AB95CA962B44657A00E98210 /* ServerStartupParameters.swift */,
 				AB95CA982B4465CB00E98210 /* EggVariable.swift */,
 				AB95CAA92B4491F500E98210 /* FileDownloadLinkResponse.swift */,
+				AB94F3D02B3DDC25003BA4CB /* DiscordCommand.swift */,
 			);
 			path = "Pterodactyl API";
 			sourceTree = "<group>";

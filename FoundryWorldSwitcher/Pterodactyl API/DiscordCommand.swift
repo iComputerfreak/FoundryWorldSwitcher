@@ -28,10 +28,6 @@ extension DiscordCommand {
         nil
     }
     
-    var logger: Logger {
-        Logger(label: "\(String(describing: Self.self))")
-    }
-    
     func createApplicationCommand() -> Payloads.ApplicationCommandCreate {
         Payloads.ApplicationCommandCreate(
             name: self.name,

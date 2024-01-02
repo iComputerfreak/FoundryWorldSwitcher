@@ -10,6 +10,7 @@ import DiscordBM
 import Logging
 
 struct SetPermissionLevel: DiscordCommand {
+    let logger: Logger = .init(label: String(describing: Self.self))
     let name = "setpermissionlevel"
     let description = "Sets a permission level for a user or a role."
     let permissionsLevel: BotPermissionLevel = .admin
