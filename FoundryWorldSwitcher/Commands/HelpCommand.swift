@@ -24,9 +24,7 @@ struct HelpCommand: DiscordCommand {
             token: interaction.token,
             message: """
             You can use this bot to view information about the FoundryVTT server and manage the currently running world.
-            
-            You can use `/worldinfo` to show the currently running world and use `/switchworld <world_id>` to change the active world.
-            To get the world ID, use `/listworlds`.
+            You can use `/worldinfo` to show the currently running world and use `/switchworld <world_id>` to change the active world. To get the world ID, use `/listworlds`.
             """
         )
     }
