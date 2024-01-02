@@ -33,7 +33,7 @@ struct WorldInfoCommand: DiscordCommand {
         let isCurrentWorld: Bool?
         
         // MARK: Get the world
-        if let worldArg = try applicationCommand.option(named: options!.first!.name)?.value?.requireString() {
+        if let worldArg = try applicationCommand.option(named: "world_id")?.value?.requireString() {
             do {
                 world = try await PterodactylAPI.shared.world(for: worldArg)
             } catch PterodactylAPIError.invalidResponseCode(let code) {

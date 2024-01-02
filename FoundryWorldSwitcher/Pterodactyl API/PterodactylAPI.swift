@@ -52,15 +52,19 @@ struct PterodactylAPI {
     }
     
     func startServer() async throws {
-        
+        try await serverPowerAction(action: .start)
     }
     
     func stopServer() async throws {
-        
+        try await serverPowerAction(action: .stop)
     }
     
     func restartServer() async throws {
-        
+        try await serverPowerAction(action: .restart)
+    }
+    
+    func serverPowerAction(action: PterodactylServerPowerAction) async throws {
+        let _: Data = try await post(path: Paths.serverPowerAction(), body: ["signal": action.rawValue])
     }
     
     func changeWorld(to worldID: String) async throws {
@@ -132,6 +136,10 @@ struct PterodactylAPI {
         
         static func fileDownloadLink(serverID: String = BotConfig.shared.pterodactylServerID) -> String {
             "/servers/\(serverID)/files/download"
+        }
+        
+        static func serverPowerAction(serverID: String = BotConfig.shared.pterodactylServerID) -> String {
+            "/servers/\(serverID)/power"
         }
     }
     
