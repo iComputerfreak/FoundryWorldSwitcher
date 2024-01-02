@@ -9,6 +9,12 @@ import Foundation
 import DiscordBM
 
 enum Utils {
+    static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f
+    }()
+    
     static func mention(of snowflake: any SnowflakeProtocol) throws -> String {
         if snowflake is UserSnowflake {
             return DiscordUtils.mention(id: snowflake as! UserSnowflake)

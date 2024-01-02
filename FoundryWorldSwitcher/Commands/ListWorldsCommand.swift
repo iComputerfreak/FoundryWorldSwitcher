@@ -24,7 +24,7 @@ struct ListWorldsCommand: DiscordCommand {
                 return "*None*"
             }
             return worlds.map { world in
-                "* \(world.name) (`\(world.id)`)"
+                "* \(world.title) (`\(world.id)`)"
             }
             .joined(separator: "\n")
         }
@@ -32,7 +32,7 @@ struct ListWorldsCommand: DiscordCommand {
         try await client.updateOriginalInteractionResponse(
             token: interaction.token,
             payload: .init(content: """
-            **Worlds**
+            ## Worlds
             \(formattedWorlds())
             """)
         ).guardSuccess()

@@ -45,6 +45,8 @@
 		AB95CA8F2B439A3500E98210 /* WorldInfoCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA8E2B439A3500E98210 /* WorldInfoCommand.swift */; };
 		AB95CA912B439A4F00E98210 /* RestartWorldCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA902B439A4F00E98210 /* RestartWorldCommand.swift */; };
 		AB95CA932B439A8200E98210 /* ForceSwitchWorldCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA922B439A8200E98210 /* ForceSwitchWorldCommand.swift */; };
+		AB95CA972B44657A00E98210 /* ServerStartupParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA962B44657A00E98210 /* ServerStartupParameters.swift */; };
+		AB95CA992B4465CB00E98210 /* EggVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB95CA982B4465CB00E98210 /* EggVariable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -95,6 +97,8 @@
 		AB95CA8E2B439A3500E98210 /* WorldInfoCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldInfoCommand.swift; sourceTree = "<group>"; };
 		AB95CA902B439A4F00E98210 /* RestartWorldCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestartWorldCommand.swift; sourceTree = "<group>"; };
 		AB95CA922B439A8200E98210 /* ForceSwitchWorldCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForceSwitchWorldCommand.swift; sourceTree = "<group>"; };
+		AB95CA962B44657A00E98210 /* ServerStartupParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerStartupParameters.swift; sourceTree = "<group>"; };
+		AB95CA982B4465CB00E98210 /* EggVariable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EggVariable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -182,6 +186,8 @@
 				AB95CA862B43920900E98210 /* PterodactylAPIError.swift */,
 				AB94F3F42B3F35EF003BA4CB /* FoundryWorld.swift */,
 				AB94F3FC2B3F6BD8003BA4CB /* FileListResponse.swift */,
+				AB95CA962B44657A00E98210 /* ServerStartupParameters.swift */,
+				AB95CA982B4465CB00E98210 /* EggVariable.swift */,
 			);
 			path = "Pterodactyl API";
 			sourceTree = "<group>";
@@ -268,6 +274,7 @@
 				AB94F3B92B3DB8C5003BA4CB /* main.swift in Sources */,
 				AB94F3FD2B3F6BD8003BA4CB /* FileListResponse.swift in Sources */,
 				AB94F4012B4336E0003BA4CB /* Savable.swift in Sources */,
+				AB95CA972B44657A00E98210 /* ServerStartupParameters.swift in Sources */,
 				AB95CA8F2B439A3500E98210 /* WorldInfoCommand.swift in Sources */,
 				AB94F3F72B3F63AE003BA4CB /* Secrets.swift in Sources */,
 				AB95CA912B439A4F00E98210 /* RestartWorldCommand.swift in Sources */,
@@ -276,6 +283,7 @@
 				AB94F3CF2B3DB974003BA4CB /* EventHandler.swift in Sources */,
 				AB94F3F22B3F35C2003BA4CB /* PterodactylAPI.swift in Sources */,
 				AB94F3DB2B3DE38F003BA4CB /* DiscordCommandError.swift in Sources */,
+				AB95CA992B4465CB00E98210 /* EggVariable.swift in Sources */,
 				AB94F3E82B3EFAAF003BA4CB /* Utils.swift in Sources */,
 				AB94F3EA2B3F1DFF003BA4CB /* ShowPermissionsCommand.swift in Sources */,
 				AB94F3DF2B3E105E003BA4CB /* BotPermissionLevel.swift in Sources */,

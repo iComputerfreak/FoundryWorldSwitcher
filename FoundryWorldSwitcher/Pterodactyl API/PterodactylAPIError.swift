@@ -11,4 +11,5 @@ enum PterodactylAPIError: Error {
     case invalidURL(String)
     case invalidHTTPResponse(Data)
     case invalidResponseCode(Int)
+    case cannotDecode(Data, Any.Type)
 }

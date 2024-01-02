@@ -73,7 +73,8 @@ let commands: [DiscordCommand] = [
     MyPermissionsCommand(),
     SetPermissionLevel(),
     ShowPermissionsCommand(),
-    ListWorldsCommand()
+    ListWorldsCommand(),
+    WorldInfoCommand()
 ]
 
 try await bot.client

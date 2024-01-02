@@ -38,10 +38,10 @@ struct ShowPermissionsCommand: DiscordCommand {
         try await client.updateOriginalInteractionResponse(
             token: interaction.token,
             payload: .init(content: """
-            **Admin Permissions**
+            ## Admin Permissions
             \(formatMentions(admins))
             
-            **Dungeon Master Permissions**
+            ## Dungeon Master Permissions
             \(formatMentions(dms))
             """)
         ).guardSuccess()
