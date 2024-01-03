@@ -188,7 +188,6 @@ struct PterodactylAPI {
         guard let url = builder?.url else {
             throw PterodactylAPIError.invalidURL(builder?.string ?? BotConfig.shared.pterodactylHost)
         }
-        // TODO: Does not exist on Linux!
         var request = URLRequest(url: url)
         request.httpMethod = method
         // Encode the body as JSON
@@ -199,8 +198,7 @@ struct PterodactylAPI {
         request.setValue("Application/vnd.pterodactyl.vl+json", forHTTPHeaderField: "Accept")
         
         logger.info("Performing HTTP GET request to \(request.url?.absoluteString ?? "nil")")
-        // TODO: How to do on Linux?
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await self.dataRequest(request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw PterodactylAPIError.invalidHTTPResponse(data)
@@ -218,6 +216,24 @@ struct PterodactylAPI {
             return data as! Response
         } else {
             return try JSONDecoder().decode(Response.self, from: data)
+        }
+    }
+    
+    // Uses a continuation to make the old completion handler DataSession syntax async/await-ready on Linux
+    private func dataRequest(_ request: URLRequest) async throws -> (data: Data, response: URLResponse) {
+        try await withCheckedThrowingContinuation { continuation in
+            let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                if response == nil || data == nil {
+                    continuation.resume(throwing: PterodactylAPIError.emptyResponse)
+                    return
+                }
+                continuation.resume(returning: (data!, response!))
+            }
+            task.resume()
         }
     }
 }
