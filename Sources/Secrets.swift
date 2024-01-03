@@ -9,7 +9,7 @@ import Foundation
 import Logging
 
 struct Secrets: Savable {
-    static var dataPath: URL = Utils.baseURL.appending(path: "secrets.json")
+    static var dataPath: URL = Utils.baseURL.appendingPathComponent("secrets.json")
     static let shared = {
         do {
             return try Self.load()
@@ -48,7 +48,7 @@ struct Secrets: Savable {
     }
     
     static func loadSecret(baseURL: URL, fileName: String, environmentName: String) throws -> String {
-        if FileManager.default.fileExists(atPath: baseURL.appending(path: fileName).path()) {
+        if FileManager.default.fileExists(atPath: baseURL.appendingPathComponent(fileName).path) {
             do {
                 // Try getting the secret from a file
                 return try loadSecretFromFile(baseURL: baseURL, fileName: fileName)
@@ -67,7 +67,7 @@ struct Secrets: Savable {
     }
     
     static func loadSecretFromFile(baseURL: URL, fileName: String) throws -> String {
-        let contents = try String(contentsOf: baseURL.appending(path: fileName))
+        let contents = try String(contentsOf: baseURL.appendingPathComponent(fileName))
         guard !contents.isEmpty else {
             throw SecretsError.emptySecret
         }

@@ -5,6 +5,9 @@
 //  Created by Jonas Frey on 29.12.23.
 //
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import Foundation
 import Logging
 
@@ -185,6 +188,7 @@ struct PterodactylAPI {
         guard let url = builder?.url else {
             throw PterodactylAPIError.invalidURL(builder?.string ?? BotConfig.shared.pterodactylHost)
         }
+        // TODO: Does not exist on Linux!
         var request = URLRequest(url: url)
         request.httpMethod = method
         // Encode the body as JSON
@@ -195,6 +199,7 @@ struct PterodactylAPI {
         request.setValue("Application/vnd.pterodactyl.vl+json", forHTTPHeaderField: "Accept")
         
         logger.info("Performing HTTP GET request to \(request.url?.absoluteString ?? "nil")")
+        // TODO: How to do on Linux?
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {

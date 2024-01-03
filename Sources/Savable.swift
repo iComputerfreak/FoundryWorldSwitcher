@@ -25,7 +25,7 @@ protocol Savable: Codable {
 extension Savable {
     /// Decodes the data stored at the `dataPath` and returns the decoded object of type `Self`.
     static func load() throws -> Self {
-        guard FileManager.default.fileExists(atPath: dataPath.path()) else {
+        guard FileManager.default.fileExists(atPath: dataPath.path) else {
             // No data available on disk, so we can create a new file
             let newObject = Self()
             do {

@@ -92,7 +92,7 @@ struct Permissions: Codable {
     
     static let permissionsFile = Bundle.main.executableURL?
         .deletingLastPathComponent()
-        .appending(path: "permissions.json")
+        .appendingPathComponent("permissions.json")
     
     static func load() throws -> Self {
         guard let permissionsFile else {
