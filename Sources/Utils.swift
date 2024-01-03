@@ -39,6 +39,20 @@ enum Utils {
         return baseURL
     }
     
+    static var configURL: URL {
+        let configURL = baseURL.appendingPathComponent("config")
+        var isDirectory: ObjCBool = false
+        // If the config directory does not exist or it is not a directory, create a new one
+        if !FileManager.default.fileExists(atPath: configURL.path, isDirectory: &isDirectory) || !isDirectory.boolValue {
+            do {
+                try FileManager.default.createDirectory(at: configURL, withIntermediateDirectories: true)
+            } catch {
+                logger.error("Error creating config directory: \(error)")
+            }
+        }
+        return configURL
+    }
+    
     /// Tries to parse and return a `FoundryWorld` from the given command's arguments.
     /// Returns `nil`, if no argument is present or the argument's value is empty
     static func parseWorld(from command: Interaction.ApplicationCommand, optionName: String = "world_id") async throws -> FoundryWorld? {

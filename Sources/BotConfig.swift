@@ -10,7 +10,7 @@ import Logging
 
 struct BotConfig: Savable {
     static let logger = Logger(label: "BotConfig")
-    static let dataPath = Utils.baseURL.appendingPathComponent("botConfig.json")
+    static let dataPath = Utils.configURL.appendingPathComponent("botConfig.json")
     static let shared: Self = {
         do {
             return try Self.load()

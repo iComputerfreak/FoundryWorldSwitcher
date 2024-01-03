@@ -9,7 +9,7 @@ import Foundation
 import Logging
 
 struct Secrets: Savable {
-    static var dataPath: URL = Utils.baseURL.appendingPathComponent("secrets.json")
+    static var dataPath: URL = Utils.configURL.appendingPathComponent("secrets.json")
     static let shared = {
         do {
             return try Self.load()
@@ -37,13 +37,9 @@ struct Secrets: Savable {
     }
     
     static func load() throws -> Self {
-        // Fall back to the current working directory
-        guard let baseURL = Bundle.main.executableURL?.deletingLastPathComponent() else {
-            throw SecretsError.cannotCreateFilePath
-        }
         return Self(
-            botToken: try loadSecret(baseURL: baseURL, fileName: "BOT_TOKEN", environmentName: "FOUNDRY_BOT_TOKEN"),
-            pterodactylAPIKey: try loadSecret(baseURL: baseURL, fileName: "PTERODACTYL_API_KEY", environmentName: "FOUNDRY_PTERODACTYL_TOKEN")
+            botToken: try loadSecret(baseURL: Utils.configURL, fileName: "BOT_TOKEN", environmentName: "FOUNDRY_BOT_TOKEN"),
+            pterodactylAPIKey: try loadSecret(baseURL: Utils.configURL, fileName: "PTERODACTYL_API_KEY", environmentName: "FOUNDRY_PTERODACTYL_TOKEN")
         )
     }
     

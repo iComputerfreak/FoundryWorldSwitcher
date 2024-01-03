@@ -91,14 +91,9 @@ struct Permissions: Codable {
         }
     }()
     
-    static let permissionsFile = Bundle.main.executableURL?
-        .deletingLastPathComponent()
-        .appendingPathComponent("permissions.json")
+    static let permissionsFile = Utils.configURL.appendingPathComponent("permissions.json")
     
     static func load() throws -> Self {
-        guard let permissionsFile else {
-            throw DiscordBotError.errorReadingPermissions
-        }
         // If there is no config file, we create a new one
         guard FileManager.default.fileExists(atPath: permissionsFile.path) else {
             let newPermissions = Self()
@@ -110,13 +105,9 @@ struct Permissions: Codable {
     }
     
     func save() {
-        guard let permissionsFile = Self.permissionsFile else {
-            Self.logger.error("Cannot create path for permissions file. Unable to save permissions.")
-            return
-        }
         do {
             let data = try JSONEncoder().encode(self)
-            try data.write(to: permissionsFile)
+            try data.write(to: Self.permissionsFile)
         } catch {
             Self.logger.error("Error saving permissions: \(error)")
         }
