@@ -9,6 +9,7 @@ import Foundation
 import DiscordBM
 import Logging
 
+// TODO: Make Savable
 struct Permissions: Codable {
     private static let logger = Logger(label: "Permissions")
     private var userMap: [UserSnowflake: BotPermissionLevel]
@@ -97,6 +98,12 @@ struct Permissions: Codable {
     static func load() throws -> Self {
         guard let permissionsFile else {
             throw DiscordBotError.errorReadingPermissions
+        }
+        // If there is no config file, we create a new one
+        guard FileManager.default.fileExists(atPath: permissionsFile.path) else {
+            let newPermissions = Self()
+            newPermissions.save()
+            return newPermissions
         }
         let data = try Data(contentsOf: permissionsFile)
         return try JSONDecoder().decode(Self.self, from: data)
