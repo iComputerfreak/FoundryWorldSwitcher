@@ -38,13 +38,17 @@ struct PterodactylAPI {
         self.init(baseURL: url)
     }
     
-    func worlds() async throws -> [FoundryWorld] {
+    func worldIDs() async throws -> [String] {
         let worldDirectories = try await files(in: "/data/Data/worlds/")
             .filter { !$0.isFile }
+        return worldDirectories.map(\.name)
+    }
+    
+    func worlds() async throws -> [FoundryWorld] {
         // We now have to read the contents of the worlds' world.json file and parse it as JSON
         var worlds: [FoundryWorld] = []
-        for worldDir in worldDirectories {
-            worlds.append(try await world(for: worldDir.name))
+        for worldID in try await worldIDs() {
+            worlds.append(try await world(for: worldID))
         }
         return worlds
     }

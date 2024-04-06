@@ -61,15 +61,19 @@ enum Utils {
             return nil
         }
         let worldID = try worldArg.requireString()
+        
+        let allWorlds = try await PterodactylAPI.shared.worldIDs()
+        print(allWorlds)
+        guard allWorlds.contains(worldID) else {
+            throw DiscordCommandError.worldDoesNotExist(worldID: worldID)
+        }
+        
         do {
             return try await PterodactylAPI.shared.world(for: worldID)
         } catch PterodactylAPIError.invalidResponseCode(let code) {
             // If we get a 500 error, maybe the world ID does not exist.
-            guard code == 500 else {
-                throw PterodactylAPIError.invalidResponseCode(code)
-            }
-            Self.logger.error("Error getting world information for world '\(worldArg)'. HTTP Request returned code \(code)")
-            throw PterodactylAPIError.cannotFindWorld(worldID)
+            Self.logger.error("Error getting world information for world `\(worldArg)`. HTTP Request returned code \(code)")
+            throw PterodactylAPIError.invalidResponseCode(code)
         }
     }
 }

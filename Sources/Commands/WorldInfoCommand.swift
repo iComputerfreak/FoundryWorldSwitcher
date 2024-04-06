@@ -35,7 +35,7 @@ struct WorldInfoCommand: DiscordCommand {
         // MARK: Get the world
         do {
             world = try await Utils.parseWorld(from: applicationCommand)
-        } catch PterodactylAPIError.cannotFindWorld(let worldID) {
+        } catch DiscordCommandError.worldDoesNotExist(worldID: let worldID) {
             try await client.respond(
                 token: interaction.token,
                 message: "There was an error trying to get information about the world. Are you sure a world with the ID `\(worldID)` exists?"
@@ -57,7 +57,8 @@ struct WorldInfoCommand: DiscordCommand {
         }
         
         guard let world else {
-            throw DiscordBotError.unexpected("Error getting a valid world.")
+            // We really should not be here. The do-statement above either assigns a valid world or throws an error.
+            fatalError("Error getting a valid world.")
         }
         
         // MARK: Determine the message color
@@ -74,7 +75,7 @@ struct WorldInfoCommand: DiscordCommand {
             do {
                 description = try HTMLParser().parse(html: descriptionHTML).toMarkdown()
             } catch {
-                logger.warning("Error parsing HTML description of world '\(world.id)'. Using raw HTML.")
+                logger.warning("Error parsing HTML description of world `\(world.id)`. Using raw HTML.")
                 // As a fallback, use the raw HTML
                 description = descriptionHTML
             }
