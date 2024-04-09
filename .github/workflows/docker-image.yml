@@ -26,5 +26,5 @@ jobs:
 
     - name: Push the Docker image to Docker Hub
       run: |
-        docker push icomputerfreak/foundry-world-switcher:${{ steps.get_tag.outputs.tag }}
-        docker push icomputerfreak/foundry-world-switcher:latest
+        docker push foundry-world-switcher:${{ steps.get_tag.outputs.tag }}
+        docker push foundry-world-switcher:latest
