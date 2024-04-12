@@ -18,6 +18,7 @@ actor BookingsService {
     func createBooking(at date: Date, author: UserSnowflake, worldID: String, roleSnowflake: RoleSnowflake?) {
         let booking = Booking(date: date, author: author, worldID: worldID, roleSnowflake: roleSnowflake)
         bookings.append(booking)
+        saveBookings()
     }
     
     func deleteBooking(_ booking: Booking) {
