@@ -22,6 +22,7 @@ struct HelpCommand: DiscordCommand {
     ) async throws {
         try await client.respond(
             token: interaction.token,
+            // TODO: Update
             message: """
             You can use this bot to view information about the FoundryVTT server and manage the currently running world.
             You can use `/worldinfo` to show the currently running world and use `/switchworld <world_id>` to change the active world. To get the world ID, use `/listworlds`.
