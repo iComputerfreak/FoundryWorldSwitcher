@@ -14,6 +14,7 @@ actor BookingsService {
     static var reservationBookingsDataPath: URL = Utils.baseURL.appending(path: "reservation_bookings.json")
     static var eventBookingsDataPath: URL = Utils.baseURL.appending(path: "event_bookings.json")
     
+    let scheduler: Scheduler
     private(set) var reservationBookings: [ReservationBooking] = loadBookings(from: reservationBookingsDataPath)
     private(set) var eventBookings: [EventBooking] = loadBookings(from: eventBookingsDataPath)
     
@@ -28,21 +29,25 @@ actor BookingsService {
         }
     }
     
+    init(scheduler: Scheduler) {
+        self.scheduler = scheduler
+    }
+    
     /// Adds the given booking to the store
-    func createBooking(_ booking: any Booking) {
+    func createBooking(_ booking: any Booking) async {
         bookings.append(booking)
         saveBookings()
+        for event in booking.associatedEvents {
+            await scheduler.schedule(event)
+        }
     }
     
     /// Deletes the given booking from the store
-    func deleteBooking(_ booking: any Booking) {
-        deleteBooking(id: booking.id)
-    }
-    
-    /// Deletes the booking with the given ID from the store
-    func deleteBooking(id: UUID) {
-        bookings.removeAll(where: { $0.id == id })
-        saveBookings()
+    func deleteBooking(_ booking: any Booking) async {
+        bookings.removeAll(where: { $0.id == booking.id })
+        for event in booking.associatedEvents {
+            await scheduler.unqueue(event)
+        }
     }
 }
 

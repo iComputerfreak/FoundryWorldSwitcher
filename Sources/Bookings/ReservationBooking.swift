@@ -13,6 +13,7 @@ struct ReservationBooking: Booking {
     var date: Date
     var author: UserSnowflake
     var worldID: String
+    var associatedEvents: [SchedulerEvent] = []
     
     /// Creates a new booking without any associated event or player role information
     init(date: Date, author: UserSnowflake, worldID: String) {
@@ -20,5 +21,15 @@ struct ReservationBooking: Booking {
         self.date = date
         self.author = author
         self.worldID = worldID
+        self.associatedEvents = [
+            SchedulerEvent(
+                dueDate: bookingIntervalStartDate,
+                eventType: .lockWorld(worldID: worldID)
+            ),
+            SchedulerEvent(
+                dueDate: bookingIntervalEndDate,
+                eventType: .unlockWorld(worldID: worldID)
+            )
+        ]
     }
 }

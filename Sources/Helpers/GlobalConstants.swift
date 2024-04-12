@@ -18,4 +18,10 @@ enum GlobalConstants {
     static let bookingIntervalStartTime = 6
     /// The time at which the booking ends in hours from midnight on the following day
     static let bookingIntervalEndTime = 5
+    /// The time how much in advance the bot will remind players about a session
+    static let sessionReminderTime = 1 * secondsPerDay
+    /// Whether the bot should notify players at the start of the session
+    static let shouldNotifyAtSessionStart = true
+    /// The time how much in advance the bot will remind players that the session is about to start
+    static let sessionStartReminderTime: TimeInterval = 5 * secondsPerMinute
 }

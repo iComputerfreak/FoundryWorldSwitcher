@@ -24,23 +24,7 @@ struct BookingsCommands: DiscordCommand {
         try await client.respond(
             token: interaction.token,
             payload: .init(
-                content: formatBookings(//bookings)
-                    [
-                        ReservationBooking(
-                            date: .now.addingTimeInterval(1 * GlobalConstants.secondsPerDay + 3 * GlobalConstants.secondsPerHour),
-                            author: .init("140498824576761856"),
-                            worldID: "twbtw"
-                        ),
-                        EventBooking(
-                            date: .now.addingTimeInterval(2 * GlobalConstants.secondsPerDay),
-                            author: .init("140498824576761856"),
-                            worldID: "twbtw",
-                            campaignRoleSnowflake: .init("933830267578241084"),
-                            location: .init("1190025788486066236"),
-                            topic: "Session 13"
-                        ),
-                    ]
-                ),
+                content: formatBookings(bookings),
                 allowed_mentions: .init() // Don't allow mentions on this message
             )
         )

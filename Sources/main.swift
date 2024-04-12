@@ -86,7 +86,7 @@ try await bot.client
 let scheduler = Scheduler()
 
 /// Register services
-let bookingsService = BookingsService()
+let bookingsService = BookingsService(scheduler: scheduler)
 
 // MARK: - Start the bot
 /// Handle each event in the `bot.events` async stream

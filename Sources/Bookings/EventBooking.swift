@@ -19,6 +19,7 @@ struct EventBooking: Booking {
     var location: ChannelSnowflake
     /// The topic of the booking (e.g., "Session 13")
     var topic: String
+    var associatedEvents: [SchedulerEvent] = []
     
     /// Creates a new booking with associated event information and a player role to notify before the event starts
     init(
@@ -36,5 +37,27 @@ struct EventBooking: Booking {
         self.campaignRoleSnowflake = campaignRoleSnowflake
         self.location = location
         self.topic = topic
+        self.associatedEvents = [
+            SchedulerEvent(
+                dueDate: bookingIntervalStartDate,
+                eventType: .lockWorld(worldID: worldID)
+            ),
+            SchedulerEvent(
+                dueDate: bookingIntervalEndDate,
+                eventType: .unlockWorld(worldID: worldID)
+            ),
+            SchedulerEvent(
+                dueDate: date.addingTimeInterval(-GlobalConstants.sessionReminderTime),
+                eventType: .sendSessionReminder(roleSnowflake: campaignRoleSnowflake, sessionDate: date)
+            ),
+        ]
+        if GlobalConstants.shouldNotifyAtSessionStart {
+            associatedEvents.append(
+                SchedulerEvent(
+                    dueDate: date.addingTimeInterval(-GlobalConstants.sessionStartReminderTime),
+                    eventType: .sendSessionStartsReminder(roleSnowflake: campaignRoleSnowflake, sessionDate: date)
+                )
+            )
+        }
     }
 }

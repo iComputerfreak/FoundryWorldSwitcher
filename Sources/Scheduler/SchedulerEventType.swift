@@ -13,4 +13,5 @@ enum SchedulerEventType: Codable, Hashable {
     case lockWorld(worldID: String)
     case unlockWorld(worldID: String)
     case sendSessionReminder(roleSnowflake: RoleSnowflake, sessionDate: Date)
+    case sendSessionStartsReminder(roleSnowflake: RoleSnowflake, sessionDate: Date)
 }

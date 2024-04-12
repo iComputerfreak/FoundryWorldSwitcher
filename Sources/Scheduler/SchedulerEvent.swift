@@ -34,6 +34,9 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             
         case let .sendSessionReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate):
             try await handleSendSessionReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate)
+            
+        case let .sendSessionStartsReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate):
+            try await handleSendSessionStartsReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate)
         }
     }
 }
@@ -48,6 +51,7 @@ extension SchedulerEvent {
 // MARK: - Lock World
 extension SchedulerEvent {
     private func handleLockWorld(worldID: String) async throws {
+        Self.logger.debug("Locking world '\(worldID)'")
         // Lock the world with the given ID
     }
 }
@@ -55,6 +59,7 @@ extension SchedulerEvent {
 // MARK: - Unlock World
 extension SchedulerEvent {
     private func handleUnlockWorld(worldID: String) async throws {
+        Self.logger.debug("Unlocking world '\(worldID)'")
         // Unlock the world with the given ID
     }
 }
@@ -62,6 +67,15 @@ extension SchedulerEvent {
 // MARK: - Send Session Reminder
 extension SchedulerEvent {
     private func handleSendSessionReminder(roleSnowflake: RoleSnowflake, sessionDate: Date) async throws {
+        Self.logger.debug("Sending session reminder for session at \(sessionDate)")
+        // Send a reminder to the role with the given snowflake
+    }
+}
+
+// MARK: - Send Session Starts Reminder
+extension SchedulerEvent {
+    private func handleSendSessionStartsReminder(roleSnowflake: RoleSnowflake, sessionDate: Date) async throws {
+        Self.logger.debug("Sending session starts reminder for session at \(sessionDate)")
         // Send a reminder to the role with the given snowflake
     }
 }

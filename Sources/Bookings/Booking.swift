@@ -17,6 +17,8 @@ protocol Booking: Codable, Hashable, Identifiable {
     var author: UserSnowflake { get set }
     /// The ID of the world on the Pterodactyl server that is being booked
     var worldID: String { get set }
+    /// The scheduler events associated with this booking
+    var associatedEvents: [SchedulerEvent] { get }
 }
 
 // MARK: - Booking Interval
