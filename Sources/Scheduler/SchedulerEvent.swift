@@ -8,9 +8,16 @@
 import DiscordBM
 import Foundation
 
-struct SchedulerEvent: Codable {
+struct SchedulerEvent: Codable, Hashable, Identifiable {
+    let id: UUID
     var dueDate: Date
     var eventType: SchedulerEventType
+    
+    init(dueDate: Date, eventType: SchedulerEventType) {
+        self.id = UUID()
+        self.dueDate = dueDate
+        self.eventType = eventType
+    }
     
     func execute() async throws {
         switch eventType {
