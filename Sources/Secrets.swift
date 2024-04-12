@@ -8,6 +8,12 @@
 import Foundation
 import Logging
 
+enum SecretsError: Error {
+    case cannotCreateFilePath
+    case emptySecret
+    case noSecretFound(baseURL: URL, fileName: String, environmentName: String)
+}
+
 struct Secrets: Savable {
     static var dataPath: URL = Utils.configURL.appendingPathComponent("secrets.json")
     static let shared = {
