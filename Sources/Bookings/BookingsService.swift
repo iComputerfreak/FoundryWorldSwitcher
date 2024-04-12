@@ -21,6 +21,46 @@ actor BookingsService {
         saveBookings()
     }
     
+    func createBooking(
+        at date: Date,
+        author: UserSnowflake,
+        worldID: String,
+        roleSnowflake: RoleSnowflake,
+        location: ChannelSnowflake,
+        topic: String
+    ) {
+        let booking = Booking(
+            date: date,
+            author: author,
+            worldID: worldID,
+            campaignRoleSnowflake: roleSnowflake,
+            location: location,
+            topic: topic
+        )
+        bookings.append(booking)
+        saveBookings()
+    }
+    
+    private func createBooking(
+        at date: Date,
+        author: UserSnowflake,
+        worldID: String,
+        roleSnowflake: RoleSnowflake,
+        location: ChannelSnowflake,
+        topic: String
+    ) {
+        let booking = Booking(
+            date: date,
+            author: author,
+            worldID: worldID,
+            campaignRoleSnowflake: roleSnowflake,
+            location: location,
+            topic: topic
+        )
+        bookings.append(booking)
+        saveBookings()
+    }
+    
     func deleteBooking(_ booking: Booking) {
         deleteBooking(id: booking.id)
     }

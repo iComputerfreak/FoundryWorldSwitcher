@@ -78,13 +78,16 @@ let commands: [DiscordCommand] = [
     SwitchWorldCommand(),
     HelpCommand()
 ]
-
-let scheduler = Scheduler()
-
 try await bot.client
     .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )
     .guardSuccess() // Throw an error if not successful
 
+let scheduler = Scheduler()
+
+/// Register services
+let bookingsService = BookingsService()
+
+// MARK: - Start the bot
 /// Handle each event in the `bot.events` async stream
 /// This stream will never end, therefore preventing your executable from exiting
 for await event in await bot.events {

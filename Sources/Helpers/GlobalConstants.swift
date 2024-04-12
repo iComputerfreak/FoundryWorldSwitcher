@@ -11,4 +11,7 @@ enum GlobalConstants {
     static let secondsPerDay: TimeInterval = 24 * secondsPerHour
     static let secondsPerHour: TimeInterval = 60 * secondsPerMinute
     static let secondsPerMinute: TimeInterval = 60
+    
+    // TODO: Move to config
+    static let sessionLength: TimeInterval = 4 * secondsPerHour
 }
