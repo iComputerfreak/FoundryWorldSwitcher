@@ -11,11 +11,11 @@ import Foundation
 struct Booking: Codable, Hashable, Identifiable {
     let id: UUID
     var date: Date
-    var author: String
+    var author: UserSnowflake
     var worldID: String
     var roleSnowflake: RoleSnowflake?
     
-    init(date: Date, author: String, worldID: String, roleSnowflake: RoleSnowflake? = nil) {
+    init(date: Date, author: UserSnowflake, worldID: String, roleSnowflake: RoleSnowflake? = nil) {
         self.id = UUID()
         self.date = date
         self.author = author

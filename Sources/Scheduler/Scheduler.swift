@@ -56,27 +56,19 @@ actor Scheduler {
 
 // MARK: - Saving
 extension Scheduler {
-    func trySaveEvents() throws {
-        let data = try JSONEncoder().encode(events)
-        try data.write(to: Self.dataPath)
-    }
-    
     func saveEvents() {
         do {
-            try trySaveEvents()
+            let data = try JSONEncoder().encode(events)
+            try data.write(to: Self.dataPath)
         } catch {
             Self.logger.error("Failed to save events: \(error)")
         }
     }
     
-    static func tryLoadEvents() throws -> [SchedulerEvent] {
-        let data = try Data(contentsOf: dataPath)
-        return try JSONDecoder().decode([SchedulerEvent].self, from: data)
-    }
-    
     static func loadEvents() -> [SchedulerEvent] {
         do {
-            return try tryLoadEvents()
+            let data = try Data(contentsOf: dataPath)
+            return try JSONDecoder().decode([SchedulerEvent].self, from: data)
         } catch {
             logger.error("Failed to load events: \(error)")
             return []
