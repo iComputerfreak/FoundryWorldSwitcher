@@ -7,8 +7,10 @@
 
 import DiscordBM
 import Foundation
+import Logging
 
 struct SchedulerEvent: Codable, Hashable, Identifiable {
+    private static let logger: Logger = .init(label: String(describing: Self.self))
     let id: UUID
     var dueDate: Date
     var eventType: SchedulerEventType
@@ -21,15 +23,25 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
     
     func execute() async throws {
         switch eventType {
+        case let .consoleMessage(message):
+            try await handleConsoleMessage(message)
+            
         case let .lockWorld(worldID: worldID):
-            return
+            try await handleLockWorld(worldID: worldID)
             
         case let .unlockWorld(worldID: worldID):
-            return
+            try await handleUnlockWorld(worldID: worldID)
             
         case let .sendSessionReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate):
-            return
+            try await handleSendSessionReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate)
         }
+    }
+}
+
+// MARK: - Console Message
+extension SchedulerEvent {
+    private func handleConsoleMessage(_ message: String) async throws {
+        Self.logger.info("\(message)")
     }
 }
 

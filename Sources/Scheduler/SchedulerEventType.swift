@@ -9,6 +9,7 @@ import DiscordBM
 import Foundation
 
 enum SchedulerEventType: Codable, Hashable {
+    case consoleMessage(_ message: String)
     case lockWorld(worldID: String)
     case unlockWorld(worldID: String)
     case sendSessionReminder(roleSnowflake: RoleSnowflake, sessionDate: Date)
