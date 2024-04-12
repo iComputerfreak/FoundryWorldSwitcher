@@ -35,12 +35,9 @@ extension DiscordClient {
     }
     
     /// Creates a new server event for the given booking in the given guild
-    func createServerEvent(for booking: Booking, in guild: GuildSnowflake) async throws {
+    func createServerEvent(for booking: EventBooking, in guild: GuildSnowflake) async throws {
         let eventTitle: String = try await {
-            if
-                let role = booking.campaignRoleSnowflake,
-                let roleName = try await roleName(of: role, in: guild)
-            {
+            if let roleName = try await roleName(of: booking.campaignRoleSnowflake, in: guild) {
                 return "\(roleName) - \(booking.topic)"
             } else {
                 return booking.topic

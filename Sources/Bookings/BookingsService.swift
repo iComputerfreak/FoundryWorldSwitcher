@@ -11,61 +11,36 @@ import Logging
 
 actor BookingsService {
     static var logger: Logger = .init(label: String(describing: BookingsService.self))
-    static var dataPath: URL = Utils.baseURL.appending(path: "bookings.json")
+    static var reservationBookingsDataPath: URL = Utils.baseURL.appending(path: "reservation_bookings.json")
+    static var eventBookingsDataPath: URL = Utils.baseURL.appending(path: "event_bookings.json")
     
-    private(set) var bookings: [Booking] = loadBookings()
+    private(set) var reservationBookings: [ReservationBooking] = loadBookings(from: reservationBookingsDataPath)
+    private(set) var eventBookings: [EventBooking] = loadBookings(from: eventBookingsDataPath)
     
-    func createBooking(at date: Date, author: UserSnowflake, worldID: String, roleSnowflake: RoleSnowflake?) {
-        let booking = Booking(date: date, author: author, worldID: worldID, roleSnowflake: roleSnowflake)
+    /// All bookings
+    private(set) var bookings: [any Booking] {
+        get {
+            reservationBookings + eventBookings
+        }
+        set {
+            reservationBookings = newValue.compactMap { $0 as? ReservationBooking }
+            eventBookings = newValue.compactMap { $0 as? EventBooking }
+        }
+    }
+    
+    /// Adds the given booking to the store
+    func createBooking(_ booking: any Booking) {
         bookings.append(booking)
         saveBookings()
     }
     
-    func createBooking(
-        at date: Date,
-        author: UserSnowflake,
-        worldID: String,
-        roleSnowflake: RoleSnowflake,
-        location: ChannelSnowflake,
-        topic: String
-    ) {
-        let booking = Booking(
-            date: date,
-            author: author,
-            worldID: worldID,
-            campaignRoleSnowflake: roleSnowflake,
-            location: location,
-            topic: topic
-        )
-        bookings.append(booking)
-        saveBookings()
-    }
-    
-    private func createBooking(
-        at date: Date,
-        author: UserSnowflake,
-        worldID: String,
-        roleSnowflake: RoleSnowflake,
-        location: ChannelSnowflake,
-        topic: String
-    ) {
-        let booking = Booking(
-            date: date,
-            author: author,
-            worldID: worldID,
-            campaignRoleSnowflake: roleSnowflake,
-            location: location,
-            topic: topic
-        )
-        bookings.append(booking)
-        saveBookings()
-    }
-    
-    func deleteBooking(_ booking: Booking) {
+    /// Deletes the given booking from the store
+    func deleteBooking(_ booking: any Booking) {
         deleteBooking(id: booking.id)
     }
     
-    func deleteBooking(id: Booking.ID) {
+    /// Deletes the booking with the given ID from the store
+    func deleteBooking(id: UUID) {
         bookings.removeAll(where: { $0.id == id })
         saveBookings()
     }
@@ -75,17 +50,22 @@ actor BookingsService {
 extension BookingsService {
     func saveBookings() {
         do {
-            let data = try JSONEncoder().encode(self.bookings)
-            try data.write(to: Self.dataPath)
+            try save(self.reservationBookings, at: Self.reservationBookingsDataPath)
+            try save(self.eventBookings, at: Self.eventBookingsDataPath)
         } catch {
             Self.logger.error("Failed to save bookings: \(error)")
         }
     }
     
-    private static func loadBookings() -> [Booking] {
+    private func save<B: Booking>(_ bookings: [B], at url: URL) throws {
+        let data = try JSONEncoder().encode(bookings)
+        try data.write(to: url)
+    }
+    
+    private static func loadBookings<B: Booking>(from url: URL) -> [B] {
         do {
-            let data = try Data(contentsOf: Self.dataPath)
-            return try JSONDecoder().decode([Booking].self, from: data)
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode([B].self, from: data)
         } catch {
             Self.logger.error("Failed to load bookings: \(error)")
             return []

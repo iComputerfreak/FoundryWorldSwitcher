@@ -101,7 +101,7 @@ struct SetPermissionLevel: DiscordCommand {
                 newPermissionLevel: newLevel
             )
         } else {
-            throw DiscordCommandError.missingArgument(argumentName: "user/role")
+            throw DiscordCommandError.missingSubcommand
         }
     }
     
@@ -111,7 +111,7 @@ struct SetPermissionLevel: DiscordCommand {
         user: UserSnowflake,
         newPermissionLevel: BotPermissionLevel
     ) async throws {
-        let mention = try Utils.mention(of: user)
+        let mention = DiscordUtils.mention(id: user)
         try await client.respond(
             token: interaction.token,
             message: "User \(mention) now has permission level `\(newPermissionLevel.description)`."
@@ -124,7 +124,7 @@ struct SetPermissionLevel: DiscordCommand {
         role: RoleSnowflake,
         newPermissionLevel: BotPermissionLevel
     ) async throws {
-        let mention = try Utils.mention(of: role)
+        let mention = DiscordUtils.mention(id: role)
         try await client.respond(
             token: interaction.token,
             message: "Role \(mention) now has `\(newPermissionLevel.description)` permissions."

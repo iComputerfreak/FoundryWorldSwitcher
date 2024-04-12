@@ -76,7 +76,8 @@ let commands: [DiscordCommand] = [
     WorldInfoCommand(),
     RestartWorldCommand(),
     SwitchWorldCommand(),
-    HelpCommand()
+    HelpCommand(),
+    BookingsCommands()
 ]
 try await bot.client
     .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )

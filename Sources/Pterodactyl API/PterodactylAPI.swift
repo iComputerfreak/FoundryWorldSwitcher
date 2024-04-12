@@ -11,6 +11,8 @@ import FoundationNetworking
 import Foundation
 import Logging
 
+// TODO: Cache world info (e.g. names)
+
 struct PterodactylAPI {
     static let shared: Self = {
         do {
