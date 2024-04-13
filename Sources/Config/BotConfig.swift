@@ -14,6 +14,8 @@ class BotConfig: Savable {
     static let dataPath = Utils.dataURL.appendingPathComponent("botConfig.json")
     static let shared: BotConfig = .init()
     
+    // TODO: For some reason, we are not reading the file from disk correctly, the values are all default
+    
     /// The hostname of the Pterodactyl panel
     var pterodactylHost: String {
         didSet { save() }

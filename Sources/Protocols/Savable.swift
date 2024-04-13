@@ -44,7 +44,9 @@ extension Savable {
     
     /// Encodes this object into JSON data and writes it to the `dataPath` and throws any errors that occur during saving.
     func trySave() throws {
-        let data = try JSONEncoder().encode(self)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try encoder.encode(self)
         try data.write(to: Self.dataPath)
     }
     
