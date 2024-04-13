@@ -15,13 +15,13 @@ enum SecretsError: Error {
 }
 
 struct Secrets: Savable {
-    static var dataPath: URL = Utils.configURL.appendingPathComponent("secrets.json")
+    static var dataPath: URL = Utils.dataURL.appendingPathComponent("secrets.json")
     static let shared = {
         do {
             return try Self.load()
         } catch {
             logger.critical("Unable to load secrets! \(error)")
-            fatalError("The bot is missing at least one of the two required secrets. Make sure that the Discord bot token and Pterodactyl API token are both present as either environment variables or in the config directory \(Utils.configURL.path())")
+            fatalError("The bot is missing at least one of the two required secrets. Make sure that the Discord bot token and Pterodactyl API token are both present as either environment variables or in the config directory \(Utils.dataURL.path())")
         }
     }()
     static let logger = Logger(label: "Secrets")
@@ -44,8 +44,8 @@ struct Secrets: Savable {
     
     static func load() throws -> Self {
         return Self(
-            botToken: try loadSecret(baseURL: Utils.configURL, fileName: "BOT_TOKEN", environmentName: "FOUNDRY_BOT_TOKEN"),
-            pterodactylAPIKey: try loadSecret(baseURL: Utils.configURL, fileName: "PTERODACTYL_API_KEY", environmentName: "FOUNDRY_PTERODACTYL_TOKEN")
+            botToken: try loadSecret(baseURL: Utils.dataURL, fileName: "BOT_TOKEN", environmentName: "FOUNDRY_BOT_TOKEN"),
+            pterodactylAPIKey: try loadSecret(baseURL: Utils.dataURL, fileName: "PTERODACTYL_API_KEY", environmentName: "FOUNDRY_PTERODACTYL_TOKEN")
         )
     }
     

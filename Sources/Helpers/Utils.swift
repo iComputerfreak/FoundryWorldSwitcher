@@ -27,7 +27,7 @@ enum Utils {
         return baseURL
     }
     
-    static var configURL: URL {
+    static var dataURL: URL {
         let configURL = baseURL.appendingPathComponent("config")
         var isDirectory: ObjCBool = false
         // If the config directory does not exist or it is not a directory, create a new one

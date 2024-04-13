@@ -5,34 +5,93 @@
 //  Created by Jonas Frey on 29.12.23.
 //
 
+import DiscordBM
 import Foundation
 import Logging
 
-struct BotConfig: Savable {
+class BotConfig: Savable {
     static let logger = Logger(label: "BotConfig")
-    static let dataPath = Utils.configURL.appendingPathComponent("botConfig.json")
-    static let shared: Self = {
-        do {
-            return try Self.load()
-        } catch {
-            // No sense in continuing without a valid bot config
-            fatalError("Error reading bot config file: \(error). To recreate the default config, delete or rename the corrupt file.")
-        }
-        return Self()
-    }()
+    static let dataPath = Utils.dataURL.appendingPathComponent("botConfig.json")
+    static let shared: BotConfig = .init()
     
-    // For now, we keep everything read only and let the user edit the .json.
-    // This means we don't need to save either.
-    let pterodactylHost: String
-    let pterodactylServerID: String
+    /// The hostname of the Pterodactyl panel
+    var pterodactylHost: String {
+        didSet { save() }
+    }
     
-    init(pterodactylHost: String, pterodactylServerID: String) {
+    /// The ID of the server on the Pterodactyl panel
+    var pterodactylServerID: String {
+        didSet { save() }
+    }
+    
+    /// The length of a session
+    var sessionLength: TimeInterval {
+        didSet { save() }
+    }
+    
+    /// The time at which the booking starts in hours from midnight
+    var bookingIntervalStartTime: TimeInterval {
+        didSet { save() }
+    }
+    
+    /// The time at which the booking ends in hours from midnight on the following day
+    var bookingIntervalEndDate: TimeInterval {
+        didSet { save() }
+    }
+    
+    /// The time how much in advance the bot will remind players about a session
+    var sessionReminderTime: TimeInterval {
+        didSet { save() }
+    }
+    
+    /// Whether the bot should notify players at the start of the session
+    var shouldNotifyAtSessionStart: Bool {
+        didSet { save() }
+    }
+    
+    /// The time how much in advance the bot will remind players that the session is about to start
+    var sessionStartReminderTime: TimeInterval {
+        didSet { save() }
+    }
+    
+    /// The channel where the bot will send reminders
+    var reminderChannel: ChannelSnowflake? {
+        didSet { save() }
+    }
+    
+    init(
+        pterodactylHost: String,
+        pterodactylServerID: String,
+        sessionLength: TimeInterval,
+        bookingIntervalStartTime: TimeInterval,
+        bookingIntervalEndDate: TimeInterval,
+        sessionReminderTime: TimeInterval,
+        shouldNotifyAtSessionStart: Bool,
+        sessionStartReminderTime: TimeInterval,
+        reminderChannel: ChannelSnowflake?
+    ) {
         self.pterodactylHost = pterodactylHost
         self.pterodactylServerID = pterodactylServerID
+        self.sessionLength = sessionLength
+        self.bookingIntervalStartTime = bookingIntervalStartTime
+        self.bookingIntervalEndDate = bookingIntervalEndDate
+        self.sessionReminderTime = sessionReminderTime
+        self.shouldNotifyAtSessionStart = shouldNotifyAtSessionStart
+        self.sessionStartReminderTime = sessionStartReminderTime
+        self.reminderChannel = reminderChannel
     }
     
-    init() {
-        self.init(pterodactylHost: "http://127.0.0.1", pterodactylServerID: "")
+    required convenience init() {
+        self.init(
+            pterodactylHost: "",
+            pterodactylServerID: "",
+            sessionLength: 4 * GlobalConstants.secondsPerHour,
+            bookingIntervalStartTime: 6,
+            bookingIntervalEndDate: 5,
+            sessionReminderTime: 1 * GlobalConstants.secondsPerDay,
+            shouldNotifyAtSessionStart: true,
+            sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
+            reminderChannel: nil
+        )
     }
-    
 }

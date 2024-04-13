@@ -11,8 +11,8 @@ import Logging
 
 actor BookingsService {
     static var logger: Logger = .init(label: String(describing: BookingsService.self))
-    static var reservationBookingsDataPath: URL = Utils.baseURL.appendingPathComponent("reservation_bookings.json")
-    static var eventBookingsDataPath: URL = Utils.baseURL.appendingPathComponent("event_bookings.json")
+    static var reservationBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("reservation_bookings.json")
+    static var eventBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("event_bookings.json")
     
     let scheduler: Scheduler
     private(set) var reservationBookings: [ReservationBooking] = loadBookings(from: reservationBookingsDataPath)

@@ -11,7 +11,7 @@ import Logging
 
 class Permissions: Savable {
     static let logger = Logger(label: "Permissions")
-    static var dataPath: URL = Utils.configURL.appendingPathComponent("permissions.json")
+    static var dataPath: URL = Utils.dataURL.appendingPathComponent("permissions.json")
     static let shared: Permissions = .init()
     
     private var userMap: [UserSnowflake: BotPermissionLevel]

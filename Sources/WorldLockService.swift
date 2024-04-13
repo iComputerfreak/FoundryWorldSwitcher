@@ -20,7 +20,7 @@ enum WorldLockError: LocalizedError {
 }
 
 class WorldLockService {
-    static var lockFilePath: URL = Utils.configURL.appendingPathComponent(".worldlock")
+    static var lockFilePath: URL = Utils.dataURL.appendingPathComponent(".worldlock")
     static let shared = WorldLockService()
     
     let fileManager = FileManager.default
