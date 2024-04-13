@@ -93,9 +93,11 @@ let bookingsService = BookingsService(scheduler: scheduler)
 /// Handle each event in the `bot.events` async stream
 /// This stream will never end, therefore preventing your executable from exiting
 for await event in await bot.events {
+    #if DEBUG
     if event.opcode == .heartbeatAccepted {
         print("Heartbeat at \(Date().formatted(date: .omitted, time: .standard))")
     }
+    #endif
     EventHandler(event: event, client: bot.client, permissionsHandler: permissionsHandler).handle()
     // We receive heartbeats every ~45 seconds, so this is a good time to call the scheduler and check for
     // events to trigger
