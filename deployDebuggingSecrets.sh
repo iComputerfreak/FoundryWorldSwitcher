@@ -11,4 +11,4 @@ fi
 
 cp BOT_TOKEN "$1/BOT_TOKEN"
 cp PTERODACTYL_API_KEY "$1/PTERODACTYL_API_KEY"
-cp botConfig.json "$1/config/botConfig.json"
+cp botConfig.json "$1/data/botConfig.json"
