@@ -42,6 +42,15 @@ extension Savable {
         return try JSONDecoder().decode(Self.self, from: data)
     }
     
+    static func loadOrDefault() -> Self {
+        do {
+            return try load()
+        } catch {
+            logger.error("Error loading \(String(describing: Self.self)): \(error)")
+            return Self()
+        }
+    }
+    
     /// Encodes this object into JSON data and writes it to the `dataPath` and throws any errors that occur during saving.
     func trySave() throws {
         let encoder = JSONEncoder()

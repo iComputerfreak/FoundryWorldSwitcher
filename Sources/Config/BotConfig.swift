@@ -12,7 +12,7 @@ import Logging
 class BotConfig: Savable {
     static let logger = Logger(label: "BotConfig")
     static let dataPath = Utils.dataURL.appendingPathComponent("botConfig.json")
-    static let shared: BotConfig = .init()
+    static let shared: BotConfig = .loadOrDefault()
     
     // TODO: For some reason, we are not reading the file from disk correctly, the values are all default
     

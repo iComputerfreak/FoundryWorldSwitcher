@@ -188,6 +188,8 @@ struct PterodactylAPI {
         body: BodyType? = nil as Data?,
         queryItems: [URLQueryItem] = []
     ) async throws -> Response {
+        let queryItems = queryItems.isEmpty ? nil : queryItems
+        
         var builder = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
         builder?.path.append(path)
         builder?.queryItems = queryItems
