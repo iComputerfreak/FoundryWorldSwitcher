@@ -50,6 +50,17 @@ let bot = await BotGatewayManager(
 Task {
     await bot.connect()
     
+    // Make sure the bot only runs in a single guild
+    guard try await bot.client.listOwnGuilds().decode().count <= 1 else {
+        await bot.disconnect()
+        logger.critical(
+            "The bot is in more than one guild. This bot is designed to only work in one guild. Please remove the bot from all guilds except the one you want it to work in."
+        )
+        fatalError(
+            "The bot is in more than one guild. This bot is designed to only work in one guild. Please remove the bot from all guilds except the one you want it to work in."
+        )
+    }
+    
     // Give the bot owner admin permissions
     do {
         let botApplication = try await bot.client.getOwnApplication().decode()

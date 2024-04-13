@@ -12,10 +12,10 @@ import Logging
 struct SwitchWorldCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "switchworld"
-    let description = "Switches the currently active Foundry VTT world."
+    let description = "Switches the currently active Foundry VTT world"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     let options: [ApplicationCommand.Option]? = [
-        .init(type: .string, name: "world_id", description: "The ID of the world to switch to.", required: nil)
+        .init(type: .string, name: "world_id", description: "The ID of the world to switch to", required: nil)
     ]
     
     func handle(

@@ -32,7 +32,7 @@ struct EventHandler: GatewayEventHandler {
         case let .applicationCommand(applicationCommand):
             // Use the commands defined in main.swift
             do {
-                guard let command = commands.first(where: { $0.name == applicationCommand.name }) else {
+                guard let command = DiscordCommands.commands.first(where: { $0.name == applicationCommand.name }) else {
                     throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
                 }
                 guard let member = interaction.member else {

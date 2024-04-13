@@ -12,7 +12,7 @@ import Logging
 struct HelpCommand: DiscordCommand {
     var logger: Logger = .init(label: String(describing: Self.self))
     let name = "help"
-    let description = "Displays information about the use of this bot."
+    let description = "Displays information about the use of this bot"
     let permissionsLevel: BotPermissionLevel = .user
     
     func handle(

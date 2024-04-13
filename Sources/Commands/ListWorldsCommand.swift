@@ -12,7 +12,7 @@ import Logging
 struct ListWorldsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "listworlds"
-    let description = "Lists all available worlds in Foundry VTT."
+    let description = "Lists all available worlds in Foundry VTT"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     
     func handle(

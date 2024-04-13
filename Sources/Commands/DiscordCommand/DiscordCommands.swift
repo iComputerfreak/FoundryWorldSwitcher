@@ -9,7 +9,7 @@ import DiscordBM
 import Foundation
 
 enum DiscordCommands {
-    private static let commands: [DiscordCommand] = [
+    static let commands: [DiscordCommand] = [
         HelloCommand(),
         MyPermissionsCommand(),
         SetPermissionLevel(),

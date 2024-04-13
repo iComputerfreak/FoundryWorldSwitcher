@@ -12,7 +12,7 @@ import Logging
 struct RestartWorldCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "restartworld"
-    let description = "Restarts the Foundry VTT Server."
+    let description = "Restarts the Foundry VTT Server"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     
     func handle(

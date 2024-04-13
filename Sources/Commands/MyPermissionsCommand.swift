@@ -12,7 +12,7 @@ import Logging
 struct MyPermissionsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "mypermissions"
-    let description = "Returns your permission level."
+    let description = "Returns your permission level"
     let permissionsLevel: BotPermissionLevel = .user
     
     func handle(

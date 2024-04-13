@@ -12,7 +12,7 @@ import Logging
 struct HelloCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "hello"
-    let description = "Returns a simple message to show that the bot is working."
+    let description = "Returns a simple message to show that the bot is working"
     let permissionsLevel: BotPermissionLevel = .user
     
     func handle(

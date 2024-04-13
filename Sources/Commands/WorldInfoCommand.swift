@@ -13,13 +13,13 @@ import HTML2Markdown
 struct WorldInfoCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "worldinfo"
-    let description = "Displays information about the current world or a given world ID."
+    let description = "Displays information about the current world or a given world ID"
     let permissionsLevel: BotPermissionLevel = .user
     let options: [ApplicationCommand.Option]? = [
         .init(
             type: .string,
             name: "world_id",
-            description: "The ID of the world to show information about.",
+            description: "The ID of the world to show information about",
             required: false
         )
     ]

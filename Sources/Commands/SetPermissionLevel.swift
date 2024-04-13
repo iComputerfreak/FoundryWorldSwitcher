@@ -12,13 +12,13 @@ import Logging
 struct SetPermissionLevel: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "setpermissionlevel"
-    let description = "Sets a permission level for a user or a role."
+    let description = "Sets a permission level for a user or a role"
     let permissionsLevel: BotPermissionLevel = .admin
     
     static let permissionLevelOption = ApplicationCommand.Option(
         type: .integer,
         name: "level",
-        description: "The permission level.",
+        description: "The permission level",
         required: true,
         choices: BotPermissionLevel.allCases.map { level in
             ApplicationCommand.Option.Choice(name: level.description, value: .int(level.rawValue))
@@ -29,12 +29,12 @@ struct SetPermissionLevel: DiscordCommand {
         .init(
             type: .subCommand,
             name: "user",
-            description: "Sets a permission level for a user.",
+            description: "Sets a permission level for a user",
             options: [
                 .init(
                     type: .user,
                     name: "user",
-                    description: "The user to give permissions.",
+                    description: "The user to give permissions",
                     required: true
                 ),
                 permissionLevelOption
@@ -43,12 +43,12 @@ struct SetPermissionLevel: DiscordCommand {
         .init(
             type: .subCommand,
             name: "role",
-            description: "Sets a permission level for a role.",
+            description: "Sets a permission level for a role",
             options: [
                 .init(
                     type: .role,
                     name: "role",
-                    description: "The role to give permissions.",
+                    description: "The role to give permissions",
                     required: true
                 ),
                 permissionLevelOption
