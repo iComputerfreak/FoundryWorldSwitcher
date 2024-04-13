@@ -78,7 +78,8 @@ let commands: [DiscordCommand] = [
     SwitchWorldCommand(),
     HelpCommand(),
     BookingsCommands(),
-    BookCommand()
+    BookCommand(),
+    EventQueueCommand(),
 ]
 try await bot.client
     .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )
