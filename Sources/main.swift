@@ -84,9 +84,8 @@ try await bot.client
     .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )
     .guardSuccess() // Throw an error if not successful
 
-let scheduler = Scheduler()
-
 /// Register services
+private let scheduler = Scheduler.shared
 let bookingsService = BookingsService(scheduler: scheduler)
 
 // MARK: - Start the bot

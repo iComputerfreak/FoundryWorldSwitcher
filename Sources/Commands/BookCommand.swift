@@ -12,7 +12,7 @@ import Logging
 struct BookCommand: DiscordCommand {
     private enum Constants {
         static let dateFormat = "dd.MM.yyyy"
-        static let timeFormat = "HH:mm" // TODO: Wrong format? // TODO: Scheduled bookings not executed?
+        static let timeFormat = "HH:mm"
         static let dateTimeFormatSeparator = "_"
     }
     
@@ -113,8 +113,9 @@ struct BookCommand: DiscordCommand {
         let worldID = try subcommand.requireOption(named: Self.worldOption.name).requireString()
         let dateString = try subcommand.requireOption(named: Self.dateOption.name).requireString()
         guard
-            let date = Self.dateFormatter.date(from: dateString)
-                // TODO: Date should not be in past (not older than today)
+            let date = Self.dateFormatter.date(from: dateString),
+            // The day should be either today or in the future
+            Calendar.current.startOfDay(for: date).addingTimeInterval(GlobalConstants.secondsPerDay) > .now
         else {
             throw DiscordCommandError.wrongDateFormat(dateString, format: Constants.dateFormat.uppercased())
         }

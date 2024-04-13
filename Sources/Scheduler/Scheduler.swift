@@ -11,7 +11,8 @@ import Logging
 
 actor Scheduler {
     static var logger: Logger = .init(label: String(describing: Scheduler.self))
-    static var dataPath: URL = Utils.baseURL.appending(path: "events.json")
+    static var dataPath: URL = Utils.baseURL.appendingPathComponent("events.json")
+    static let shared: Scheduler = .init()
     
     private(set) var events: [SchedulerEvent]
     
