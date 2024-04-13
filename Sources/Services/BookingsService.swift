@@ -77,7 +77,7 @@ extension BookingsService {
     
     private static func loadBookings<B: Booking>(from url: URL) -> [B] {
         do {
-            guard FileManager.default.fileExists(atPath: url.path()) else {
+            guard FileManager.default.fileExists(atPath: url.path) else {
                 return []
             }
             let data = try Data(contentsOf: url)

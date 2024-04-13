@@ -21,7 +21,7 @@ struct Secrets: Savable {
             return try Self.load()
         } catch {
             logger.critical("Unable to load secrets! \(error)")
-            fatalError("The bot is missing at least one of the two required secrets. Make sure that the Discord bot token and Pterodactyl API token are both present as either environment variables or in the config directory \(Utils.dataURL.path())")
+            fatalError("The bot is missing at least one of the two required secrets. Make sure that the Discord bot token and Pterodactyl API token are both present as either environment variables or in the config directory \(Utils.dataURL.path)")
         }
     }()
     static let logger = Logger(label: "Secrets")

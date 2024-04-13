@@ -26,7 +26,7 @@ class WorldLockService {
     let fileManager = FileManager.default
     
     func lockWorldSwitching() throws {
-        guard fileManager.createFile(atPath: Self.lockFilePath.path(), contents: nil) else {
+        guard fileManager.createFile(atPath: Self.lockFilePath.path, contents: nil) else {
             throw WorldLockError.unableToCreateFile
         }
     }
@@ -36,6 +36,6 @@ class WorldLockService {
     }
     
     func isWorldSwitchingLocked() -> Bool {
-        fileManager.fileExists(atPath: Self.lockFilePath.path())
+        fileManager.fileExists(atPath: Self.lockFilePath.path)
     }
 }

@@ -70,7 +70,7 @@ extension Scheduler {
     
     static func loadEvents() -> [SchedulerEvent] {
         do {
-            guard FileManager.default.fileExists(atPath: dataPath.path()) else {
+            guard FileManager.default.fileExists(atPath: dataPath.path) else {
                 return []
             }
             let data = try Data(contentsOf: dataPath)

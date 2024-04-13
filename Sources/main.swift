@@ -12,6 +12,8 @@ import Logging
 
 fileprivate let logger = Logger(label: "Main")
 
+logger.info("Started bot with data path \(Utils.dataURL.path)")
+
 let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
 
 let bot = await BotGatewayManager(
