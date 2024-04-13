@@ -10,11 +10,24 @@ import DiscordBM
 import AsyncHTTPClient
 import Logging
 
-fileprivate let logger = Logger(label: "Main")
+private let logger = Logger(label: "Main")
 
 logger.info("Started bot with data path \(Utils.dataURL.path)")
 
-let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
+if BotConfig.shared.pterodactylHost.isEmpty {
+    logger.error("The Pterodactyl host is not set. Please set it in the config file.")
+}
+if BotConfig.shared.pterodactylServerID.isEmpty {
+    logger.error("The Pterodactyl server ID is not set. Please set it in the config file.")
+}
+
+// MARK: -  Register services
+private let scheduler = Scheduler.shared
+let bookingsService = BookingsService(scheduler: scheduler)
+
+// MARK: - Set up the bot
+
+private let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
 
 let bot = await BotGatewayManager(
     eventLoopGroup: httpClient.eventLoopGroup,
@@ -41,8 +54,7 @@ Task {
     do {
         let botApplication = try await bot.client.getOwnApplication().decode()
         guard let ownerID = botApplication.owner?.id else {
-            logger.warning("Error determining the bot owner. Will not give the bot owner admin permissions.")
-            return
+            throw DiscordBotError.noUser
         }
         Permissions.shared.setUserPermissionLevel(of: ownerID, to: .admin)
     } catch {
@@ -68,28 +80,8 @@ let cache = await DiscordCache(
 
 let permissionsHandler = PermissionsHandler(cache: cache)
 
-/// Register commands
-let commands: [DiscordCommand] = [
-    HelloCommand(),
-    MyPermissionsCommand(),
-    SetPermissionLevel(),
-    ShowPermissionsCommand(),
-    ListWorldsCommand(),
-    WorldInfoCommand(),
-    RestartWorldCommand(),
-    SwitchWorldCommand(),
-    HelpCommand(),
-    BookingsCommands(),
-    BookCommand(),
-    EventQueueCommand(),
-]
-try await bot.client
-    .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )
-    .guardSuccess() // Throw an error if not successful
-
-/// Register services
-private let scheduler = Scheduler.shared
-let bookingsService = BookingsService(scheduler: scheduler)
+// MARK: -  Register commands
+try await DiscordCommands.register(bot: bot)
 
 // MARK: - Start the bot
 /// Handle each event in the `bot.events` async stream
