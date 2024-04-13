@@ -50,6 +50,10 @@ struct EventBooking: Booking {
                 dueDate: date.addingTimeInterval(-GlobalConstants.sessionReminderTime),
                 eventType: .sendSessionReminder(roleSnowflake: campaignRoleSnowflake, sessionDate: date)
             ),
+            SchedulerEvent(
+                dueDate: bookingIntervalEndDate,
+                eventType: .removeBooking(id: id)
+            ),
         ]
         if GlobalConstants.shouldNotifyAtSessionStart {
             associatedEvents.append(

@@ -37,6 +37,9 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             
         case let .sendSessionStartsReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate):
             try await handleSendSessionStartsReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate)
+            
+        case let .removeBooking(id: bookingID):
+            try await handleRemoveBooking(id: bookingID)
         }
     }
 }
@@ -77,5 +80,13 @@ extension SchedulerEvent {
     private func handleSendSessionStartsReminder(roleSnowflake: RoleSnowflake, sessionDate: Date) async throws {
         Self.logger.debug("Sending session starts reminder for session at \(sessionDate)")
         // Send a reminder to the role with the given snowflake
+    }
+}
+
+// MARK: - Delete Booking
+extension SchedulerEvent {
+    private func handleRemoveBooking(id: UUID) async throws {
+        Self.logger.debug("Removing booking with ID \(id)")
+        await bookingsService.removeBooking(id: id)
     }
 }

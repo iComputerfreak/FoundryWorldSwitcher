@@ -42,12 +42,19 @@ actor BookingsService {
         }
     }
     
-    /// Deletes the given booking from the store
+    /// Deletes the given booking from the store and unqueues any associated events
     func deleteBooking(_ booking: any Booking) async {
-        bookings.removeAll(where: { $0.id == booking.id })
+        removeBooking(id: booking.id)
         for event in booking.associatedEvents {
             await scheduler.unqueue(event)
         }
+    }
+    
+    /// Deletes the booking with the given ID from the store
+    ///
+    /// - NOTE: Does **not** unqueue any associated events.
+    func removeBooking(id: UUID) {
+        bookings.removeAll(where: { $0.id == id })
     }
 }
 

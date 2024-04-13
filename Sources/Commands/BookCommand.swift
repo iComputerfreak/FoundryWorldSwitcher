@@ -12,8 +12,8 @@ import Logging
 struct BookCommand: DiscordCommand {
     private enum Constants {
         static let dateFormat = "dd.MM.yyyy"
-        static let timeFormat = "HH:mm"
-        static let dateTimeFormatSeparator = "T"
+        static let timeFormat = "HH:mm" // TODO: Wrong format? // TODO: Scheduled bookings not executed?
+        static let dateTimeFormatSeparator = "_"
     }
     
     static let dateFormatter = {
@@ -102,8 +102,8 @@ struct BookCommand: DiscordCommand {
     ]
     
     func handle(_ applicationCommand: Interaction.ApplicationCommand, interaction: Interaction, client: any DiscordClient) async throws {
-        guard let userID = interaction.user?.id else {
-            throw DiscordCommandError.noUser
+        guard let userID = interaction.member?.user?.id else {
+            throw DiscordBotError.noUser
         }
         guard let subcommand = applicationCommand.options?.first else {
             throw DiscordCommandError.missingSubcommand
@@ -112,7 +112,10 @@ struct BookCommand: DiscordCommand {
         // MARK: Common arguments
         let worldID = try subcommand.requireOption(named: Self.worldOption.name).requireString()
         let dateString = try subcommand.requireOption(named: Self.dateOption.name).requireString()
-        guard let date = Self.dateFormatter.date(from: dateString) else {
+        guard
+            let date = Self.dateFormatter.date(from: dateString)
+                // TODO: Date should not be in past (not older than today)
+        else {
             throw DiscordCommandError.wrongDateFormat(dateString, format: Constants.dateFormat.uppercased())
         }
         

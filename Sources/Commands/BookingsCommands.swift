@@ -51,7 +51,7 @@ struct BookingsCommands: DiscordCommand {
                 // @Role is playing on the world TWBTW
                 // *Session 13*
                 return """
-                **\(date.formatted(date: .complete, time: .shortened))**
+                **\(date.formatted(date: .complete, time: booking is EventBooking ? .shortened : .omitted))**
                 \(activityString)
                 """
                     .trimmingCharacters(in: .whitespacesAndNewlines)

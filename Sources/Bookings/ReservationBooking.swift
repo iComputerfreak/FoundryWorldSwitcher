@@ -29,7 +29,11 @@ struct ReservationBooking: Booking {
             SchedulerEvent(
                 dueDate: bookingIntervalEndDate,
                 eventType: .unlockWorld(worldID: worldID)
-            )
+            ),
+            SchedulerEvent(
+                dueDate: bookingIntervalEndDate,
+                eventType: .removeBooking(id: id)
+            ),
         ]
     }
 }
