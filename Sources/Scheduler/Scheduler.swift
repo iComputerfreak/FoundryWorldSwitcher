@@ -34,10 +34,12 @@ actor Scheduler {
         saveEvents()
     }
     
+    /// Removes an event from the scheduler queue
     func unqueue(_ event: SchedulerEvent) {
         unqueue(id: event.id)
     }
     
+    /// Removes an event from the scheduler queue
     func unqueue(id eventID: SchedulerEvent.ID) {
         events.removeAll(where: { $0.id == eventID })
         saveEvents()
@@ -68,6 +70,9 @@ extension Scheduler {
     
     static func loadEvents() -> [SchedulerEvent] {
         do {
+            guard FileManager.default.fileExists(atPath: dataPath.path()) else {
+                return []
+            }
             let data = try Data(contentsOf: dataPath)
             return try JSONDecoder().decode([SchedulerEvent].self, from: data)
         } catch {

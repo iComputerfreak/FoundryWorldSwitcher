@@ -32,11 +32,21 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
         case let .unlockWorld(worldID: worldID):
             try await handleUnlockWorld(worldID: worldID)
             
-        case let .sendSessionReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate):
-            try await handleSendSessionReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate)
+        case let .sendSessionReminder(sessionDate: date, roleSnowflake: role, location: location, topic: topic):
+            try await handleSendSessionReminder(
+                sessionDate: date,
+                roleSnowflake: role,
+                location: location,
+                topic: topic
+            )
             
-        case let .sendSessionStartsReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate):
-            try await handleSendSessionStartsReminder(roleSnowflake: roleSnowflake, sessionDate: sessionDate)
+        case let .sendSessionStartsReminder(sessionDate: date, roleSnowflake: role, location: location, topic: topic):
+            try await handleSendSessionStartsReminder(
+                sessionDate: date,
+                roleSnowflake: role,
+                location: location,
+                topic: topic
+            )
             
         case let .removeBooking(id: bookingID):
             try await handleRemoveBooking(id: bookingID)
@@ -56,6 +66,8 @@ extension SchedulerEvent {
     private func handleLockWorld(worldID: String) async throws {
         Self.logger.debug("Locking world '\(worldID)'")
         // Lock the world with the given ID
+        try await PterodactylAPI.shared.changeWorld(to: worldID)
+        try WorldLockService.shared.lockWorldSwitching()
     }
 }
 
@@ -64,22 +76,53 @@ extension SchedulerEvent {
     private func handleUnlockWorld(worldID: String) async throws {
         Self.logger.debug("Unlocking world '\(worldID)'")
         // Unlock the world with the given ID
+        try WorldLockService.shared.unlockWorldSwitching()
     }
 }
 
 // MARK: - Send Session Reminder
 extension SchedulerEvent {
-    private func handleSendSessionReminder(roleSnowflake: RoleSnowflake, sessionDate: Date) async throws {
+    private func handleSendSessionReminder(
+        sessionDate: Date,
+        roleSnowflake: RoleSnowflake,
+        location: ChannelSnowflake,
+        topic: String
+    ) async throws {
         Self.logger.debug("Sending session reminder for session at \(sessionDate)")
         // Send a reminder to the role with the given snowflake
+        try await bot.client.createMessage(
+            channelId: GlobalConstants.reminderChannel,
+            payload: .init(
+                content: """
+                \(DiscordUtils.mention(id: roleSnowflake))
+                **Reminder**: Your session starts \(DiscordUtils.timestamp(date: sessionDate)) in channel \(DiscordUtils.mention(id: location)).
+                > \(topic)
+                """.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        ).guardSuccess()
     }
 }
 
 // MARK: - Send Session Starts Reminder
 extension SchedulerEvent {
-    private func handleSendSessionStartsReminder(roleSnowflake: RoleSnowflake, sessionDate: Date) async throws {
+    private func handleSendSessionStartsReminder(
+        sessionDate: Date,
+        roleSnowflake: RoleSnowflake,
+        location: ChannelSnowflake,
+        topic: String
+    ) async throws {
         Self.logger.debug("Sending session starts reminder for session at \(sessionDate)")
         // Send a reminder to the role with the given snowflake
+        try await bot.client.createMessage(
+            channelId: GlobalConstants.reminderChannel,
+            payload: .init(
+                content: """
+                \(DiscordUtils.mention(id: roleSnowflake))
+                Your session starts now in channel \(DiscordUtils.mention(id: location)).
+                > \(topic)
+                """.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        ).guardSuccess()
     }
 }
 

@@ -31,7 +31,11 @@ struct BookingsCommands: DiscordCommand {
     }
     
     private func formatBookings(_ bookings: [any Booking]) -> String {
-        bookings
+        guard !bookings.isEmpty else {
+            return "There are no bookings scheduled right now."
+        }
+        
+        return bookings
             .sorted { $0.date < $1.date }
             .map { booking in
                 let date = booking.date

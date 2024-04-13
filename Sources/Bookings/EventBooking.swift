@@ -48,7 +48,12 @@ struct EventBooking: Booking {
             ),
             SchedulerEvent(
                 dueDate: date.addingTimeInterval(-GlobalConstants.sessionReminderTime),
-                eventType: .sendSessionReminder(roleSnowflake: campaignRoleSnowflake, sessionDate: date)
+                eventType: .sendSessionReminder(
+                    sessionDate: date,
+                    roleSnowflake: campaignRoleSnowflake,
+                    location: location,
+                    topic: topic
+                )
             ),
             SchedulerEvent(
                 dueDate: bookingIntervalEndDate,
@@ -59,7 +64,12 @@ struct EventBooking: Booking {
             associatedEvents.append(
                 SchedulerEvent(
                     dueDate: date.addingTimeInterval(-GlobalConstants.sessionStartReminderTime),
-                    eventType: .sendSessionStartsReminder(roleSnowflake: campaignRoleSnowflake, sessionDate: date)
+                    eventType: .sendSessionStartsReminder(
+                        sessionDate: date,
+                        roleSnowflake: campaignRoleSnowflake,
+                        location: location,
+                        topic: topic
+                    )
                 )
             )
         }

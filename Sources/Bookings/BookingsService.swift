@@ -55,6 +55,7 @@ actor BookingsService {
     /// - NOTE: Does **not** unqueue any associated events.
     func removeBooking(id: UUID) {
         bookings.removeAll(where: { $0.id == id })
+        saveBookings()
     }
 }
 
@@ -76,6 +77,9 @@ extension BookingsService {
     
     private static func loadBookings<B: Booking>(from url: URL) -> [B] {
         do {
+            guard FileManager.default.fileExists(atPath: url.path()) else {
+                return []
+            }
             let data = try Data(contentsOf: url)
             return try JSONDecoder().decode([B].self, from: data)
         } catch {
