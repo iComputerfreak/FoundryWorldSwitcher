@@ -84,13 +84,14 @@ class BotConfig: Savable {
     }
     
     required convenience init() {
+        // Default config values
         self.init(
             pterodactylHost: "",
             pterodactylServerID: "",
             sessionLength: 4 * GlobalConstants.secondsPerHour,
             bookingIntervalStartTime: 6,
             bookingIntervalEndTime: 5,
-            sessionReminderTime: 1 * GlobalConstants.secondsPerDay,
+            sessionReminderTime: 3 * GlobalConstants.secondsPerDay,
             shouldNotifyAtSessionStart: true,
             sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
             reminderChannel: nil
