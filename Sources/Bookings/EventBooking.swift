@@ -47,7 +47,7 @@ struct EventBooking: Booking {
                 eventType: .unlockWorld(worldID: worldID)
             ),
             SchedulerEvent(
-                dueDate: date.addingTimeInterval(-GlobalConstants.sessionReminderTime),
+                dueDate: date.addingTimeInterval(-BotConfig.shared.sessionReminderTime),
                 eventType: .sendSessionReminder(
                     sessionDate: date,
                     roleSnowflake: campaignRoleSnowflake,
@@ -60,10 +60,10 @@ struct EventBooking: Booking {
                 eventType: .removeBooking(id: id)
             ),
         ]
-        if GlobalConstants.shouldNotifyAtSessionStart {
+        if BotConfig.shared.shouldNotifyAtSessionStart {
             associatedEvents.append(
                 SchedulerEvent(
-                    dueDate: date.addingTimeInterval(-GlobalConstants.sessionStartReminderTime),
+                    dueDate: date.addingTimeInterval(-BotConfig.shared.sessionStartReminderTime),
                     eventType: .sendSessionStartsReminder(
                         sessionDate: date,
                         roleSnowflake: campaignRoleSnowflake,

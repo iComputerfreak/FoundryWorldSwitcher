@@ -28,7 +28,7 @@ extension Booking {
         // The interval starts at 6 AM in the morning
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
-        return calendar.date(byAdding: .hour, value: GlobalConstants.bookingIntervalStartTime, to: startOfDay)!
+        return calendar.date(byAdding: .hour, value: BotConfig.shared.bookingIntervalStartTime, to: startOfDay)!
     }
     
     /// The end date of the booking interval. The server will be unlocked at this time.
@@ -38,6 +38,6 @@ extension Booking {
         let startOfNextDay = calendar
             .startOfDay(for: date)
             .addingTimeInterval(1 * GlobalConstants.secondsPerDay)
-        return calendar.date(byAdding: .hour, value: GlobalConstants.bookingIntervalEndTime, to: startOfNextDay)!
+        return calendar.date(byAdding: .hour, value: BotConfig.shared.bookingIntervalEndTime, to: startOfNextDay)!
     }
 }

@@ -51,7 +51,7 @@ extension DiscordClient {
                 name: eventTitle,
                 privacy_level: .guildOnly,
                 scheduled_start_time: .init(date: booking.date),
-                scheduled_end_time: .init(date: booking.date.addingTimeInterval(GlobalConstants.sessionLength)),
+                scheduled_end_time: .init(date: booking.date.addingTimeInterval(BotConfig.shared.sessionLength)),
                 entity_type: .voice
             )
         ).guardSuccess()

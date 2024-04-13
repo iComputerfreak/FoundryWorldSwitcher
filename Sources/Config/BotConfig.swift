@@ -30,12 +30,12 @@ class BotConfig: Savable {
     }
     
     /// The time at which the booking starts in hours from midnight
-    var bookingIntervalStartTime: TimeInterval {
+    var bookingIntervalStartTime: Int {
         didSet { save() }
     }
     
     /// The time at which the booking ends in hours from midnight on the following day
-    var bookingIntervalEndDate: TimeInterval {
+    var bookingIntervalEndTime: Int {
         didSet { save() }
     }
     
@@ -63,8 +63,8 @@ class BotConfig: Savable {
         pterodactylHost: String,
         pterodactylServerID: String,
         sessionLength: TimeInterval,
-        bookingIntervalStartTime: TimeInterval,
-        bookingIntervalEndDate: TimeInterval,
+        bookingIntervalStartTime: Int,
+        bookingIntervalEndTime: Int,
         sessionReminderTime: TimeInterval,
         shouldNotifyAtSessionStart: Bool,
         sessionStartReminderTime: TimeInterval,
@@ -74,7 +74,7 @@ class BotConfig: Savable {
         self.pterodactylServerID = pterodactylServerID
         self.sessionLength = sessionLength
         self.bookingIntervalStartTime = bookingIntervalStartTime
-        self.bookingIntervalEndDate = bookingIntervalEndDate
+        self.bookingIntervalEndTime = bookingIntervalEndTime
         self.sessionReminderTime = sessionReminderTime
         self.shouldNotifyAtSessionStart = shouldNotifyAtSessionStart
         self.sessionStartReminderTime = sessionStartReminderTime
@@ -87,7 +87,7 @@ class BotConfig: Savable {
             pterodactylServerID: "",
             sessionLength: 4 * GlobalConstants.secondsPerHour,
             bookingIntervalStartTime: 6,
-            bookingIntervalEndDate: 5,
+            bookingIntervalEndTime: 5,
             sessionReminderTime: 1 * GlobalConstants.secondsPerDay,
             shouldNotifyAtSessionStart: true,
             sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,

@@ -89,9 +89,13 @@ extension SchedulerEvent {
         topic: String
     ) async throws {
         Self.logger.debug("Sending session reminder for session at \(sessionDate)")
+        guard let reminderChannel = BotConfig.shared.reminderChannel else {
+            Self.logger.warning("There is no reminder channel set up in which to send the message.")
+            return
+        }
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
-            channelId: GlobalConstants.reminderChannel,
+            channelId: reminderChannel,
             payload: .init(
                 content: """
                 \(DiscordUtils.mention(id: roleSnowflake))
@@ -112,9 +116,13 @@ extension SchedulerEvent {
         topic: String
     ) async throws {
         Self.logger.debug("Sending session starts reminder for session at \(sessionDate)")
+        guard let reminderChannel = BotConfig.shared.reminderChannel else {
+            Self.logger.warning("There is no reminder channel set up in which to send the message.")
+            return
+        }
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
-            channelId: GlobalConstants.reminderChannel,
+            channelId: reminderChannel,
             payload: .init(
                 content: """
                 \(DiscordUtils.mention(id: roleSnowflake))
