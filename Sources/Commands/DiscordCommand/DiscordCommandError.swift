@@ -22,6 +22,8 @@ enum DiscordCommandError: Error, LocalizedError {
     case noBookingFoundAtDate(Date)
     case deleteBookingPermissionDenied(required: BotPermissionLevel)
     case bookingAlreadyExists(atDate: Date)
+    case worldSwitchingIsLocked
+    case forceSwitchWorldPermissionDenied(required: BotPermissionLevel)
     
     var errorDescription: String? {
         switch self {
@@ -63,6 +65,12 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case let .bookingAlreadyExists(atDate: date):
             return "A booking already exists at the given date."
+            
+        case .worldSwitchingIsLocked:
+            return "World switching is currently locked."
+            
+        case let .forceSwitchWorldPermissionDenied(required: required):
+            return "You need to have the `\(required.description)` permission level to force a world switch."
         }
     }
 }
