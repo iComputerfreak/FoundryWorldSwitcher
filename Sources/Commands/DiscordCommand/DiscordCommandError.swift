@@ -25,6 +25,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case worldSwitchingIsLocked
     case forceSwitchWorldPermissionDenied(required: BotPermissionLevel)
     case noMessageID
+    case dateIsInThePast(Date)
     
     var errorDescription: String? {
         switch self {
@@ -64,7 +65,7 @@ enum DiscordCommandError: Error, LocalizedError {
         case let .deleteBookingPermissionDenied(required: required):
             return "To cancel bookings of other users, you need to have the `\(required.description)` permission level."
             
-        case let .bookingAlreadyExists(atDate: date):
+        case .bookingAlreadyExists:
             return "A booking already exists at the given date."
             
         case .worldSwitchingIsLocked:
@@ -75,6 +76,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case .noMessageID:
             return "Unable to retrieve the message ID."
+            
+        case let .dateIsInThePast(date):
+            return "The date \(date.formatted(date: .numeric, time: .omitted)) is in the past."
         }
     }
 }

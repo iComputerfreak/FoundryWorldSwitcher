@@ -35,7 +35,7 @@ struct BookCommand: DiscordCommand {
     
     private static let worldOption = ApplicationCommand.Option(
         type: .string,
-        name: "world",
+        name: "world_id",
         description: "The world ID of the world to book",
         required: true
     )
@@ -112,12 +112,12 @@ struct BookCommand: DiscordCommand {
         // MARK: Common arguments
         let world = try await parseWorld(from: subcommand, optionName: Self.worldOption.name)
         let dateString = try subcommand.requireOption(named: Self.dateOption.name).requireString()
-        guard
-            let date = Self.dateFormatter.date(from: dateString),
-            // The day should be either today or in the future
-            Calendar.current.startOfDay(for: date).addingTimeInterval(GlobalConstants.secondsPerDay) > .now
-        else {
+        guard let date = Self.dateFormatter.date(from: dateString) else {
             throw DiscordCommandError.wrongDateFormat(dateString, format: Constants.dateFormat.uppercased())
+        }
+        // The day should be either today or in the future
+        guard Calendar.current.startOfDay(for: date).addingTimeInterval(GlobalConstants.secondsPerDay) > .now else {
+            throw DiscordCommandError.dateIsInThePast(date)
         }
         
         guard await bookingsService.booking(at: date) == nil else {

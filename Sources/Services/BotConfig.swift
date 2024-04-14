@@ -22,6 +22,12 @@ enum ConfigKey: String {
     case reminderChannel
 }
 
+struct PinnedBookingMessage: Codable {
+    let token: String
+    let worldID: String?
+    let role: RoleSnowflake?
+}
+
 class BotConfig: Savable {
     static let logger = Logger(label: "BotConfig")
     static let dataPath = Utils.dataURL.appendingPathComponent("botConfig.json")
@@ -72,7 +78,7 @@ class BotConfig: Savable {
         didSet { save() }
     }
     
-    var pinnedContinuationTokens: [String] {
+    var pinnedBookingMessages: [PinnedBookingMessage] {
         didSet { save() }
     }
     
@@ -86,7 +92,7 @@ class BotConfig: Savable {
         shouldNotifyAtSessionStart: Bool,
         sessionStartReminderTime: TimeInterval,
         reminderChannel: ChannelSnowflake?,
-        pinnedContinuationTokens: [String]
+        pinnedBookingMessages: [PinnedBookingMessage]
     ) {
         self.pterodactylHost = pterodactylHost
         self.pterodactylServerID = pterodactylServerID
@@ -97,7 +103,7 @@ class BotConfig: Savable {
         self.shouldNotifyAtSessionStart = shouldNotifyAtSessionStart
         self.sessionStartReminderTime = sessionStartReminderTime
         self.reminderChannel = reminderChannel
-        self.pinnedContinuationTokens = pinnedContinuationTokens
+        self.pinnedBookingMessages = pinnedBookingMessages
     }
     
     required convenience init() {
@@ -111,7 +117,7 @@ class BotConfig: Savable {
             shouldNotifyAtSessionStart: Self.default.shouldNotifyAtSessionStart,
             sessionStartReminderTime: Self.default.sessionStartReminderTime,
             reminderChannel: Self.default.reminderChannel,
-            pinnedContinuationTokens: Self.default.pinnedContinuationTokens
+            pinnedBookingMessages: Self.default.pinnedBookingMessages
         )
     }
     
@@ -154,10 +160,10 @@ class BotConfig: Savable {
             ChannelSnowflake.self,
             forKey: .reminderChannel
         ) ?? Self.default.reminderChannel
-        self.pinnedContinuationTokens = try container.decodeIfPresent(
-            [String].self,
-            forKey: .pinnedContinuationTokens
-        ) ?? Self.default.pinnedContinuationTokens
+        self.pinnedBookingMessages = try container.decodeIfPresent(
+            [PinnedBookingMessage].self,
+            forKey: .pinnedBookingMessages
+        ) ?? Self.default.pinnedBookingMessages
     }
 }
 
@@ -172,7 +178,7 @@ extension BotConfig {
         shouldNotifyAtSessionStart: true,
         sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
         reminderChannel: nil,
-        pinnedContinuationTokens: []
+        pinnedBookingMessages: []
     )
 }
 

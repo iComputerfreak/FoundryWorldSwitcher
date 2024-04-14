@@ -116,14 +116,36 @@ extension BookingsService {
 // MARK: - Pinned Bookings
 extension BookingsService {
     func updatePinnedBookings() async throws {
-        let tokens = BotConfig.shared.pinnedContinuationTokens
-        Self.logger.info("Updating \(tokens.count) pinned booking messages.")
-        let payload = try await Payloads.EditWebhookMessage(
-            content: "# Upcoming Bookings",
-            embeds: Utils.createBookingEmbeds(for: bookings)
-        )
-        for token in tokens {
-            try await bot.client.updateOriginalInteractionResponse(token: token, payload: payload).guardSuccess()
+        let messages = BotConfig.shared.pinnedBookingMessages
+        Self.logger.info("Updating \(messages.count) pinned booking messages.")
+        func payload(for bookings: [any Booking]) async throws -> Payloads.EditWebhookMessage {
+            return try await Payloads.EditWebhookMessage(
+                embeds: Utils.createBookingEmbeds(for: bookings)
+            )
+        }
+        for message in messages {
+            let filteredBookings = bookings
+                .filter { booking in
+                    guard let worldID = message.worldID else {
+                        return true
+                    }
+                    return booking.worldID == worldID
+                }
+                .filter { booking in
+                    guard let role = message.role else {
+                        // If there is no role filter, include the booking
+                        return true
+                    }
+                    guard let eventBooking = booking as? EventBooking else {
+                        // If the booking is a reservation, exclude it
+                        return false
+                    }
+                    return eventBooking.campaignRoleSnowflake == role
+                }
+            try await bot.client.updateOriginalInteractionResponse(
+                token: message.token,
+                payload: payload(for: filteredBookings)
+            ).guardSuccess()
         }
     }
 }
