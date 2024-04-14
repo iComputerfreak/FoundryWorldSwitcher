@@ -33,6 +33,7 @@ actor BookingsService {
         self.scheduler = scheduler
     }
     
+    /// Returns the booking for the given date, or `nil` if no booking exists for that date
     func booking(at date: Date) -> (any Booking)? {
         // We ignore the time part of the date
         let calendar = Calendar.current
@@ -41,6 +42,11 @@ actor BookingsService {
             let bookingDate = calendar.startOfDay(for: booking.date)
             return bookingDate == date
         }
+    }
+    
+    /// Returns the booking with the given ID, or `nil` if no booking exists with that ID
+    func booking(id: UUID) -> (any Booking)? {
+        bookings.first(where: { $0.id == id })
     }
     
     /// Adds the given booking to the store

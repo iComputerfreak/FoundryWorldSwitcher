@@ -32,21 +32,11 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
         case .unlockWorldSwitching:
             try await handleUnlockWorld()
             
-        case let .sendSessionReminder(sessionDate: date, roleSnowflake: role, location: location, topic: topic):
-            try await handleSendSessionReminder(
-                sessionDate: date,
-                roleSnowflake: role,
-                location: location,
-                topic: topic
-            )
+        case let .sendSessionReminder(bookingID: bookingID):
+            try await handleSendSessionReminder(bookingID: bookingID)
             
-        case let .sendSessionStartsReminder(sessionDate: date, roleSnowflake: role, location: location, topic: topic):
-            try await handleSendSessionStartsReminder(
-                sessionDate: date,
-                roleSnowflake: role,
-                location: location,
-                topic: topic
-            )
+        case let .sendSessionStartsReminder(bookingID: bookingID):
+            try await handleSendSessionStartsReminder(bookingID: bookingID)
             
         case let .removeBooking(id: bookingID):
             try await handleRemoveBooking(id: bookingID)
@@ -82,26 +72,26 @@ extension SchedulerEvent {
 
 // MARK: - Send Session Reminder
 extension SchedulerEvent {
-    private func handleSendSessionReminder(
-        sessionDate: Date,
-        roleSnowflake: RoleSnowflake,
-        location: ChannelSnowflake,
-        topic: String
-    ) async throws {
-        Self.logger.debug("Sending session reminder for session at \(sessionDate)")
+    private func handleSendSessionReminder(bookingID: UUID) async throws {
+        guard let booking = await bookingsService.booking(id: bookingID) as? EventBooking else {
+            Self.logger.error("Booking with ID \(bookingID) not found.")
+            return
+        }
+        
+        Self.logger.debug("Sending session reminder for session at \(booking.date)")
         guard let reminderChannel = BotConfig.shared.reminderChannel else {
             Self.logger.warning("There is no reminder channel set up in which to send the message.")
             return
         }
+        
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
             channelId: reminderChannel,
             payload: .init(
                 content: """
-                \(DiscordUtils.mention(id: roleSnowflake))
-                **Reminder**: Your session starts \(DiscordUtils.timestamp(date: sessionDate)) in channel \(DiscordUtils.mention(id: location)).
-                > \(topic)
-                """.trimmingCharacters(in: .whitespacesAndNewlines)
+                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) **Reminder**: Your session is booked for \(DiscordUtils.timestamp(date: booking.date)).
+                """.trimmingCharacters(in: .whitespacesAndNewlines),
+                embeds: [Utils.createBookingEmbed(for: booking)]
             )
         ).guardSuccess()
     }
@@ -109,13 +99,13 @@ extension SchedulerEvent {
 
 // MARK: - Send Session Starts Reminder
 extension SchedulerEvent {
-    private func handleSendSessionStartsReminder(
-        sessionDate: Date,
-        roleSnowflake: RoleSnowflake,
-        location: ChannelSnowflake,
-        topic: String
-    ) async throws {
-        Self.logger.debug("Sending session starts reminder for session at \(sessionDate)")
+    private func handleSendSessionStartsReminder(bookingID: UUID) async throws {
+        guard let booking = await bookingsService.booking(id: bookingID) as? EventBooking else {
+            Self.logger.error("Booking with ID \(bookingID) not found.")
+            return
+        }
+        
+        Self.logger.debug("Sending session starts reminder for session at \(booking.date)")
         guard let reminderChannel = BotConfig.shared.reminderChannel else {
             Self.logger.warning("There is no reminder channel set up in which to send the message.")
             return
@@ -125,10 +115,9 @@ extension SchedulerEvent {
             channelId: reminderChannel,
             payload: .init(
                 content: """
-                \(DiscordUtils.mention(id: roleSnowflake))
-                Your session starts now in channel \(DiscordUtils.mention(id: location)).
-                > \(topic)
-                """.trimmingCharacters(in: .whitespacesAndNewlines)
+                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts now in channel \(DiscordUtils.mention(id: booking.location)).
+                """.trimmingCharacters(in: .whitespacesAndNewlines),
+                embeds: [Utils.createBookingEmbed(for: booking)]
             )
         ).guardSuccess()
     }

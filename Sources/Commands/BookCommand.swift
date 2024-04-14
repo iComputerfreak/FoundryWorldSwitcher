@@ -124,6 +124,8 @@ struct BookCommand: DiscordCommand {
             throw DiscordCommandError.bookingAlreadyExists(atDate: date)
         }
         
+        var warning: String?
+        
         // MARK: Create the Booking
         let booking: any Booking
         if let eventSubcommand = applicationCommand.option(named: "event") {
@@ -143,6 +145,12 @@ struct BookCommand: DiscordCommand {
                 location: ChannelSnowflake(location),
                 topic: topic
             )
+            if booking.date > booking.bookingIntervalEndDate {
+                let start = DiscordUtils.timestamp(date: booking.bookingIntervalStartDate, style: .shortDateTime)
+                let end = DiscordUtils.timestamp(date: booking.bookingIntervalEndDate, style: .shortDateTime)
+                warning = "\nThe world will be locked from \(start) to \(end).\n" +
+                "**Warning**: With the current configuration settings, the world will be unlocked before the event starts."
+            }
         } else {
             booking = ReservationBooking(date: date, author: userID, worldID: world.id)
         }
@@ -154,7 +162,7 @@ struct BookCommand: DiscordCommand {
         try await client.respond(
             token: interaction.token,
             payload: .init(
-                content: "Booking created successfully!",
+                content: "Booking created successfully.\(warning ?? "")",
                 embeds: [Utils.createBookingEmbed(for: booking)]
             )
         )

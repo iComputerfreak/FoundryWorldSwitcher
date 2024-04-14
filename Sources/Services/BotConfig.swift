@@ -47,7 +47,7 @@ class BotConfig: Savable {
         didSet { save() }
     }
     
-    /// The time at which the booking ends in seconds from midnight on the following day
+    /// The time at which the booking ends in seconds from `bookingIntervalStartTime`
     var bookingIntervalEndTime: TimeInterval {
         didSet { save() }
     }
@@ -156,7 +156,7 @@ extension BotConfig {
         pterodactylServerID: "",
         sessionLength: 4 * GlobalConstants.secondsPerHour,
         bookingIntervalStartTime: 6 * GlobalConstants.secondsPerHour,
-        bookingIntervalEndTime: 5 * GlobalConstants.secondsPerHour,
+        bookingIntervalEndTime: 23 * GlobalConstants.secondsPerHour,
         sessionReminderTime: 3 * GlobalConstants.secondsPerDay,
         shouldNotifyAtSessionStart: true,
         sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,

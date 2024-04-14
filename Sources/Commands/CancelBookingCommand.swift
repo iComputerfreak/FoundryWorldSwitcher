@@ -39,8 +39,8 @@ class CancelBookingCommand: DiscordCommand {
         guard let dateString = try applicationCommand.option(named: "date")?.requireString() else {
             throw DiscordCommandError.missingArgument(argumentName: "date")
         }
-        guard let date = Utils.dateFormatter.date(from: dateString) else {
-            throw DiscordCommandError.wrongDateFormat(dateString, format: Utils.dateFormatter.dateFormat.uppercased())
+        guard let date = Utils.inputDateFormatter.date(from: dateString) else {
+            throw DiscordCommandError.wrongDateFormat(dateString, format: Utils.inputDateFormatter.dateFormat.uppercased())
         }
         guard let booking = await bookingsService.booking(at: date) else {
             throw DiscordCommandError.noBookingFoundAtDate(date)

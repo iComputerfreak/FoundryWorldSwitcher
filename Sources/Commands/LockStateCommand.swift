@@ -22,10 +22,10 @@ class LockStateCommand: DiscordCommand {
     ) async throws {
         let message: String
         if WorldLockService.shared.isWorldSwitchingLocked() {
-            message = "World switching is currently locked. " +
+            message = "World switching is currently **locked**. " +
             "If you believe this is a mistake or need to switch the active world, please contact a server administrator."
         } else {
-            message = "World switching is currently unlocked."
+            message = "World switching is currently **unlocked**."
         }
         
         try await client.respond(

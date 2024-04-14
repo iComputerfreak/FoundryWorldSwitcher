@@ -47,29 +47,25 @@ struct EventBooking: Booking {
                 eventType: .unlockWorldSwitching
             ),
             SchedulerEvent(
-                dueDate: date.addingTimeInterval(-BotConfig.shared.sessionReminderTime),
-                eventType: .sendSessionReminder(
-                    sessionDate: date,
-                    roleSnowflake: campaignRoleSnowflake,
-                    location: location,
-                    topic: topic
-                )
-            ),
-            SchedulerEvent(
                 dueDate: bookingIntervalEndDate,
                 eventType: .removeBooking(id: id)
             ),
         ]
+        let initialReminderDate = date.addingTimeInterval(-BotConfig.shared.sessionReminderTime)
+        // Only add the initial reminder, if it lies in the future
+        if initialReminderDate > .now {
+            associatedEvents.append(
+                SchedulerEvent(
+                    dueDate: initialReminderDate,
+                    eventType: .sendSessionReminder(bookingID: id)
+                )
+            )
+        }
         if BotConfig.shared.shouldNotifyAtSessionStart {
             associatedEvents.append(
                 SchedulerEvent(
                     dueDate: date.addingTimeInterval(-BotConfig.shared.sessionStartReminderTime),
-                    eventType: .sendSessionStartsReminder(
-                        sessionDate: date,
-                        roleSnowflake: campaignRoleSnowflake,
-                        location: location,
-                        topic: topic
-                    )
+                    eventType: .sendSessionStartsReminder(bookingID: id)
                 )
             )
         }

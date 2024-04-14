@@ -33,11 +33,6 @@ extension Booking {
     
     /// The end date of the booking interval. The server will be unlocked at this time.
     var bookingIntervalEndDate: Date {
-        // The interval ends at 5 AM the next day
-        let calendar = Calendar.current
-        let startOfNextDay = calendar
-            .startOfDay(for: date)
-            .addingTimeInterval(1 * GlobalConstants.secondsPerDay)
-        return startOfNextDay.addingTimeInterval(BotConfig.shared.bookingIntervalEndTime)
+        bookingIntervalStartDate.addingTimeInterval(BotConfig.shared.bookingIntervalEndTime)
     }
 }

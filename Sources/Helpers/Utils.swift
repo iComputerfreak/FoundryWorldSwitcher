@@ -12,10 +12,17 @@ import Logging
 enum Utils {
     private static let logger = Logger(label: "Utils")
     
-    /// A date formatter for date strings
-    static let dateFormatter: DateFormatter = {
+    /// A date formatter for displaying date strings
+    static let outputDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
+        return f
+    }()
+    
+    /// A date formatter for user-typed dates
+    static let inputDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "dd.MM.yyyy"
         return f
     }()
     
@@ -95,7 +102,7 @@ extension Utils {
     }
     
     static private func createBookingEmbed(for booking: EventBooking, world: String) -> Embed {
-        let date = Utils.dateFormatter.string(from: booking.date)
+        let date = Utils.outputDateFormatter.string(from: booking.date)
         let time = Utils.timeFormatter.string(from: booking.date)
         
         return .init(
@@ -108,7 +115,7 @@ extension Utils {
     }
     
     static private func createBookingEmbed(for booking: any Booking, world: String) -> Embed {
-        let date = Utils.dateFormatter.string(from: booking.date)
+        let date = Utils.outputDateFormatter.string(from: booking.date)
         
         return .init(
             title: date,

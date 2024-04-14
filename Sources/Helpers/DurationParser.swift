@@ -54,7 +54,7 @@ enum DurationParser {
             }
             
             Optionally {
-                TryCapture(OneOrMore(.digit), as: hourReference) { (value: Substring) -> String? in
+                TryCapture(OneOrMore(.digit), as: minuteReference) { (value: Substring) -> String? in
                     String(value)
                 }
                 ZeroOrMore(.whitespace)
@@ -67,19 +67,21 @@ enum DurationParser {
         }
         
         if let matches = try? regex.firstMatch(in: string) {
+            let hourMatch = matches[hourReference]
+            let minuteMatch = matches[minuteReference]
             // We need at least one of the two references to be available
-            guard matches[hourReference] != nil || matches[minuteReference] != nil else {
+            guard hourMatch != nil || minuteMatch != nil else {
                 throw DurationParserError.couldNotParseHoursOrMinutes
             }
             var duration: TimeInterval = 0
             if
-                let hourString = matches[hourReference],
+                let hourString = hourMatch,
                 let hour = Int(hourString)
             {
                 duration += Double(hour) * GlobalConstants.secondsPerHour
             }
             if
-                let minuteString = matches[minuteReference],
+                let minuteString = minuteMatch,
                 let minute = Int(minuteString)
             {
                 duration += Double(minute) * GlobalConstants.secondsPerMinute

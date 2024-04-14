@@ -114,7 +114,7 @@ struct WorldInfoCommand: DiscordCommand {
                             .init(name: "System Version", value: world.systemVersion),
                             .init(
                                 name: "Last Played",
-                                value: world.lastPlayed.map(Utils.dateFormatter.string(from:)) ?? "Unknown"
+                                value: world.lastPlayed.map(Utils.outputDateFormatter.string(from:)) ?? "Unknown"
                             ),
                             .init(name: "Note", value: "World switching is currently \(lockState ? "**locked**" : "unlocked")."),
                         ]
