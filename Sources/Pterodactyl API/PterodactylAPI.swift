@@ -26,8 +26,16 @@ actor PterodactylAPI {
     
     // Cache
     private var worldsTTL: Date?
+    private var _cachedWorlds: [FoundryWorld]?
     private(set) var cachedWorlds: [FoundryWorld]? {
-        didSet {
+        get {
+            guard let worldsTTL, worldsTTL > .now else {
+                return nil
+            }
+            return _cachedWorlds
+        }
+        set {
+            _cachedWorlds = newValue
             worldsTTL = .now.addingTimeInterval(GlobalConstants.secondsPerDay)
         }
     }
@@ -47,11 +55,7 @@ actor PterodactylAPI {
     }
     
     func worlds() async throws -> [FoundryWorld] {
-        if
-            let cachedWorlds,
-            let worldsTTL,
-            worldsTTL > .now
-        {
+        if let cachedWorlds {
             return cachedWorlds
         }
         
@@ -69,7 +73,10 @@ actor PterodactylAPI {
     }
     
     func world(for id: String) async throws -> FoundryWorld {
-        try await fileContents(file: "/data/Data/worlds/\(id)/world.json", as: FoundryWorld.self)
+        if let world = cachedWorlds?.first(where: { $0.id == id }) {
+            return world
+        }
+        return try await fileContents(file: "/data/Data/worlds/\(id)/world.json", as: FoundryWorld.self)
     }
     
     func startServer() async throws {

@@ -72,6 +72,10 @@ class BotConfig: Savable {
         didSet { save() }
     }
     
+    var pinnedContinuationTokens: [String] {
+        didSet { save() }
+    }
+    
     init(
         pterodactylHost: String,
         pterodactylServerID: String,
@@ -81,7 +85,8 @@ class BotConfig: Savable {
         sessionReminderTime: TimeInterval,
         shouldNotifyAtSessionStart: Bool,
         sessionStartReminderTime: TimeInterval,
-        reminderChannel: ChannelSnowflake?
+        reminderChannel: ChannelSnowflake?,
+        pinnedContinuationTokens: [String]
     ) {
         self.pterodactylHost = pterodactylHost
         self.pterodactylServerID = pterodactylServerID
@@ -92,6 +97,7 @@ class BotConfig: Savable {
         self.shouldNotifyAtSessionStart = shouldNotifyAtSessionStart
         self.sessionStartReminderTime = sessionStartReminderTime
         self.reminderChannel = reminderChannel
+        self.pinnedContinuationTokens = pinnedContinuationTokens
     }
     
     required convenience init() {
@@ -104,7 +110,8 @@ class BotConfig: Savable {
             sessionReminderTime: Self.default.sessionReminderTime,
             shouldNotifyAtSessionStart: Self.default.shouldNotifyAtSessionStart,
             sessionStartReminderTime: Self.default.sessionStartReminderTime,
-            reminderChannel: Self.default.reminderChannel
+            reminderChannel: Self.default.reminderChannel,
+            pinnedContinuationTokens: Self.default.pinnedContinuationTokens
         )
     }
     
@@ -147,6 +154,10 @@ class BotConfig: Savable {
             ChannelSnowflake.self,
             forKey: .reminderChannel
         ) ?? Self.default.reminderChannel
+        self.pinnedContinuationTokens = try container.decodeIfPresent(
+            [String].self,
+            forKey: .pinnedContinuationTokens
+        ) ?? Self.default.pinnedContinuationTokens
     }
 }
 
@@ -160,7 +171,8 @@ extension BotConfig {
         sessionReminderTime: 3 * GlobalConstants.secondsPerDay,
         shouldNotifyAtSessionStart: true,
         sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
-        reminderChannel: nil
+        reminderChannel: nil,
+        pinnedContinuationTokens: []
     )
 }
 

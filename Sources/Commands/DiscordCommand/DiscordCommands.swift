@@ -26,6 +26,7 @@ enum DiscordCommands {
         UnlockWorldCommand(),
         LockStateCommand(),
         CancelBookingCommand(),
+        PinBookingsCommand(),
 //        ConfigCommand(),
     ]
     

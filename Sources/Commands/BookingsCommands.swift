@@ -20,12 +20,7 @@ struct BookingsCommands: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        let bookings = await bookingsService.bookings.sorted(by: { $0.date < $1.date })
-        
-        var bookingEmbeds: [Embed] = []
-        for booking in bookings {
-            bookingEmbeds.append(try await Utils.createBookingEmbed(for: booking))
-        }
+        let bookingEmbeds = try await Utils.createBookingEmbeds(for: bookingsService.bookings)
         
         let payload: Payloads.EditWebhookMessage
         if bookingEmbeds.isEmpty {

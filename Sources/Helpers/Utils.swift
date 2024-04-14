@@ -81,6 +81,16 @@ extension Utils {
         return Utils.timeFormatter.string(from: time)
     }
     
+    static func createBookingEmbeds(for bookings: [any Booking]) async throws -> [Embed] {
+        let bookings = bookings.sorted(by: { $0.date < $1.date })
+        
+        var bookingEmbeds: [Embed] = []
+        for booking in bookings {
+            bookingEmbeds.append(try await Utils.createBookingEmbed(for: booking))
+        }
+        return bookingEmbeds
+    }
+    
     static func createBookingEmbed(for booking: any Booking) async throws -> Embed {
         let world = try await PterodactylAPI.shared.world(for: booking.worldID)
         

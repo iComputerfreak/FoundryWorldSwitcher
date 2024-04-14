@@ -24,6 +24,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case bookingAlreadyExists(atDate: Date)
     case worldSwitchingIsLocked
     case forceSwitchWorldPermissionDenied(required: BotPermissionLevel)
+    case noMessageID
     
     var errorDescription: String? {
         switch self {
@@ -71,6 +72,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case let .forceSwitchWorldPermissionDenied(required: required):
             return "You need to have the `\(required.description)` permission level to force a world switch."
+            
+        case .noMessageID:
+            return "Unable to retrieve the message ID."
         }
     }
 }

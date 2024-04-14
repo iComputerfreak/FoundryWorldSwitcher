@@ -9,7 +9,7 @@ import DiscordBM
 import Foundation
 import Logging
 
-class LockStateCommand: DiscordCommand {
+struct LockStateCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: LockStateCommand.self))
     let name = "lockstate"
     let description = "Returns the current state of the world switching lock"

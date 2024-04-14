@@ -9,7 +9,7 @@ import DiscordBM
 import Foundation
 import Logging
 
-class CancelBookingCommand: DiscordCommand {
+struct CancelBookingCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: CancelBookingCommand.self))
     let name = "cancelbooking"
     let description = "Cancels a booking for a specific date"

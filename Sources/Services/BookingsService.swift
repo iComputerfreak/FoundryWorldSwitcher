@@ -26,6 +26,14 @@ actor BookingsService {
         set {
             reservationBookings = newValue.compactMap { $0 as? ReservationBooking }
             eventBookings = newValue.compactMap { $0 as? EventBooking }
+            saveBookings()
+            Task { [weak self] in
+                do {
+                    try await self?.updatePinnedBookings()
+                } catch {
+                    Self.logger.error("Error updating pinned bookings: \(error)")
+                }
+            }
         }
     }
     
@@ -101,6 +109,21 @@ extension BookingsService {
         } catch {
             Self.logger.error("Failed to load bookings: \(error)")
             return []
+        }
+    }
+}
+
+// MARK: - Pinned Bookings
+extension BookingsService {
+    func updatePinnedBookings() async throws {
+        let tokens = BotConfig.shared.pinnedContinuationTokens
+        Self.logger.info("Updating \(tokens.count) pinned booking messages.")
+        let payload = try await Payloads.EditWebhookMessage(
+            content: "# Upcoming Bookings",
+            embeds: Utils.createBookingEmbeds(for: bookings)
+        )
+        for token in tokens {
+            try await bot.client.updateOriginalInteractionResponse(token: token, payload: payload).guardSuccess()
         }
     }
 }
