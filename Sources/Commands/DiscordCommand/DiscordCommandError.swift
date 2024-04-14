@@ -21,6 +21,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case wrongTimeFormat(String, format: String)
     case noBookingFoundAtDate(Date)
     case deleteBookingPermissionDenied(required: BotPermissionLevel)
+    case bookingAlreadyExists(atDate: Date)
     
     var errorDescription: String? {
         switch self {
@@ -59,6 +60,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case let .deleteBookingPermissionDenied(required: required):
             return "To cancel bookings of other users, you need to have the `\(required.description)` permission level."
+            
+        case let .bookingAlreadyExists(atDate: date):
+            return "A booking already exists at the given date."
         }
     }
 }

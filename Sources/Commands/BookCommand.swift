@@ -108,7 +108,6 @@ struct BookCommand: DiscordCommand {
         guard let subcommand = applicationCommand.options?.first else {
             throw DiscordCommandError.missingSubcommand
         }
-        // TODO: Check if there already exists a booking for a day!
         
         // MARK: Common arguments
         let worldID = try subcommand.requireOption(named: Self.worldOption.name).requireString()
@@ -119,6 +118,10 @@ struct BookCommand: DiscordCommand {
             Calendar.current.startOfDay(for: date).addingTimeInterval(GlobalConstants.secondsPerDay) > .now
         else {
             throw DiscordCommandError.wrongDateFormat(dateString, format: Constants.dateFormat.uppercased())
+        }
+        
+        guard await bookingsService.booking(at: date) == nil else {
+            throw DiscordCommandError.bookingAlreadyExists(atDate: date)
         }
         
         // MARK: Create the Booking
