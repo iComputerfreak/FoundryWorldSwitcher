@@ -33,6 +33,16 @@ actor BookingsService {
         self.scheduler = scheduler
     }
     
+    func booking(at date: Date) -> (any Booking)? {
+        // We ignore the time part of the date
+        let calendar = Calendar.current
+        let date = calendar.startOfDay(for: date)
+        return bookings.first { booking in
+            let bookingDate = calendar.startOfDay(for: booking.date)
+            return bookingDate == date
+        }
+    }
+    
     /// Adds the given booking to the store
     func createBooking(_ booking: any Booking) async {
         bookings.append(booking)

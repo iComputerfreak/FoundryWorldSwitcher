@@ -108,6 +108,7 @@ struct BookCommand: DiscordCommand {
         guard let subcommand = applicationCommand.options?.first else {
             throw DiscordCommandError.missingSubcommand
         }
+        // TODO: Check if there already exists a booking for a day!
         
         // MARK: Common arguments
         let worldID = try subcommand.requireOption(named: Self.worldOption.name).requireString()

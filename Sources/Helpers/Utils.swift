@@ -64,4 +64,28 @@ enum Utils {
             throw PterodactylAPIError.invalidResponseCode(code)
         }
     }
+    
+    static func formatBooking(_ booking: any Booking) -> String {
+        let date = booking.date
+        let author = booking.author
+        let world = booking.worldID
+        
+        let activityString: String
+        if let eventBooking = booking as? EventBooking {
+            let group = eventBooking.campaignRoleSnowflake
+            let topic = eventBooking.topic
+            activityString = "\(DiscordUtils.mention(id: group)) is playing on the world \(world)\n> \(topic)"
+        } else {
+            activityString = "\(DiscordUtils.mention(id: author)) is preparing the world \(world)"
+        }
+        
+        // Sunday, 01.01.2024 at 18:00
+        // @Role is playing on the world TWBTW
+        // *Session 13*
+        return """
+        **\(date.formatted(date: .complete, time: booking is EventBooking ? .shortened : .omitted))**
+        \(activityString)
+        """
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }

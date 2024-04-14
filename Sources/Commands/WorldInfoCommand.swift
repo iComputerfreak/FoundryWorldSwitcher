@@ -93,6 +93,8 @@ struct WorldInfoCommand: DiscordCommand {
 //            backgroundURL = nil
 //        }
         
+        let lockState = WorldLockService.shared.isWorldSwitchingLocked()
+        
         try await client.updateOriginalInteractionResponse(
             token: interaction.token,
             payload: .init(
@@ -113,6 +115,7 @@ struct WorldInfoCommand: DiscordCommand {
                                 name: "Last Played",
                                 value: world.lastPlayed.map(Utils.dateFormatter.string(from:)) ?? "Unknown"
                             ),
+                            .init(name: "Note", value: "World switching is currently \(lockState ? "**locked**" : "unlocked")."),
                         ]
                     )
                 ]
