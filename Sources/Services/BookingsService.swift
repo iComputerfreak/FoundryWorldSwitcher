@@ -119,9 +119,17 @@ extension BookingsService {
         let messages = BotConfig.shared.pinnedBookingMessages
         Self.logger.info("Updating \(messages.count) pinned booking messages.")
         func payload(for bookings: [any Booking]) async throws -> Payloads.EditWebhookMessage {
-            return try await Payloads.EditWebhookMessage(
-                embeds: Utils.createBookingEmbeds(for: bookings)
-            )
+            if bookings.isEmpty {
+                return Payloads.EditWebhookMessage(
+                    content: "# Upcoming Bookings\nThere are no bookings scheduled right now.",
+                    embeds: []
+                )
+            } else {
+                return try await Payloads.EditWebhookMessage(
+                    content: "# Upcoming Bookings",
+                    embeds: Utils.createBookingEmbeds(for: bookings)
+                )
+            }
         }
         for message in messages {
             let filteredBookings = bookings
