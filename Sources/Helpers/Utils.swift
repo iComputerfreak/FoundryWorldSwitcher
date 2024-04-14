@@ -33,15 +33,6 @@ enum Utils {
         return f
     }()
     
-    /// A date components formatter for durations
-    static let dateComponentsFormatter: DateComponentsFormatter = {
-        let f = DateComponentsFormatter()
-        f.unitsStyle = .abbreviated
-        f.zeroFormattingBehavior = .dropAll
-        f.allowedUnits = [.hour, .minute]
-        return f
-    }()
-    
     /// The URL pointing to the directory the executable file is in.
     /// Crashes the program, if the app is unable to determine the base path.
     static var baseURL: URL {
@@ -70,8 +61,14 @@ enum Utils {
 extension Utils {
     /// Returns a duration string for a given time interval
     static func durationString(for duration: TimeInterval) -> String {
-        let reference = Date(timeIntervalSinceReferenceDate: 0)
-        return dateComponentsFormatter.string(from: reference, to: reference.addingTimeInterval(duration)) ?? ""
+        let seconds = Int(duration.rounded())
+        let minutes = (seconds / 60) % 60
+        let hours = seconds / 3600
+        var string = "\(minutes)m"
+        if hours > 0 {
+            string = "\(hours)h \(string)"
+        }
+        return string
     }
     
     /// Returns a time string for a given time in seconds from midnight

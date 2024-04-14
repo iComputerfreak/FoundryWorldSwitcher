@@ -78,7 +78,7 @@ enum DiscordCommandError: Error, LocalizedError {
             return "Unable to retrieve the message ID."
             
         case let .dateIsInThePast(date):
-            return "The date \(date.formatted(date: .numeric, time: .omitted)) is in the past."
+            return "The date \(Utils.outputDateFormatter.string(from: date)) is in the past."
         }
     }
 }
