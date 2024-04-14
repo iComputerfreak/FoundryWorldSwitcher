@@ -110,7 +110,7 @@ struct BookCommand: DiscordCommand {
         }
         
         // MARK: Common arguments
-        let worldID = try subcommand.requireOption(named: Self.worldOption.name).requireString()
+        let world = try await parseWorld(from: subcommand, optionName: Self.worldOption.name)
         let dateString = try subcommand.requireOption(named: Self.dateOption.name).requireString()
         guard
             let date = Self.dateFormatter.date(from: dateString),
@@ -138,13 +138,13 @@ struct BookCommand: DiscordCommand {
             booking = EventBooking(
                 date: dateTime,
                 author: userID,
-                worldID: worldID,
+                worldID: world.id,
                 campaignRoleSnowflake: RoleSnowflake(role),
                 location: ChannelSnowflake(location),
                 topic: topic
             )
         } else {
-            booking = ReservationBooking(date: date, author: userID, worldID: worldID)
+            booking = ReservationBooking(date: date, author: userID, worldID: world.id)
         }
         
         // MARK: Create the booking

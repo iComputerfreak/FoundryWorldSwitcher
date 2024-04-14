@@ -23,22 +23,6 @@ enum ConfigKey: String {
 }
 
 class BotConfig: Savable {
-    /// A date components formatter for durations
-    static let dateComponentsFormatter: DateComponentsFormatter = {
-        let f = DateComponentsFormatter()
-        f.unitsStyle = .abbreviated
-        f.zeroFormattingBehavior = .dropAll
-        f.allowedUnits = [.hour, .minute]
-        return f
-    }()
-    
-    /// A date formatter for time strings
-    static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm"
-        return f
-    }()
-    
     static let logger = Logger(label: "BotConfig")
     static let dataPath = Utils.dataURL.appendingPathComponent("botConfig.json")
     static let shared: BotConfig = .loadOrDefault()
@@ -128,19 +112,6 @@ class BotConfig: Savable {
 
 // MARK: -  Discord Command
 extension BotConfig {
-    /// Returns a duration string for a given time interval
-    static func durationString(for duration: TimeInterval) -> String {
-        let reference = Date(timeIntervalSinceReferenceDate: 0)
-        return dateComponentsFormatter.string(from: reference, to: reference.addingTimeInterval(duration)) ?? ""
-    }
-    
-    /// Returns a time string for a given time in seconds from midnight
-    static func timeString(for timeFromMidnight: TimeInterval) -> String {
-        let startOfDay = Calendar.current.startOfDay(for: .now)
-        let time = startOfDay.addingTimeInterval(timeFromMidnight)
-        return timeFormatter.string(from: time)
-    }
-    
     func value(for key: ConfigKey) -> String {
         switch key {
         case .pterodactylHost:
@@ -148,17 +119,17 @@ extension BotConfig {
         case .pterodactylServerID:
             return pterodactylServerID
         case .sessionLength:
-            return Self.durationString(for: sessionLength)
+            return Utils.durationString(for: sessionLength)
         case .bookingIntervalStartTime:
-            return Self.timeString(for: bookingIntervalStartTime)
+            return Utils.timeString(for: bookingIntervalStartTime)
         case .bookingIntervalEndTime:
-            return Self.timeString(for: bookingIntervalEndTime)
+            return Utils.timeString(for: bookingIntervalEndTime)
         case .sessionReminderTime:
-            return Self.durationString(for: sessionReminderTime)
+            return Utils.durationString(for: sessionReminderTime)
         case .shouldNotifyAtSessionStart:
             return shouldNotifyAtSessionStart ? "true" : "false"
         case .sessionStartReminderTime:
-            return Self.durationString(for: sessionStartReminderTime)
+            return Utils.durationString(for: sessionStartReminderTime)
         case .reminderChannel:
             return reminderChannel.map(DiscordUtils.mention(id:)) ?? "None"
         }
@@ -176,12 +147,12 @@ extension BotConfig {
             sessionLength = try DurationParser.duration(from: value)
         
         case .bookingIntervalStartTime:
-            if let time = Self.timeFormatter.date(from: value)?.timeIntervalSince(Calendar.current.startOfDay(for: .now)) {
+            if let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(Calendar.current.startOfDay(for: .now)) {
                 bookingIntervalStartTime = time
             }
         
         case .bookingIntervalEndTime:
-            if let time = Self.timeFormatter.date(from: value)?.timeIntervalSince(Calendar.current.startOfDay(for: .now)) {
+            if let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(Calendar.current.startOfDay(for: .now)) {
                 bookingIntervalEndTime = time
             }
         

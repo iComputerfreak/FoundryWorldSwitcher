@@ -34,7 +34,7 @@ struct WorldInfoCommand: DiscordCommand {
         
         // MARK: Get the world
         do {
-            world = try await Utils.parseWorld(from: applicationCommand)
+            world = try await parseWorld(from: applicationCommand, optionName: "world_id")
         } catch DiscordCommandError.worldDoesNotExist(worldID: let worldID) {
             try await client.respond(
                 token: interaction.token,

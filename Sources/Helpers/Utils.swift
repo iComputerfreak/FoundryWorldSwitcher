@@ -12,9 +12,26 @@ import Logging
 enum Utils {
     private static let logger = Logger(label: "Utils")
     
+    /// A date formatter for date strings
     static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
+        return f
+    }()
+    
+    /// A date formatter for time strings
+    static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+    
+    /// A date components formatter for durations
+    static let dateComponentsFormatter: DateComponentsFormatter = {
+        let f = DateComponentsFormatter()
+        f.unitsStyle = .abbreviated
+        f.zeroFormattingBehavior = .dropAll
+        f.allowedUnits = [.hour, .minute]
         return f
     }()
     
@@ -40,31 +57,24 @@ enum Utils {
         }
         return configURL
     }
-    
-    /// Tries to parse and return a `FoundryWorld` from the given command's arguments.
-    /// Returns `nil`, if no argument is present or the argument's value is empty
-    static func parseWorld(from command: Interaction.ApplicationCommand, optionName: String = "world_id") async throws -> FoundryWorld? {
-        guard let worldArg = command.option(named: optionName)?.value, !worldArg.asString.isEmpty else {
-            // No argument given or argument is empty
-            return nil
-        }
-        let worldID = try worldArg.requireString()
-        
-        let allWorlds = try await PterodactylAPI.shared.worldIDs()
-        print(allWorlds)
-        guard allWorlds.contains(worldID) else {
-            throw DiscordCommandError.worldDoesNotExist(worldID: worldID)
-        }
-        
-        do {
-            return try await PterodactylAPI.shared.world(for: worldID)
-        } catch PterodactylAPIError.invalidResponseCode(let code) {
-            // If we get a 500 error, maybe the world ID does not exist.
-            Self.logger.error("Error getting world information for world `\(worldArg)`. HTTP Request returned code \(code)")
-            throw PterodactylAPIError.invalidResponseCode(code)
-        }
+}
+
+// MARK: - Formatting
+extension Utils {
+    /// Returns a duration string for a given time interval
+    static func durationString(for duration: TimeInterval) -> String {
+        let reference = Date(timeIntervalSinceReferenceDate: 0)
+        return dateComponentsFormatter.string(from: reference, to: reference.addingTimeInterval(duration)) ?? ""
     }
     
+    /// Returns a time string for a given time in seconds from midnight
+    static func timeString(for timeFromMidnight: TimeInterval) -> String {
+        let startOfDay = Calendar.current.startOfDay(for: .now)
+        let time = startOfDay.addingTimeInterval(timeFromMidnight)
+        return Utils.timeFormatter.string(from: time)
+    }
+    
+    /// Formats a booking into a readable string
     static func formatBooking(_ booking: any Booking) -> String {
         let date = booking.date
         let author = booking.author

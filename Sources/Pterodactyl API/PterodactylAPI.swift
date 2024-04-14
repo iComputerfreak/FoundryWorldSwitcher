@@ -11,12 +11,10 @@ import FoundationNetworking
 import Foundation
 import Logging
 
-// TODO: Cache world info (e.g. names)
-
-struct PterodactylAPI {
-    static let shared: Self = {
+actor PterodactylAPI {
+    static let shared: PterodactylAPI = {
         do {
-            return try Self()
+            return try .init()
         } catch {
             fatalError("Unable to create base URL for Pterodactyl API: \(error)")
         }
@@ -25,6 +23,14 @@ struct PterodactylAPI {
     let logger = Logger(label: "PterodactylAPI")
     private let apiKey: String = Secrets.shared.pterodactylAPIKey
     let baseURL: URL
+    
+    // Cache
+    private var worldsTTL: Date?
+    private var worlds: [FoundryWorld]? {
+        didSet {
+            worldsTTL = .now.addingTimeInterval(GlobalConstants.secondsPerDay)
+        }
+    }
     
     init(baseURL: URL) {
         self.baseURL = baseURL
@@ -40,18 +46,25 @@ struct PterodactylAPI {
         self.init(baseURL: url)
     }
     
-    func worldIDs() async throws -> [String] {
+    func worlds() async throws -> [FoundryWorld] {
+        if
+            let worlds,
+            let worldsTTL,
+            worldsTTL > .now
+        {
+            return worlds
+        }
+        
         let worldDirectories = try await files(in: "/data/Data/worlds/")
             .filter { !$0.isFile }
-        return worldDirectories.map(\.name)
-    }
-    
-    func worlds() async throws -> [FoundryWorld] {
+        let worldIDs = worldDirectories.map(\.name)
+        
         // We now have to read the contents of the worlds' world.json file and parse it as JSON
         var worlds: [FoundryWorld] = []
-        for worldID in try await worldIDs() {
+        for worldID in worldIDs {
             worlds.append(try await world(for: worldID))
         }
+        self.worlds = worlds
         return worlds
     }
     

@@ -42,9 +42,7 @@ struct SwitchWorldCommand: DiscordCommand {
             throw DiscordCommandError.noUser
         }
         
-        guard let world = try await Utils.parseWorld(from: applicationCommand) else {
-            throw DiscordCommandError.missingArgument(argumentName: "world_id")
-        }
+        let world = try await parseWorld(from: applicationCommand, optionName: "world_id")
         
         // Only admins can use `force:true` to switch while locked
         if WorldLockService.shared.isWorldSwitchingLocked() {

@@ -18,7 +18,7 @@ struct LockWorldCommand: DiscordCommand {
     let options: [ApplicationCommand.Option]? = [
         .init(
             type: .string,
-            name: "worldID",
+            name: "world_id",
             description: "The ID of the world to switch to before locking",
             required: false
         ),
@@ -35,25 +35,37 @@ struct LockWorldCommand: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        let worldID = try applicationCommand.option(named: "worldID")?.requireString()
-        let durationString = try applicationCommand.option(named: "duration")?.requireString()
+        let world = try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
+        let duration = try applicationCommand
+            .option(named: "duration")?
+            .value?
+            .stringValue
+            .map(DurationParser.duration(from:))
         
-        if worldID != nil {
-            try await PterodactylAPI.shared.changeWorld(to: worldID!)
+        if let worldID = world?.id {
+            try await PterodactylAPI.shared.changeWorld(to: worldID)
         }
         
         try WorldLockService.shared.lockWorldSwitching()
         
-        if durationString != nil {
-            let duration = try DurationParser.duration(from: durationString!)
+        if let duration {
             let unlockTime = Date.now.addingTimeInterval(duration)
             await Scheduler.shared.schedule(.init(dueDate: unlockTime, eventType: .unlockWorldSwitching))
         }
         
+        var message = "The world has been "
+        if let world {
+            message += "switched to \(world.title) and "
+        }
+        message += "locked"
+        if let duration {
+            message += " for \(Utils.durationString(for: duration))"
+        }
+        message += "."
+        
         try await client.respond(
             token: interaction.token,
-            // TODO: Use world name instead of ID
-            message: "The world has been \(worldID == nil ? "" : "switched to \(worldID!) and ")locked."
+            message: message
         )
     }
 }
