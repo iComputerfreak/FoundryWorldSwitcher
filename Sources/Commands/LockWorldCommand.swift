@@ -30,7 +30,6 @@ struct LockWorldCommand: DiscordCommand {
         )
     ]
     
-    // TODO: Add option to specify the duration as "7h" or "3d" or no value for "forever"
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
