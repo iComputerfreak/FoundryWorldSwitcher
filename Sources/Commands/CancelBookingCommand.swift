@@ -29,7 +29,13 @@ class CancelBookingCommand: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        // TODO: Verify author (or admin permissions)
+        guard 
+            let member = interaction.member,
+            let user = member.user
+        else {
+            throw DiscordCommandError.noUser
+        }
+        
         guard let dateString = try applicationCommand.option(named: "date")?.requireString() else {
             throw DiscordCommandError.missingArgument(argumentName: "date")
         }
@@ -38,6 +44,14 @@ class CancelBookingCommand: DiscordCommand {
         }
         guard let booking = await bookingsService.booking(at: date) else {
             throw DiscordCommandError.noBookingFoundAtDate(date)
+        }
+        
+        // Only admins can delete bookings of other people
+        if booking.author != user.id {
+            let userPermissions = Permissions.shared.permissionsLevel(of: user.id, roles: member.roles)
+            guard userPermissions == .admin else {
+                throw DiscordCommandError.deleteBookingPermissionDenied(required: .admin)
+            }
         }
         
         let bookingString = Utils.formatBooking(booking)

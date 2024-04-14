@@ -20,6 +20,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case wrongDateFormat(String, format: String)
     case wrongTimeFormat(String, format: String)
     case noBookingFoundAtDate(Date)
+    case deleteBookingPermissionDenied(required: BotPermissionLevel)
     
     var errorDescription: String? {
         switch self {
@@ -55,6 +56,9 @@ enum DiscordCommandError: Error, LocalizedError {
         
         case .noBookingFoundAtDate:
             return "There exists no booking at the given date."
+            
+        case let .deleteBookingPermissionDenied(required: required):
+            return "To cancel bookings of other users, you need to have the `\(required.description)` permission level."
         }
     }
 }
