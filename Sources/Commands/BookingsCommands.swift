@@ -20,24 +20,20 @@ struct BookingsCommands: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        let bookings = await bookingsService.bookings
-        try await client.respond(
-            token: interaction.token,
-            payload: .init(
-                content: formatBookings(bookings),
-                allowed_mentions: .init() // Don't allow mentions on this message
-            )
-        )
-    }
-    
-    private func formatBookings(_ bookings: [any Booking]) -> String {
-        guard !bookings.isEmpty else {
-            return "There are no bookings scheduled right now."
+        let bookings = await bookingsService.bookings.sorted(by: { $0.date < $1.date })
+        
+        var bookingEmbeds: [Embed] = []
+        for booking in bookings {
+            bookingEmbeds.append(try await Utils.createBookingEmbed(for: booking))
         }
         
-        return bookings
-            .sorted { $0.date < $1.date }
-            .map(Utils.formatBooking)
-            .joined(separator: "\n\n")
+        let payload: Payloads.EditWebhookMessage
+        if bookingEmbeds.isEmpty {
+            payload = .init(content: "There are no bookings scheduled right now.")
+        } else {
+            payload = .init(embeds: bookingEmbeds, allowed_mentions: .init())
+        }
+        
+        try await client.respond(token: interaction.token, payload: payload)
     }
 }

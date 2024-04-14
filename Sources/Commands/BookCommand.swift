@@ -153,7 +153,10 @@ struct BookCommand: DiscordCommand {
         // MARK: Respond to the user
         try await client.respond(
             token: interaction.token,
-            message: "Booking created successfully!"
+            payload: .init(
+                content: "Booking created successfully!",
+                embeds: [Utils.createBookingEmbed(for: booking)]
+            )
         )
     }
 }

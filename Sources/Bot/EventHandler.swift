@@ -61,7 +61,7 @@ struct EventHandler: GatewayEventHandler {
                 logger.error("Error handling command /\(applicationCommand.name): \(error)")
                 try await client.respond(
                     token: interaction.token,
-                    message: "There was an error running your command: \(error.localizedDescription)"
+                    message: "There was an error running your command:\n\(error.localizedDescription)"
                 )
             }
         default: break

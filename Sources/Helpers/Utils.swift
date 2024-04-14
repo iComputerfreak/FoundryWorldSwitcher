@@ -74,28 +74,47 @@ extension Utils {
         return Utils.timeFormatter.string(from: time)
     }
     
-    /// Formats a booking into a readable string
-    static func formatBooking(_ booking: any Booking) -> String {
-        let date = booking.date
-        let author = booking.author
-        let world = booking.worldID
+    static func createBookingEmbed(for booking: any Booking) async throws -> Embed {
+        let world = try await PterodactylAPI.shared.world(for: booking.worldID)
         
-        let activityString: String
+        var embed: Embed
+        
         if let eventBooking = booking as? EventBooking {
-            let group = eventBooking.campaignRoleSnowflake
-            let topic = eventBooking.topic
-            activityString = "\(DiscordUtils.mention(id: group)) is playing on the world \(world)\n> \(topic)"
+            embed = createBookingEmbed(for: eventBooking, world: world.title)
         } else {
-            activityString = "\(DiscordUtils.mention(id: author)) is preparing the world \(world)"
+            embed = createBookingEmbed(for: booking, world: world.title)
         }
         
-        // Sunday, 01.01.2024 at 18:00
-        // @Role is playing on the world TWBTW
-        // *Session 13*
-        return """
-        **\(date.formatted(date: .complete, time: booking is EventBooking ? .shortened : .omitted))**
-        \(activityString)
-        """
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        embed.type = .rich
+        
+        if let author = try? await bot.client.getUser(id: booking.author).decode() {
+            embed.footer = .init(text: "Created by \(author.global_name ?? author.username)")
+        }
+        
+        return embed
+    }
+    
+    static private func createBookingEmbed(for booking: EventBooking, world: String) -> Embed {
+        let date = Utils.dateFormatter.string(from: booking.date)
+        let time = Utils.timeFormatter.string(from: booking.date)
+        
+        return .init(
+            title: "\(date) at \(time)",
+            description: """
+            \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\(world)'.
+            > \(booking.topic)
+            """.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+    }
+    
+    static private func createBookingEmbed(for booking: any Booking, world: String) -> Embed {
+        let date = Utils.dateFormatter.string(from: booking.date)
+        
+        return .init(
+            title: date,
+            description: """
+            \(DiscordUtils.mention(id: booking.author)) is preparing the world '\(world)'.
+            """.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
     }
 }

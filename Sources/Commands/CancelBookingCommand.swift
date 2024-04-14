@@ -54,12 +54,15 @@ class CancelBookingCommand: DiscordCommand {
             }
         }
         
-        let bookingString = Utils.formatBooking(booking)
+        let bookingEmbed = try await Utils.createBookingEmbed(for: booking)
         await bookingsService.deleteBooking(booking)
         
         try await client.respond(
             token: interaction.token,
-            message: "The following booking has been cancelled:\n\(bookingString)"
+            payload: .init(
+                content: "The following booking has been cancelled:",
+                embeds: [bookingEmbed]
+            )
         )
     }
 }

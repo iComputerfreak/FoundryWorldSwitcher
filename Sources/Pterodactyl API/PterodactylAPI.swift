@@ -26,7 +26,7 @@ actor PterodactylAPI {
     
     // Cache
     private var worldsTTL: Date?
-    private var worlds: [FoundryWorld]? {
+    private(set) var cachedWorlds: [FoundryWorld]? {
         didSet {
             worldsTTL = .now.addingTimeInterval(GlobalConstants.secondsPerDay)
         }
@@ -48,11 +48,11 @@ actor PterodactylAPI {
     
     func worlds() async throws -> [FoundryWorld] {
         if
-            let worlds,
+            let cachedWorlds,
             let worldsTTL,
             worldsTTL > .now
         {
-            return worlds
+            return cachedWorlds
         }
         
         let worldDirectories = try await files(in: "/data/Data/worlds/")
@@ -64,7 +64,7 @@ actor PterodactylAPI {
         for worldID in worldIDs {
             worlds.append(try await world(for: worldID))
         }
-        self.worlds = worlds
+        self.cachedWorlds = worlds
         return worlds
     }
     

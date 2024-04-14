@@ -34,11 +34,12 @@ struct WorldInfoCommand: DiscordCommand {
         
         // MARK: Get the world
         do {
-            world = try await parseWorld(from: applicationCommand, optionName: "world_id")
+            world = try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
         } catch DiscordCommandError.worldDoesNotExist(worldID: let worldID) {
             try await client.respond(
                 token: interaction.token,
-                message: "There was an error trying to get information about the world. Are you sure a world with the ID `\(worldID)` exists?"
+                message: "There was an error trying to get information about the world. " +
+                "Are you sure a world with the ID `\(worldID)` exists?"
             )
             return
         }
