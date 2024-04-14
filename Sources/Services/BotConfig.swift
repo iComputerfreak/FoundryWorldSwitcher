@@ -95,19 +95,73 @@ class BotConfig: Savable {
     }
     
     required convenience init() {
-        // Default config values
         self.init(
-            pterodactylHost: "",
-            pterodactylServerID: "",
-            sessionLength: 4 * GlobalConstants.secondsPerHour,
-            bookingIntervalStartTime: 6 * GlobalConstants.secondsPerHour,
-            bookingIntervalEndTime: 5 * GlobalConstants.secondsPerHour,
-            sessionReminderTime: 3 * GlobalConstants.secondsPerDay,
-            shouldNotifyAtSessionStart: true,
-            sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
-            reminderChannel: nil
+            pterodactylHost: Self.default.pterodactylHost,
+            pterodactylServerID: Self.default.pterodactylServerID,
+            sessionLength: Self.default.sessionLength,
+            bookingIntervalStartTime: Self.default.bookingIntervalStartTime,
+            bookingIntervalEndTime: Self.default.bookingIntervalEndTime,
+            sessionReminderTime: Self.default.sessionReminderTime,
+            shouldNotifyAtSessionStart: Self.default.shouldNotifyAtSessionStart,
+            sessionStartReminderTime: Self.default.sessionStartReminderTime,
+            reminderChannel: Self.default.reminderChannel
         )
     }
+    
+    required init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.pterodactylHost = try container.decodeIfPresent(
+            String.self,
+            forKey: .pterodactylHost
+        ) ?? Self.default.pterodactylHost
+        self.pterodactylServerID = try container.decodeIfPresent(
+            String.self,
+            forKey: .pterodactylServerID
+        ) ?? Self.default.pterodactylServerID
+        self.sessionLength = try container.decodeIfPresent(
+            TimeInterval.self,
+            forKey: .sessionLength
+        ) ?? Self.default.sessionLength
+        self.bookingIntervalStartTime = try container.decodeIfPresent(
+            TimeInterval.self,
+            forKey: .bookingIntervalStartTime
+        ) ?? Self.default.bookingIntervalStartTime
+        self.bookingIntervalEndTime = try container.decodeIfPresent(
+            TimeInterval.self,
+            forKey: .bookingIntervalEndTime
+        ) ?? Self.default.bookingIntervalEndTime
+        self.sessionReminderTime = try container.decodeIfPresent(
+            TimeInterval.self,
+            forKey: .sessionReminderTime
+        ) ?? Self.default.sessionReminderTime
+        self.shouldNotifyAtSessionStart = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .shouldNotifyAtSessionStart
+        ) ?? Self.default.shouldNotifyAtSessionStart
+        self.sessionStartReminderTime = try container.decodeIfPresent(
+            TimeInterval.self,
+            forKey: .sessionStartReminderTime
+        ) ?? Self.default.sessionStartReminderTime
+        self.reminderChannel = try container.decodeIfPresent(
+            ChannelSnowflake.self,
+            forKey: .reminderChannel
+        ) ?? Self.default.reminderChannel
+    }
+}
+
+extension BotConfig {
+    static let `default`: BotConfig = .init(
+        pterodactylHost: "",
+        pterodactylServerID: "",
+        sessionLength: 4 * GlobalConstants.secondsPerHour,
+        bookingIntervalStartTime: 6 * GlobalConstants.secondsPerHour,
+        bookingIntervalEndTime: 5 * GlobalConstants.secondsPerHour,
+        sessionReminderTime: 3 * GlobalConstants.secondsPerDay,
+        shouldNotifyAtSessionStart: true,
+        sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
+        reminderChannel: nil
+    )
 }
 
 // MARK: -  Discord Command
