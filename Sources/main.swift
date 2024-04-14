@@ -10,9 +10,24 @@ import DiscordBM
 import AsyncHTTPClient
 import Logging
 
-fileprivate let logger = Logger(label: "Main")
+private let logger = Logger(label: "Main")
 
-let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
+logger.info("Started bot with data path \(Utils.dataURL.path)")
+
+if BotConfig.shared.pterodactylHost.isEmpty {
+    logger.error("The Pterodactyl host is not set. Please set it in the config file.")
+}
+if BotConfig.shared.pterodactylServerID.isEmpty {
+    logger.error("The Pterodactyl server ID is not set. Please set it in the config file.")
+}
+
+// MARK: -  Register services
+private let scheduler = Scheduler.shared
+let bookingsService = BookingsService(scheduler: scheduler)
+
+// MARK: - Set up the bot
+
+private let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
 
 let bot = await BotGatewayManager(
     eventLoopGroup: httpClient.eventLoopGroup,
@@ -35,12 +50,22 @@ let bot = await BotGatewayManager(
 Task {
     await bot.connect()
     
+    // Make sure the bot only runs in a single guild
+    guard try await bot.client.listOwnGuilds().decode().count <= 1 else {
+        await bot.disconnect()
+        logger.critical(
+            "The bot is in more than one guild. This bot is designed to only work in one guild. Please remove the bot from all guilds except the one you want it to work in."
+        )
+        fatalError(
+            "The bot is in more than one guild. This bot is designed to only work in one guild. Please remove the bot from all guilds except the one you want it to work in."
+        )
+    }
+    
     // Give the bot owner admin permissions
     do {
         let botApplication = try await bot.client.getOwnApplication().decode()
         guard let ownerID = botApplication.owner?.id else {
-            logger.warning("Error determining the bot owner. Will not give the bot owner admin permissions.")
-            return
+            throw DiscordBotError.noUser
         }
         Permissions.shared.setUserPermissionLevel(of: ownerID, to: .admin)
     } catch {
@@ -66,25 +91,24 @@ let cache = await DiscordCache(
 
 let permissionsHandler = PermissionsHandler(cache: cache)
 
-/// Register commands
-let commands: [DiscordCommand] = [
-    HelloCommand(),
-    MyPermissionsCommand(),
-    SetPermissionLevel(),
-    ShowPermissionsCommand(),
-    ListWorldsCommand(),
-    WorldInfoCommand(),
-    RestartWorldCommand(),
-    SwitchWorldCommand(),
-    HelpCommand()
-]
+// MARK: -  Register commands
+try await DiscordCommands.register(bot: bot)
 
-try await bot.client
-    .bulkSetApplicationCommands(payload: commands.map { $0.createApplicationCommand() } )
-    .guardSuccess() // Throw an error if not successful
-
+// MARK: - Start the bot
 /// Handle each event in the `bot.events` async stream
 /// This stream will never end, therefore preventing your executable from exiting
 for await event in await bot.events {
+    #if DEBUG
+    if event.opcode == .heartbeatAccepted {
+        print("Heartbeat at \(Date().formatted(date: .omitted, time: .standard))")
+    }
+    #endif
     EventHandler(event: event, client: bot.client, permissionsHandler: permissionsHandler).handle()
+    // We receive heartbeats every ~45 seconds, so this is a good time to call the scheduler and check for
+    // events to trigger
+    do {
+        try await scheduler.update()
+    } catch {
+        logger.error("Error running scheduler: \(error)")
+    }
 }

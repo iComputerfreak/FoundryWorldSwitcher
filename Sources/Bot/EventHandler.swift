@@ -32,7 +32,7 @@ struct EventHandler: GatewayEventHandler {
         case let .applicationCommand(applicationCommand):
             // Use the commands defined in main.swift
             do {
-                guard let command = commands.first(where: { $0.name == applicationCommand.name }) else {
+                guard let command = DiscordCommands.commands.first(where: { $0.name == applicationCommand.name }) else {
                     throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
                 }
                 guard let member = interaction.member else {
@@ -61,7 +61,7 @@ struct EventHandler: GatewayEventHandler {
                 logger.error("Error handling command /\(applicationCommand.name): \(error)")
                 try await client.respond(
                     token: interaction.token,
-                    message: "There was an error running your command: \(error.localizedDescription)"
+                    message: "There was an error running your command:\n\(error.localizedDescription)"
                 )
             }
         default: break

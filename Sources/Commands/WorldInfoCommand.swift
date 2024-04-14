@@ -13,13 +13,13 @@ import HTML2Markdown
 struct WorldInfoCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "worldinfo"
-    let description = "Displays information about the current world or a given world ID."
+    let description = "Displays information about the current world or a given world ID"
     let permissionsLevel: BotPermissionLevel = .user
     let options: [ApplicationCommand.Option]? = [
         .init(
             type: .string,
             name: "world_id",
-            description: "The ID of the world to show information about.",
+            description: "The ID of the world to show information about",
             required: false
         )
     ]
@@ -34,11 +34,12 @@ struct WorldInfoCommand: DiscordCommand {
         
         // MARK: Get the world
         do {
-            world = try await Utils.parseWorld(from: applicationCommand)
+            world = try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
         } catch DiscordCommandError.worldDoesNotExist(worldID: let worldID) {
             try await client.respond(
                 token: interaction.token,
-                message: "There was an error trying to get information about the world. Are you sure a world with the ID `\(worldID)` exists?"
+                message: "There was an error trying to get information about the world. " +
+                "Are you sure a world with the ID `\(worldID)` exists?"
             )
             return
         }
@@ -93,6 +94,8 @@ struct WorldInfoCommand: DiscordCommand {
 //            backgroundURL = nil
 //        }
         
+        let lockState = WorldLockService.shared.isWorldSwitchingLocked()
+        
         try await client.updateOriginalInteractionResponse(
             token: interaction.token,
             payload: .init(
@@ -111,8 +114,9 @@ struct WorldInfoCommand: DiscordCommand {
                             .init(name: "System Version", value: world.systemVersion),
                             .init(
                                 name: "Last Played",
-                                value: world.lastPlayed.map(Utils.dateFormatter.string(from:)) ?? "Unknown"
+                                value: world.lastPlayed.map(Utils.outputDateFormatter.string(from:)) ?? "Unknown"
                             ),
+                            .init(name: "Note", value: "World switching is currently \(lockState ? "**locked**" : "unlocked")."),
                         ]
                     )
                 ]

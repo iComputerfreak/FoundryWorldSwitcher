@@ -12,13 +12,13 @@ import Logging
 struct SetPermissionLevel: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "setpermissionlevel"
-    let description = "Sets a permission level for a user or a role."
+    let description = "Sets a permission level for a user or a role"
     let permissionsLevel: BotPermissionLevel = .admin
     
     static let permissionLevelOption = ApplicationCommand.Option(
         type: .integer,
         name: "level",
-        description: "The permission level.",
+        description: "The permission level",
         required: true,
         choices: BotPermissionLevel.allCases.map { level in
             ApplicationCommand.Option.Choice(name: level.description, value: .int(level.rawValue))
@@ -29,12 +29,12 @@ struct SetPermissionLevel: DiscordCommand {
         .init(
             type: .subCommand,
             name: "user",
-            description: "Sets a permission level for a user.",
+            description: "Sets a permission level for a user",
             options: [
                 .init(
                     type: .user,
                     name: "user",
-                    description: "The user to give permissions.",
+                    description: "The user to give permissions",
                     required: true
                 ),
                 permissionLevelOption
@@ -43,12 +43,12 @@ struct SetPermissionLevel: DiscordCommand {
         .init(
             type: .subCommand,
             name: "role",
-            description: "Sets a permission level for a role.",
+            description: "Sets a permission level for a role",
             options: [
                 .init(
                     type: .role,
                     name: "role",
-                    description: "The role to give permissions.",
+                    description: "The role to give permissions",
                     required: true
                 ),
                 permissionLevelOption
@@ -101,7 +101,7 @@ struct SetPermissionLevel: DiscordCommand {
                 newPermissionLevel: newLevel
             )
         } else {
-            throw DiscordCommandError.missingArgument(argumentName: "user/role")
+            throw DiscordCommandError.missingSubcommand
         }
     }
     
@@ -111,7 +111,7 @@ struct SetPermissionLevel: DiscordCommand {
         user: UserSnowflake,
         newPermissionLevel: BotPermissionLevel
     ) async throws {
-        let mention = try Utils.mention(of: user)
+        let mention = DiscordUtils.mention(id: user)
         try await client.respond(
             token: interaction.token,
             message: "User \(mention) now has permission level `\(newPermissionLevel.description)`."
@@ -124,7 +124,7 @@ struct SetPermissionLevel: DiscordCommand {
         role: RoleSnowflake,
         newPermissionLevel: BotPermissionLevel
     ) async throws {
-        let mention = try Utils.mention(of: role)
+        let mention = DiscordUtils.mention(id: role)
         try await client.respond(
             token: interaction.token,
             message: "Role \(mention) now has `\(newPermissionLevel.description)` permissions."

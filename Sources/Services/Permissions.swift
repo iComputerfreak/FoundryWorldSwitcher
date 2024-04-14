@@ -9,9 +9,11 @@ import Foundation
 import DiscordBM
 import Logging
 
-// TODO: Make Savable
-struct Permissions: Codable {
-    private static let logger = Logger(label: "Permissions")
+class Permissions: Savable {
+    static let logger = Logger(label: "Permissions")
+    static var dataPath: URL = Utils.dataURL.appendingPathComponent("permissions.json")
+    static let shared: Permissions = .loadOrDefault()
+    
     private var userMap: [UserSnowflake: BotPermissionLevel]
     private var roleMap: [RoleSnowflake: BotPermissionLevel]
     
@@ -44,7 +46,7 @@ struct Permissions: Codable {
         .sorted { $0.rawValue < $1.rawValue }
     }
     
-    init() {
+    required init() {
         self.userMap = [:]
         self.roleMap = [:]
     }
@@ -62,54 +64,21 @@ struct Permissions: Codable {
         return permissions.max(by: <) ?? .user
     }
     
-    mutating func setUserPermissionLevel(of user: UserSnowflake, to level: BotPermissionLevel) {
+    func setUserPermissionLevel(of user: UserSnowflake, to level: BotPermissionLevel) {
         userMap[user] = level
         self.save()
     }
     
-    mutating func setRolePermissionLevel(of role: RoleSnowflake, to level: BotPermissionLevel) {
+    func setRolePermissionLevel(of role: RoleSnowflake, to level: BotPermissionLevel) {
         roleMap[role] = level
         self.save()
     }
     
-    mutating func setPermissionLevel(of user: UserSnowflake, to level: BotPermissionLevel) {
+    func setPermissionLevel(of user: UserSnowflake, to level: BotPermissionLevel) {
         setUserPermissionLevel(of: user, to: level)
     }
     
-    mutating func setPermissionLevel(of role: RoleSnowflake, to level: BotPermissionLevel) {
+    func setPermissionLevel(of role: RoleSnowflake, to level: BotPermissionLevel) {
         setRolePermissionLevel(of: role, to: level)
-    }
-    
-    // MARK: - Persisting
-    
-    static var shared: Self = {
-        do {
-            return try Self.load()
-        } catch {
-            logger.error("Error reading permissions file. Falling back to empty permissions: \(error)")
-            return Self()
-        }
-    }()
-    
-    static let permissionsFile = Utils.configURL.appendingPathComponent("permissions.json")
-    
-    static func load() throws -> Self {
-        // If there is no config file, we create a new one
-        guard FileManager.default.fileExists(atPath: permissionsFile.path) else {
-            let newPermissions = Self()
-            newPermissions.save()
-            return newPermissions
-        }
-        let data = try Data(contentsOf: permissionsFile)
-        return try JSONDecoder().decode(Self.self, from: data)
-    }
-    
-    func save() {
-        do {
-            let data = try JSONEncoder().encode(self)
-            try data.write(to: Self.permissionsFile)
-        } catch {
-            Self.logger.error("Error saving permissions: \(error)")
-        }
     }
 }

@@ -11,10 +11,10 @@ import FoundationNetworking
 import Foundation
 import Logging
 
-struct PterodactylAPI {
-    static let shared: Self = {
+actor PterodactylAPI {
+    static let shared: PterodactylAPI = {
         do {
-            return try Self()
+            return try .init()
         } catch {
             fatalError("Unable to create base URL for Pterodactyl API: \(error)")
         }
@@ -23,6 +23,22 @@ struct PterodactylAPI {
     let logger = Logger(label: "PterodactylAPI")
     private let apiKey: String = Secrets.shared.pterodactylAPIKey
     let baseURL: URL
+    
+    // Cache
+    private var worldsTTL: Date?
+    private var _cachedWorlds: [FoundryWorld]?
+    private(set) var cachedWorlds: [FoundryWorld]? {
+        get {
+            guard let worldsTTL, worldsTTL > .now else {
+                return nil
+            }
+            return _cachedWorlds
+        }
+        set {
+            _cachedWorlds = newValue
+            worldsTTL = .now.addingTimeInterval(GlobalConstants.secondsPerDay)
+        }
+    }
     
     init(baseURL: URL) {
         self.baseURL = baseURL
@@ -38,23 +54,29 @@ struct PterodactylAPI {
         self.init(baseURL: url)
     }
     
-    func worldIDs() async throws -> [String] {
+    func worlds() async throws -> [FoundryWorld] {
+        if let cachedWorlds {
+            return cachedWorlds
+        }
+        
         let worldDirectories = try await files(in: "/data/Data/worlds/")
             .filter { !$0.isFile }
-        return worldDirectories.map(\.name)
-    }
-    
-    func worlds() async throws -> [FoundryWorld] {
+        let worldIDs = worldDirectories.map(\.name)
+        
         // We now have to read the contents of the worlds' world.json file and parse it as JSON
         var worlds: [FoundryWorld] = []
-        for worldID in try await worldIDs() {
+        for worldID in worldIDs {
             worlds.append(try await world(for: worldID))
         }
+        self.cachedWorlds = worlds
         return worlds
     }
     
     func world(for id: String) async throws -> FoundryWorld {
-        try await fileContents(file: "/data/Data/worlds/\(id)/world.json", as: FoundryWorld.self)
+        if let world = cachedWorlds?.first(where: { $0.id == id }) {
+            return world
+        }
+        return try await fileContents(file: "/data/Data/worlds/\(id)/world.json", as: FoundryWorld.self)
     }
     
     func startServer() async throws {
@@ -186,6 +208,8 @@ struct PterodactylAPI {
         body: BodyType? = nil as Data?,
         queryItems: [URLQueryItem] = []
     ) async throws -> Response {
+        let queryItems = queryItems.isEmpty ? nil : queryItems
+        
         var builder = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
         builder?.path.append(path)
         builder?.queryItems = queryItems
