@@ -71,8 +71,8 @@ ENV SWIFT_ROOT=/usr SWIFT_BACKTRACE=enable=yes,sanitize=yes,threads=all,images=a
 # Ensure all further commands run as the bot user
 USER bot:bot
 
-# Create a new config directory
-RUN mkdir -p /app/config
+# Create a new data directory
+RUN mkdir -p /app/data
 
 # Start the bot
 ENTRYPOINT ["./FoundryWorldSwitcher"]
