@@ -24,11 +24,11 @@ struct ReservationBooking: Booking {
         self.associatedEvents = [
             SchedulerEvent(
                 dueDate: bookingIntervalStartDate,
-                eventType: .lockWorld(worldID: worldID)
+                eventType: .lockWorldSwitching(worldID: worldID)
             ),
             SchedulerEvent(
                 dueDate: bookingIntervalEndDate,
-                eventType: .unlockWorld(worldID: worldID)
+                eventType: .unlockWorldSwitching
             ),
             SchedulerEvent(
                 dueDate: bookingIntervalEndDate,

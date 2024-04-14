@@ -26,11 +26,11 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
         case let .consoleMessage(message):
             try await handleConsoleMessage(message)
             
-        case let .lockWorld(worldID: worldID):
-            try await handleLockWorld(worldID: worldID)
+        case let .lockWorldSwitching(worldID: worldID):
+            try await handleLockWorldSwitching(worldID: worldID)
             
-        case let .unlockWorld(worldID: worldID):
-            try await handleUnlockWorld(worldID: worldID)
+        case .unlockWorldSwitching:
+            try await handleUnlockWorld()
             
         case let .sendSessionReminder(sessionDate: date, roleSnowflake: role, location: location, topic: topic):
             try await handleSendSessionReminder(
@@ -63,7 +63,7 @@ extension SchedulerEvent {
 
 // MARK: - Lock World
 extension SchedulerEvent {
-    private func handleLockWorld(worldID: String) async throws {
+    private func handleLockWorldSwitching(worldID: String) async throws {
         Self.logger.debug("Locking world '\(worldID)'")
         // Lock the world with the given ID
         try await PterodactylAPI.shared.changeWorld(to: worldID)
@@ -73,8 +73,8 @@ extension SchedulerEvent {
 
 // MARK: - Unlock World
 extension SchedulerEvent {
-    private func handleUnlockWorld(worldID: String) async throws {
-        Self.logger.debug("Unlocking world '\(worldID)'")
+    private func handleUnlockWorld() async throws {
+        Self.logger.debug("Unlocking world switching")
         // Unlock the world with the given ID
         try WorldLockService.shared.unlockWorldSwitching()
     }
