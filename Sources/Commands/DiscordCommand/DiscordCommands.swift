@@ -24,6 +24,7 @@ enum DiscordCommands {
         EventQueueCommand(),
         LockWorldCommand(),
         UnlockWorldCommand(),
+        LockStateCommand(),
     ]
     
     static func register(bot: BotGatewayManager) async throws {
