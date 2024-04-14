@@ -15,7 +15,7 @@ struct PinBookingsCommand: DiscordCommand {
     let description = "Sends the current booking schedule in the channel and updates it when further changes are made"
     let permissionsLevel: BotPermissionLevel = .admin
     
-    let options: [ApplicationCommand.Option] = [
+    let options: [ApplicationCommand.Option]? = [
         .init(
             type: .role,
             name: "role",
