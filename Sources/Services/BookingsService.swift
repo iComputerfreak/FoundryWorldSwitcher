@@ -121,12 +121,12 @@ extension BookingsService {
         func payload(for bookings: [any Booking]) async throws -> Payloads.EditWebhookMessage {
             if bookings.isEmpty {
                 return Payloads.EditWebhookMessage(
-                    content: "# Upcoming Bookings\nThere are no bookings scheduled right now.",
+                    content: "# Upcoming Events\nThere are no bookings scheduled right now.",
                     embeds: []
                 )
             } else {
                 return try await Payloads.EditWebhookMessage(
-                    content: "# Upcoming Bookings",
+                    content: "# Upcoming Events",
                     embeds: Utils.createBookingEmbeds(for: bookings)
                 )
             }
@@ -150,10 +150,21 @@ extension BookingsService {
                     }
                     return eventBooking.campaignRoleSnowflake == role
                 }
-            try await bot.client.updateOriginalInteractionResponse(
-                token: message.token,
-                payload: payload(for: filteredBookings)
-            ).guardSuccess()
+            do {
+                try await bot.client.updateOriginalInteractionResponse(
+                    token: message.token,
+                    payload: payload(for: filteredBookings)
+                ).guardSuccess()
+            } catch DiscordHTTPError.badStatusCode(let response) {
+                if response.status == .unauthorized {
+                    // If we are no longer authorized, our token is no longer valid (e.g., because the message got deleted),
+                    // so we delete the pin and move on.
+                    BotConfig.shared.pinnedBookingMessages.removeAll(where: { $0.token == message.token })
+                } else {
+                    // Rethrow, if it is another problem
+                    throw DiscordHTTPError.badStatusCode(response)
+                }
+            }
         }
     }
 }
