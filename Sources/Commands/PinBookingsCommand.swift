@@ -41,16 +41,15 @@ struct PinBookingsCommand: DiscordCommand {
         // Save the token for updating later
         BotConfig.shared.pinnedBookingMessages.append(.init(token: interaction.token, worldID: world?.id, role: role))
         
-        let embeds = try await Utils.createBookingEmbeds(for: bookingsService.bookings)
+        try await client.respond(
+            token: interaction.token,
+            payload: .init(
+                content: "# Upcoming Bookings",
+                allowed_mentions: .init()
+            )
+        )
         
-        let info = "# Upcoming Bookings"
-        let payload: Payloads.EditWebhookMessage
-        if embeds.isEmpty {
-            payload = .init(content: "\(info)\nThere are no bookings scheduled right now.")
-        } else {
-            payload = .init(content: "\(info)", embeds: embeds, allowed_mentions: .init())
-        }
-        
-        try await client.respond(token: interaction.token, payload: payload)
+        // Immediately update the message
+        try await bookingsService.updatePinnedBookings()
     }
 }
