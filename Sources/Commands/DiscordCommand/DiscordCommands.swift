@@ -28,7 +28,7 @@ enum DiscordCommands {
         CancelBookingCommand(),
         PinBookingsCommand(),
         UpdatePinsCommand(),
-//        ConfigCommand(),
+        ConfigCommand(),
     ]
     
     static func register(bot: BotGatewayManager) async throws {

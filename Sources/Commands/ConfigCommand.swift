@@ -71,10 +71,69 @@ struct ConfigCommand: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        try await client.respond(
-            token: interaction.token,
-            message: "Hello, I am listening!"
+        // We handle "/config show" separately, as it's the only command that does not need a `key` argument
+        if
+            let showCommand = applicationCommand.option(named: "show"),
+            showCommand.option(named: "key")?.value == nil
+        {
+            try await client.respond(token: interaction.token, payload: createFullConfigPayload())
+            return
+        }
+        
+        func respond(_ payload: Payloads.EditWebhookMessage) async throws {
+            try await client.respond(token: interaction.token, payload: payload)
+        }
+        
+        func respond(_ message: String) async throws {
+            try await respond(.init(content: message))
+        }
+        
+        func value(for stringKey: String) throws -> String {
+            guard let configKey = ConfigKey(rawValue: stringKey) else {
+                throw DiscordCommandError.invalidConfigKey(stringKey)
+            }
+            return BotConfig.shared.value(for: configKey)
+        }
+        
+        if let showCommand = applicationCommand.option(named: "show") {
+            if let keyString = showCommand.option(named: "key")?.value?.stringValue {
+                try await respond("The value of `\(keyString)` is `\(value(for: keyString))`")
+            } else {
+                try await respond(createFullConfigPayload())
+            }
+        } else if let setCommand = applicationCommand.option(named: "set") {
+            let keyString = try setCommand.requireOption(named: "key").requireString()
+            let valueString = try setCommand.requireOption(named: "value").requireString()
+            guard let configKey = ConfigKey(rawValue: keyString) else {
+                throw DiscordCommandError.invalidConfigKey(keyString)
+            }
+            try BotConfig.shared.setValue(valueString, for: configKey)
+            try await respond("The value `\(keyString)` was updated to `\(valueString)`.")
+        } else if let resetCommand = applicationCommand.option(named: "reset") {
+            let keyString = try resetCommand.requireOption(named: "key").requireString()
+            guard let configKey = ConfigKey(rawValue: keyString) else {
+                throw DiscordCommandError.invalidConfigKey(keyString)
+            }
+            let newValue = try BotConfig.shared.resetValue(for: configKey)
+            try await respond("The value `\(keyString)` was reset to its default value `\(newValue)`.")
+        } else {
+            throw DiscordCommandError.missingSubcommand
+        }
+    }
+    
+    private func createFullConfigPayload() -> Payloads.EditWebhookMessage {
+        let embed = Embed(
+            title: "Bot Configuration",
+            description: "Here are the current configuration values",
+            fields: ConfigKey.allCases.map { key in
+                Embed.Field(
+                    name: key.rawValue,
+                    value: BotConfig.shared.value(for: key),
+                    inline: true
+                )
+            }
         )
+        return .init(embeds: [embed])
     }
     
     private func handleShowKey(_ key: String, interaction: Interaction, client: any DiscordClient) {

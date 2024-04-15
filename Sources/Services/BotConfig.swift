@@ -10,7 +10,7 @@ import Foundation
 import Logging
 import RegexBuilder
 
-enum ConfigKey: String {
+enum ConfigKey: String, CaseIterable {
     case pterodactylHost
     case pterodactylServerID
     case sessionLength
@@ -182,7 +182,7 @@ extension BotConfig {
     )
 }
 
-// MARK: -  Discord Command
+// MARK: -  Config Discord Command
 extension BotConfig {
     func value(for key: ConfigKey) -> String {
         switch key {
@@ -195,7 +195,7 @@ extension BotConfig {
         case .bookingIntervalStartTime:
             return Utils.timeString(for: bookingIntervalStartTime)
         case .bookingIntervalEndTime:
-            return Utils.timeString(for: bookingIntervalEndTime)
+            return Utils.durationString(for: bookingIntervalEndTime)
         case .sessionReminderTime:
             return Utils.durationString(for: sessionReminderTime)
         case .shouldNotifyAtSessionStart:
@@ -219,14 +219,16 @@ extension BotConfig {
             sessionLength = try DurationParser.duration(from: value)
         
         case .bookingIntervalStartTime:
-            if let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(Calendar.current.startOfDay(for: .now)) {
+            let startOfDay = Calendar.current.startOfDay(for: .now)
+            if let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(startOfDay) {
                 bookingIntervalStartTime = time
             }
         
         case .bookingIntervalEndTime:
-            if let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(Calendar.current.startOfDay(for: .now)) {
-                bookingIntervalEndTime = time
+            guard let seconds = TimeInterval(value) else {
+                throw DiscordCommandError.wrongDurationFormat(value)
             }
+            bookingIntervalEndTime = seconds
         
         case .sessionReminderTime:
             sessionReminderTime = try DurationParser.duration(from: value)
@@ -240,5 +242,38 @@ extension BotConfig {
         case .reminderChannel:
             reminderChannel = ChannelSnowflake(value)
         }
+    }
+    
+    func resetValue(for key: ConfigKey) throws -> String {
+        switch key {
+        case .pterodactylHost:
+            pterodactylHost = Self.default.pterodactylHost
+        
+        case .pterodactylServerID:
+            pterodactylServerID = Self.default.pterodactylServerID
+        
+        case .sessionLength:
+            sessionLength = Self.default.sessionLength
+        
+        case .bookingIntervalStartTime:
+            bookingIntervalStartTime = Self.default.bookingIntervalStartTime
+        
+        case .bookingIntervalEndTime:
+            bookingIntervalEndTime = Self.default.bookingIntervalEndTime
+        
+        case .sessionReminderTime:
+            sessionReminderTime = Self.default.sessionReminderTime
+        
+        case .shouldNotifyAtSessionStart:
+            shouldNotifyAtSessionStart = Self.default.shouldNotifyAtSessionStart
+        
+        case .sessionStartReminderTime:
+            sessionStartReminderTime = Self.default.sessionStartReminderTime
+        
+        case .reminderChannel:
+            reminderChannel = Self.default.reminderChannel
+        }
+        
+        return value(for: key)
     }
 }
