@@ -41,15 +41,7 @@ struct PinBookingsCommand: DiscordCommand {
         // Save the token for updating later
         BotConfig.shared.pinnedBookingMessages.append(.init(token: interaction.token, worldID: world?.id, role: role))
         
-        try await client.respond(
-            token: interaction.token,
-            payload: .init(
-                content: "# Upcoming Bookings",
-                allowed_mentions: .init()
-            )
-        )
-        
-        // Immediately update the message
+        // Immediately update/create the message
         try await bookingsService.updatePinnedBookings()
     }
 }
