@@ -14,6 +14,7 @@ enum PterodactylAPIError: Error, LocalizedError {
     case cannotDecode(Data, Any.Type)
     case noWorldVariable
     case emptyResponse
+    case worldDoesNotExist(String)
     
     var errorDescription: String? {
         switch self {
@@ -29,6 +30,8 @@ enum PterodactylAPIError: Error, LocalizedError {
             return "Cannot find a variable with the name `World Name` or the environment name `WORLD_NAME` in the startup variables."
         case .emptyResponse:
             return "The HTTP response returned empty data."
+        case .worldDoesNotExist(let worldID):
+            return "The world with the ID `\(worldID)` does not exist."
         }
     }
 }

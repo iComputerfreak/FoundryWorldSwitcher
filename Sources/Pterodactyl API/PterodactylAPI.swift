@@ -66,17 +66,17 @@ actor PterodactylAPI {
         // We now have to read the contents of the worlds' world.json file and parse it as JSON
         var worlds: [FoundryWorld] = []
         for worldID in worldIDs {
-            worlds.append(try await world(for: worldID))
+            worlds.append(try await fileContents(file: "/data/Data/worlds/\(worldID)/world.json", as: FoundryWorld.self))
         }
         self.cachedWorlds = worlds
         return worlds
     }
     
     func world(for id: String) async throws -> FoundryWorld {
-        if let world = cachedWorlds?.first(where: { $0.id == id }) {
-            return world
+        guard let world = try await worlds().first(where: { $0.id == id }) else {
+            throw PterodactylAPIError.worldDoesNotExist(worldID: id)
         }
-        return try await fileContents(file: "/data/Data/worlds/\(id)/world.json", as: FoundryWorld.self)
+        return world
     }
     
     func startServer() async throws {
