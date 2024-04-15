@@ -55,12 +55,12 @@ Restarts the Foundry server without switching the world
 `/switchworld world_id:<foundry_world_id>`  
 Restarts the Foundry VTT server, switching to the given world. Fails if the world is currently locked.
 
-`/schedule role:<server_role> world:<foundry_world_id> date:<date> time:<time>`  
+`/book event world_id:<foundry_world_id> date:<date> time:<time> location:<voice_channel> topic:<title> role:<server_role>`  
 Creates a new reservation for a session in the given world and notifies the players about the new session date and time.
-This command also creates a new server event for the given date and time.
+This command also creates a new server event for the given date and time (not yet implemented).
 The server is locked to the given world on the provided date (from 6 AM to 5 AM the following day).
 
-`/book world:<foundry_world_id> date:<date>`  
+`/book reservation world_id:<foundry_world_id> date:<date>`  
 Create a new reservation for a given world on a given date. Use this, if you need to prepare for a session on a given day. This command will **not** notify the players about a new session and just lock the server on that day.
 
 `/cancelbooking date:<date>`  
@@ -85,11 +85,25 @@ Restarts the Foundry VTT server, switching to the given world, even if the world
 `/lockworld <world_id>`  
 Locks the given world until 5:00 AM the next day
 
-`/unlockworld <world_id>`  
+`/unlockworld`  
 Unlocks the given world
 
 `/config`
-Change different configuration settings
+Change different bot configuration settings
+
+`/pinbookings`  
+Creates a new message with all bookings (reservations and events) that is automatically updated in the future.
+
+`/pinbookings role:<server_role>`  
+Creates a new message with all event bookings that is automatically updated in the future.
+Only shows bookings for the given role.
+
+`/pinbookings world_id:<foundry_world_id>`  
+Creates a new message with all bookings (reservations and events) that is automatically updated in the future.
+Only shows bookings for the given world.
+
+`/updatepins`  
+Manually updates all pinned booking messages.
 
 ### Configuration Options
 * pterodactyl_server_id <Server ID>
