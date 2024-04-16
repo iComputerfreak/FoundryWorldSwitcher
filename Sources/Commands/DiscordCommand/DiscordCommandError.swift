@@ -103,25 +103,25 @@ extension StringIntDoubleBool.Error: LocalizedError {
 extension Interaction.Error: LocalizedError {
     public var errorDescription: String? {
         switch self {
-        case .optionNotFoundInCommand(let name, let command):
+        case let .optionNotFoundInCommand(name, _):
             return "The option `\(name)` was not found. Please specify it."
         
-        case .optionNotFoundInOption(let name, let parentOption):
+        case let .optionNotFoundInOption(name, _):
             return "The option `\(name)` was not found. Please specify it."
         
-        case .optionNotFoundInOptions(let name, let options):
+        case let .optionNotFoundInOptions(name, _):
             return "The option `\(name)` was not found. Please specify it."
         
-        case .componentNotFoundInComponents(let customId, let components):
+        case let .componentNotFoundInComponents(customId, _):
             return "The component with custom id `\(customId)` was not found in the components."
         
-        case .componentNotFoundInActionRow(let customId, let actionRow):
+        case let .componentNotFoundInActionRow(customId, _):
             return "The component with custom id `\(customId)` was not found in the action row."
         
-        case .componentNotFoundInActionRows(let customId, let actionRows):
+        case let .componentNotFoundInActionRows(customId, _):
             return "The component with custom id `\(customId)` was not found in the action rows."
         
-        case .componentWasNotOfKind(let kind, let component):
+        case let .componentWasNotOfKind(kind, _):
             return "The component was not of kind `\(kind)`."
         }
     }
