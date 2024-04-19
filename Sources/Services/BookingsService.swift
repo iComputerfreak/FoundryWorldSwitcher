@@ -61,17 +61,13 @@ actor BookingsService {
     func createBooking(_ booking: any Booking) async {
         bookings.append(booking)
         saveBookings()
-        for event in booking.associatedEvents {
-            await scheduler.schedule(event)
-        }
+        await scheduler.schedule(booking.associatedEvents)
     }
     
     /// Deletes the given booking from the store and unqueues any associated events
     func deleteBooking(_ booking: any Booking) async {
         removeBooking(id: booking.id)
-        for event in booking.associatedEvents {
-            await scheduler.unqueue(event)
-        }
+        await scheduler.unqueue(booking.associatedEvents)
     }
     
     /// Deletes the booking with the given ID from the store

@@ -21,6 +21,14 @@ struct EventBooking: Booking {
     var topic: String
     var associatedEvents: [SchedulerEvent] = []
     
+    var sessionReminderTime: Date {
+        date.addingTimeInterval(-BotConfig.shared.sessionReminderTime)
+    }
+    
+    var sessionStartReminderTime: Date {
+        date.addingTimeInterval(-BotConfig.shared.sessionStartReminderTime)
+    }
+    
     /// Creates a new booking with associated event information and a player role to notify before the event starts
     init(
         date: Date,
@@ -51,12 +59,11 @@ struct EventBooking: Booking {
                 eventType: .removeBooking(id: id)
             ),
         ]
-        let initialReminderDate = date.addingTimeInterval(-BotConfig.shared.sessionReminderTime)
         // Only add the initial reminder, if it lies in the future
-        if initialReminderDate > .now {
+        if sessionReminderTime > .now {
             associatedEvents.append(
                 SchedulerEvent(
-                    dueDate: initialReminderDate,
+                    dueDate: sessionReminderTime,
                     eventType: .sendSessionReminder(bookingID: id)
                 )
             )
@@ -64,7 +71,7 @@ struct EventBooking: Booking {
         if BotConfig.shared.shouldNotifyAtSessionStart {
             associatedEvents.append(
                 SchedulerEvent(
-                    dueDate: date.addingTimeInterval(-BotConfig.shared.sessionStartReminderTime),
+                    dueDate: sessionStartReminderTime,
                     eventType: .sendSessionStartsReminder(bookingID: id)
                 )
             )
