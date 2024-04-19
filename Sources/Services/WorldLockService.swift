@@ -32,6 +32,7 @@ class WorldLockService {
     }
     
     func unlockWorldSwitching() throws {
+        guard isWorldSwitchingLocked() else { return }
         try fileManager.removeItem(at: Self.lockFilePath)
     }
     
