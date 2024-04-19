@@ -55,6 +55,9 @@ struct PinBookingsCommand: DiscordCommand {
             )
         )
         
+        // Delete the interaction response, so only the newly created message remains
+        try await bot.client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
+        
         // Immediately update/create the message
         try await bookingsService.updatePinnedBookings()
     }
