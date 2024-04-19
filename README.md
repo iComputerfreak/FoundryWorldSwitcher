@@ -1,6 +1,7 @@
 #  Foundry World Switcher
 
 Available as a Docker Hub image at [icomputerfreak/foundry-world-switcher](https://hub.docker.com/r/icomputerfreak/foundry-world-switcher).
+Make sure to set the environment variable `TZ` inside the docker container to your timezone (e.g., `TZ=Europe/Berlin`), to avoid the scheduled bot messages being delivered at UTC time.
 
 This is a Discord bot written purely in Swift that allows one to change the currently active world on their [Foundry VTT](https://foundryvtt.com) server.
 The bot requires Foundry to be run in a [Pterodactyl](https://pterodactyl.io) server instance.
@@ -66,6 +67,10 @@ Create a new reservation for a given world on a given date. Use this, if you nee
 `/cancelbooking date:<date>`  
 Cancel a reservation for a given date.  
 **Note**: Only users with `Admin` permissions can cancel reservations made by other users.
+
+`/reschedulebooking date:<date> new_date:<date> new_time:<time>`  
+Reschedule a reservation for a given date to a new date and time.
+**Note**: Only users with `Admin` permissions can reschedule reservations made by other users.
 
 ### Admin Commands
 These commands require the permission level `Admin`.

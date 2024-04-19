@@ -29,6 +29,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case invalidConfigKey(String)
     case wrongDurationFormat(String)
     case noChannel
+    case rescheduleBookingPermissionDenied(required: BotPermissionLevel)
     
     var errorDescription: String? {
         switch self {
@@ -91,6 +92,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case .noChannel:
             return "There is no channel associated with the command."
+            
+        case let .rescheduleBookingPermissionDenied(required: required):
+            return "You need to have the `\(required.description)` permission level to reschedule bookings of other users."
         }
     }
 }
