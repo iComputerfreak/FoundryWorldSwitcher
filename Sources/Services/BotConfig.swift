@@ -23,7 +23,8 @@ enum ConfigKey: String, CaseIterable {
 }
 
 struct PinnedBookingMessage: Codable {
-    let token: String
+    let channelID: ChannelSnowflake
+    let messageID: MessageSnowflake
     let worldID: String?
     let role: RoleSnowflake?
 }

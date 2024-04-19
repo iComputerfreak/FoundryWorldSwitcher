@@ -38,8 +38,22 @@ struct PinBookingsCommand: DiscordCommand {
         let world = try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
         let role = applicationCommand.option(named: "role")?.value?.stringValue.flatMap(RoleSnowflake.init)
         
-        // Save the token for updating later
-        BotConfig.shared.pinnedBookingMessages.append(.init(token: interaction.token, worldID: world?.id, role: role))
+        // We cannot use the normal respond mechanic, as this will give us a temporary interaction token
+        // that will be invalidated later
+        guard let channelID = interaction.channel?.id else {
+            throw DiscordCommandError.noChannel
+        }
+        
+        // Create an empty message and save its ID
+        let pinnedMessage = try await bot.client.createMessage(channelId: channelID, payload: .init()).decode()
+        BotConfig.shared.pinnedBookingMessages.append(
+            .init(
+                channelID: pinnedMessage.channel_id,
+                messageID: pinnedMessage.id,
+                worldID: world?.id,
+                role: role
+            )
+        )
         
         // Immediately update/create the message
         try await bookingsService.updatePinnedBookings()

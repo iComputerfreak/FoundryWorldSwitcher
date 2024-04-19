@@ -28,6 +28,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case dateIsInThePast(Date)
     case invalidConfigKey(String)
     case wrongDurationFormat(String)
+    case noChannel
     
     var errorDescription: String? {
         switch self {
@@ -87,6 +88,9 @@ enum DiscordCommandError: Error, LocalizedError {
         
         case let .wrongDurationFormat(value):
             return "'\(value)' is not a valid duration. Please use the format `1h 2m`."
+            
+        case .noChannel:
+            return "There is no channel associated with the command."
         }
     }
 }
