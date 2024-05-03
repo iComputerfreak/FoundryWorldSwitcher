@@ -106,9 +106,11 @@ for await event in await bot.events {
     EventHandler(event: event, client: bot.client, permissionsHandler: permissionsHandler).handle()
     // We receive heartbeats every ~45 seconds, so this is a good time to call the scheduler and check for
     // events to trigger
-    do {
-        try await scheduler.update()
-    } catch {
-        logger.error("Error running scheduler: \(error)")
+    Task(priority: .background) {
+        do {
+            try await scheduler.update()
+        } catch {
+            logger.error("Error running scheduler: \(error.localizedDescription)\n\(error)")
+        }
     }
 }
