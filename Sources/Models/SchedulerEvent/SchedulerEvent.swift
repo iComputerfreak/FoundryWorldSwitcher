@@ -110,12 +110,13 @@ extension SchedulerEvent {
             Self.logger.warning("There is no reminder channel set up in which to send the message.")
             return
         }
+        let durationString = booking.date.formatted(.relative(presentation: .numeric, unitsStyle: .wide))
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
             channelId: reminderChannel,
             payload: .init(
                 content: """
-                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts now in channel \(DiscordUtils.mention(id: booking.location)).
+                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts \(durationString) in channel \(DiscordUtils.mention(id: booking.location)).
                 """.trimmingCharacters(in: .whitespacesAndNewlines),
                 embeds: [Utils.createBookingEmbed(for: booking)]
             )
