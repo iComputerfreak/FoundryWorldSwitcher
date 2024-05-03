@@ -43,7 +43,7 @@ struct LockWorldCommand: DiscordCommand {
             .map(DurationParser.duration(from:))
         
         if let worldID = world?.id {
-            try await PterodactylAPI.shared.changeWorld(to: worldID)
+            try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
         }
         
         try WorldLockService.shared.lockWorldSwitching()
