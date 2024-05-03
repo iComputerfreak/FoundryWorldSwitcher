@@ -70,7 +70,7 @@ struct SwitchWorldCommand: DiscordCommand {
             token: interaction.token,
             message: "Switching to the world `\(world.title)`..."
         )
-        try await PterodactylAPI.shared.changeWorld(to: world.id)
+        try await PterodactylAPI.shared.changeWorld(to: world.id, restart: true)
         
         try await client.respond(
             token: interaction.token,

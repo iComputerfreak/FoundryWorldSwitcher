@@ -95,11 +95,14 @@ actor PterodactylAPI {
         let _: Data = try await post(path: Paths.serverPowerAction(), body: ["signal": action.rawValue])
     }
     
-    func changeWorld(to worldID: String) async throws {
+    func changeWorld(to worldID: String, restart: Bool) async throws {
         let _: Data = try await put(path: Paths.modifyStartupVariable(), body: [
             "key": "WORLD_NAME",
             "value": worldID
         ])
+        if restart {
+            try await restartServer()
+        }
     }
     
     func currentWorld() async throws -> FoundryWorld {

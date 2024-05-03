@@ -56,7 +56,7 @@ extension SchedulerEvent {
     private func handleLockWorldSwitching(worldID: String) async throws {
         Self.logger.debug("Locking world '\(worldID)'")
         // Lock the world with the given ID
-        try await PterodactylAPI.shared.changeWorld(to: worldID)
+        try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
         try WorldLockService.shared.lockWorldSwitching()
     }
 }
