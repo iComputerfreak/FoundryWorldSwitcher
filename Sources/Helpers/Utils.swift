@@ -66,14 +66,14 @@ extension Utils {
         var minutesString: String {
             switch self {
             case .short: return "m"
-            case .long: return "minutes"
+            case .long: return " minutes"
             }
         }
         
         var hoursString: String {
             switch self {
             case .short: return "h"
-            case .long: return "hours"
+            case .long: return " hours"
             }
         }
     }
