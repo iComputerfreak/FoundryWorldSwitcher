@@ -110,10 +110,8 @@ extension SchedulerEvent {
             Self.logger.warning("There is no reminder channel set up in which to send the message.")
             return
         }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        formatter.dateTimeStyle = .numeric
-        let durationString = formatter.localizedString(fromTimeInterval: BotConfig.shared.sessionStartReminderTime)
+        
+        let durationString = Utils.durationString(for: BotConfig.shared.sessionStartReminderTime, unitStyle: .long)
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
             channelId: reminderChannel,

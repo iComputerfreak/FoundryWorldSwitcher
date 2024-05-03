@@ -59,14 +59,33 @@ enum Utils {
 
 // MARK: - Formatting
 extension Utils {
+    enum UnitStyle {
+        case short
+        case long
+        
+        var minutesString: String {
+            switch self {
+            case .short: return "m"
+            case .long: return "minutes"
+            }
+        }
+        
+        var hoursString: String {
+            switch self {
+            case .short: return "h"
+            case .long: return "hours"
+            }
+        }
+    }
+    
     /// Returns a duration string for a given time interval
-    static func durationString(for duration: TimeInterval) -> String {
+    static func durationString(for duration: TimeInterval, unitStyle: UnitStyle = .short) -> String {
         let seconds = Int(duration.rounded())
         let minutes = (seconds / 60) % 60
         let hours = seconds / 3600
-        var string = "\(minutes)m"
+        var string = "\(minutes)\(unitStyle.minutesString)"
         if hours > 0 {
-            string = "\(hours)h \(string)"
+            string = "\(hours)\(unitStyle.hoursString) \(string)"
         }
         return string
     }
