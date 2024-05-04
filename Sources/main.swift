@@ -10,9 +10,12 @@ import DiscordBM
 import AsyncHTTPClient
 import Logging
 
+// The current version printed to the console on start
+let version: String = "1.7.0"
+
 private let logger = Logger(label: "Main")
 
-logger.info("Started bot with data path \(Utils.dataURL.path)")
+logger.info("Started bot v\(version) with data path \(Utils.dataURL.path)")
 
 if BotConfig.shared.pterodactylHost.isEmpty {
     logger.error("The Pterodactyl host is not set. Please set it in the config file.")
