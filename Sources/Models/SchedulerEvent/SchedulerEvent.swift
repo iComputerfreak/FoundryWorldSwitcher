@@ -117,7 +117,7 @@ extension SchedulerEvent {
             channelId: reminderChannel,
             payload: .init(
                 content: """
-                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts \(durationString) in channel \(DiscordUtils.mention(id: booking.location)).
+                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts in \(durationString) in channel \(DiscordUtils.mention(id: booking.location)).
                 """.trimmingCharacters(in: .whitespacesAndNewlines),
                 embeds: [Utils.createBookingEmbed(for: booking)]
             )
