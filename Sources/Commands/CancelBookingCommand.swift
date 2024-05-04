@@ -55,6 +55,12 @@ struct CancelBookingCommand: DiscordCommand {
         }
         
         let bookingEmbed = try await Utils.createBookingEmbed(for: booking)
+        
+        // MARK: Delete the booking
+        // If the booking already started, we have to unlock world switching as well.
+        if booking.bookingIntervalStartDate < .now && .now < booking.bookingIntervalEndDate {
+            try WorldLockService.shared.unlockWorldSwitching()
+        }
         await bookingsService.deleteBooking(booking)
         
         try await client.respond(
