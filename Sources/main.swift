@@ -106,7 +106,12 @@ for await event in await bot.events {
     EventHandler(event: event, client: bot.client, permissionsHandler: permissionsHandler).handle()
     // We receive heartbeats every ~45 seconds, so this is a good time to call the scheduler and check for
     // events to trigger
-    Task(priority: .background) {
+    #if DEBUG
+    let schedulerPriority = TaskPriority.userInitiated
+    #else
+    let schedulerPriority = TaskPriority.background
+    #endif
+    Task(priority: schedulerPriority) {
         do {
             try await scheduler.update()
         } catch {
