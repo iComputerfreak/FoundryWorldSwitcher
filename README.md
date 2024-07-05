@@ -110,6 +110,12 @@ Only shows bookings for the given world.
 `/updatepins`  
 Manually updates all pinned booking messages.
 
+`/listpins`  
+List all pinned booking messages.
+
+`/updatecache`  
+Updates all cached worlds.
+
 ### Configuration Options
 * pterodactyl_server_id <Server ID>
 * schedule_channel <Channel ID>
