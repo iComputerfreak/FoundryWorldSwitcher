@@ -268,3 +268,16 @@ actor PterodactylAPI {
         }
     }
 }
+
+// MARK: - Caching
+extension PterodactylAPI {
+    func updateCache() async throws {
+        invalidateCache()
+        // Update the cache by fetching the worlds
+        _ = try await worlds()
+    }
+    
+    func invalidateCache() {
+        worldsTTL = nil
+    }
+}

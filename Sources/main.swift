@@ -97,6 +97,9 @@ let permissionsHandler = PermissionsHandler(cache: cache)
 // MARK: -  Register commands
 try await DiscordCommands.register(bot: bot)
 
+// MARK: - Initialize PterodactylAPI Cache
+try await PterodactylAPI.shared.updateCache()
+
 // MARK: - Start the bot
 /// Handle each event in the `bot.events` async stream
 /// This stream will never end, therefore preventing your executable from exiting
