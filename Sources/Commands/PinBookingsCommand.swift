@@ -49,6 +49,7 @@ struct PinBookingsCommand: DiscordCommand {
             channelId: channelID,
             payload: .init(content: "Loading bookings...")
         ).decode()
+        logger.info("Pinning message \(pinnedMessage.id.rawValue) in channel \(pinnedMessage.channel_id.rawValue).")
         BotConfig.shared.pinnedBookingMessages.append(
             .init(
                 channelID: pinnedMessage.channel_id,

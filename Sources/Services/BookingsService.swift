@@ -10,6 +10,10 @@ import Foundation
 import Logging
 
 actor BookingsService {
+    private enum Constants {
+        static let notFoundStatusCode: UInt = 404
+    }
+
     static var logger: Logger = .init(label: String(describing: BookingsService.self))
     static var reservationBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("reservation_bookings.json")
     static var eventBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("event_bookings.json")
@@ -127,6 +131,8 @@ extension BookingsService {
                 )
             }
         }
+        
+        var errors: [Error] = []
         for message in messages {
             let filteredBookings = bookings
                 .filter { booking in
@@ -146,11 +152,36 @@ extension BookingsService {
                     }
                     return eventBooking.campaignRoleSnowflake == role
                 }
-            try await bot.client.updateMessage(
-                channelId: message.channelID,
-                messageId: message.messageID,
-                payload: payload(for: filteredBookings)
-            ).guardSuccess()
+            
+            do {
+                try await bot.client.updateMessage(
+                    channelId: message.channelID,
+                    messageId: message.messageID,
+                    payload: payload(for: filteredBookings)
+                ).guardSuccess()
+            } catch let error as DiscordHTTPError {
+                if
+                    case let DiscordHTTPError.badStatusCode(response) = error,
+                    response.status.code == Constants.notFoundStatusCode
+                {
+                    Self.logger.error(
+                        // swiftlint:disable:next line_length
+                        "Received 404 error while updating pinned bookings for message id \(message.messageID.rawValue) in channel \(message.channelID.rawValue). Removing it from the list of pinned messages."
+                    )
+                    BotConfig.shared.pinnedBookingMessages.removeAll(where: { $0.messageID == message.messageID && $0.channelID == message.channelID })
+                }
+            } catch {
+                // Collect all other errors and throw them after updating the other messages.
+                // We don't want a single error preventing other messages from receiving updates.
+                errors.append(error)
+            }
+        }
+        
+        // If we had any errors, throw them
+        if errors.count > 1 {
+            throw CompoundError(errors: errors)
+        } else if let error = errors.first {
+            throw error
         }
     }
 }
