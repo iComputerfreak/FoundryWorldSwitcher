@@ -169,6 +169,9 @@ extension BookingsService {
                         "Received 404 error while updating pinned bookings for message id \(message.messageID.rawValue) in channel \(message.channelID.rawValue). Removing it from the list of pinned messages."
                     )
                     BotConfig.shared.pinnedBookingMessages.removeAll(where: { $0.messageID == message.messageID && $0.channelID == message.channelID })
+                } else {
+                    // Rethrow non-404 errors
+                    throw error
                 }
             } catch {
                 // Collect all other errors and throw them after updating the other messages.
