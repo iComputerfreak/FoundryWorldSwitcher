@@ -22,8 +22,9 @@ COPY ./Package.* ./
 RUN swift package resolve --skip-update \
         $([ -f ./Package.resolved ] && echo "--force-resolved-versions" || true)
 
-# Copy entire repo into container now
-COPY . .
+# Copy the remaining code into the container now
+# We don't copy everything, so we can re-use this layer even if a non-source file in the root folder changes
+COPY ./Sources ./
 
 # Build everything, with optimizations
 RUN swift build -c release --static-swift-stdlib
