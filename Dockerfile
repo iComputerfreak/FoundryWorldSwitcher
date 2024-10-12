@@ -1,7 +1,7 @@
 # ================================
 # Build image
 # ================================
-FROM swift:5.9-jammy as build
+FROM swift:6.0-jammy as build
 
 # Install OS updates
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -41,7 +41,7 @@ RUN find -L "$(swift build --package-path /build -c release --show-bin-path)/" -
 # ================================
 # Run image
 # ================================
-FROM swift:5.9-jammy-slim
+FROM swift:6.0-jammy-slim
 
 # Make sure all system packages are up to date, and install only essential packages.
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
