@@ -79,5 +79,5 @@ USER container:container
 RUN mkdir -p /home/container/data
 
 # Start the bot
-ENTRYPOINT ["./FoundryWorldSwitcher"]
-CMD []
+COPY ./entrypoint.sh /entrypoint.sh
+CMD ["/bin/bash", "/entrypoint.sh"]
