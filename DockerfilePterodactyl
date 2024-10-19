@@ -24,7 +24,7 @@ RUN swift package resolve --skip-update \
 
 # Copy the remaining code into the container now
 # We don't copy everything, so we can re-use this layer even if a non-source file in the root folder changes
-COPY ./Sources ./
+COPY ./Sources ./Sources
 
 # Build everything, with optimizations
 RUN swift build -c release --static-swift-stdlib
