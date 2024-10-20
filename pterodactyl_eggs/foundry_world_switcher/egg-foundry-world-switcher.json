@@ -1,0 +1,152 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2024-10-20T17:39:59+02:00",
+    "name": "Foundry World Switcher",
+    "author": "noreply@games.jonasfrey.de",
+    "description": "A Discord bot to switch the currently active Foundry VTT world in a Pterodactyl server instance.",
+    "features": null,
+    "docker_images": {
+        "Ubuntu": "ghcr.io\/parkervcp\/yolks:ubuntu"
+    },
+    "file_denylist": [],
+    "startup": ".\/FoundryWorldSwitcher",
+    "config": {
+        "files": "{\r\n    \"data\/botConfig.json\": {\r\n        \"parser\": \"json\",\r\n        \"find\": {\r\n            \"reminderChannel\": \"{{env.REMINDER_CHANNEL}}\",\r\n            \"bookingIntervalEndTime\": \"{{env.BOOKING_END_TIME}}\",\r\n            \"sessionStartReminderTime\": \"{{env.SESSION_START_REMINDER}}\",\r\n            \"pterodactylServerID\": \"{{env.SERVER_ID}}\",\r\n            \"bookingIntervalStartTime\": \"{{env.BOOKING_START_TIME}}\",\r\n            \"sessionLength\": \"{{env.SESSION_LENGTH}}\",\r\n            \"shouldNotifyAtSessionStart\": \"{{env.NOTIFY_AT_SESSION_START}}\",\r\n            \"sessionReminderTime\": \"{{env.SESSION_REMINDER}}\",\r\n            \"pterodactylHost\": \"{{env.PTERODACTYL_HOST}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Bot started successfully.\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n\r\necho \"Cleaning up...\"\r\nif [[ -f \/mnt\/server\/FoundryWorldSwitcher ]]; then\r\n    rm -f \/mnt\/server\/FoundryWorldSwitcher\r\nfi\r\n\r\necho\r\necho \"Starting installation. This might take a very long time!\"\r\necho\r\n\r\nif [[ ! -d \/mnt\/server ]]; then\r\n    mkdir -p \/mnt\/server\r\nfi\r\n\r\nset -e\r\n\r\necho\r\necho Installing dependencies...\r\nexport DEBIAN_FRONTEND=noninteractive\r\nexport DEBCONF_NONINTERACTIVE_SEEN=true\r\napt-get -q update\r\napt-get -q dist-upgrade -y\r\napt-get -q install -y ca-certificates tzdata libcurl4\r\nrm -r \/var\/lib\/apt\/lists\/*\r\n\r\necho\r\necho \"Fetching Repository...\"\r\nmkdir \/build\r\ncd \/build\r\ngit clone https:\/\/github.com\/iComputerfreak\/FoundryWorldSwitcher\r\ncd FoundryWorldSwitcher\r\ngit fetch --tags\r\nLATEST_TAG=$(git describe --tags \"$(git rev-list --tags --max-count=1)\")\r\ngit checkout $LATEST_TAG\r\n\r\necho\r\necho \"Building executable...\"\r\nswift build -c release --static-swift-stdlib\r\n\r\necho\r\necho \"Deploying Executable...\"\r\nBIN_PATH=\"$(swift build --package-path .build -c release --show-bin-path)\"\r\ncp \"$BIN_PATH\/FoundryWorldSwitcher\" \/mnt\/server\/\r\nfind -L \"$BIN_PATH\/\" -regex '.*\\.resources$' -exec cp -Ra {} \/mnt\/server\/ \\;\r\n\r\n# Create a new data directory\r\nif [[ ! -d \/mnt\/server\/data ]]; then\r\n    mkdir -p \/mnt\/server\/data\r\nfi\r\n\r\necho \"Installation finished successfully.\"",
+            "container": "swift:6.0-jammy",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Reminder Channel ID",
+            "description": "The Channel ID of the text channel where to post session reminders. Leave this option empty to disable session reminders in general.",
+            "env_variable": "REMINDER_CHANNEL",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "string|max:30",
+            "field_type": "text"
+        },
+        {
+            "name": "Foundry VTT Server ID",
+            "description": "The ID of the Pterodactyl Server running the Foundry VTT instance to control",
+            "env_variable": "SERVER_ID",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:40",
+            "field_type": "text"
+        },
+        {
+            "name": "Pterodactyl Host",
+            "description": "The host name of the pterodactyl panel (not the wings agent)",
+            "env_variable": "PTERODACTYL_HOST",
+            "default_value": "https:\/\/example.org",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Notify at Session Start",
+            "description": "Whether the bot should notify users by sending a second message in the reminder channel before a session starts.",
+            "env_variable": "NOTIFY_AT_SESSION_START",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Booking Start Time",
+            "description": "The time in seconds from midnight when a booking starts. For example, if this value is set to 3600, a booked world will be locked at 1 AM on the day of the booking.",
+            "env_variable": "BOOKING_START_TIME",
+            "default_value": "21600",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|gte:0|lt:86400",
+            "field_type": "text"
+        },
+        {
+            "name": "Booking End Time",
+            "description": "The time in seconds from midnight when a booking ends. For example, if this value is set to 79200 (22 * 60 * 60), a booked world will be unlocked at 10 PM on the day of the booking.",
+            "env_variable": "BOOKING_END_TIME",
+            "default_value": "82800",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|gte:0|lt:86400",
+            "field_type": "text"
+        },
+        {
+            "name": "Session Reminder",
+            "description": "The duration in minutes how much before a booking the players should be reminded of the session. This time is subtracted from the actual booked session date and time to calculate the reminder date and time.",
+            "env_variable": "SESSION_REMINDER",
+            "default_value": "172800",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|gte:0|lte:1209600",
+            "field_type": "text"
+        },
+        {
+            "name": "Session Start Reminder",
+            "description": "The duration in minutes how much before a booking the players should be reminded for the second time. This time is subtracted from the actual booked session date and time to calculate the reminder date and time.",
+            "env_variable": "SESSION_START_REMINDER",
+            "default_value": "300",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|gte:0|lte:86400",
+            "field_type": "text"
+        },
+        {
+            "name": "Session Length",
+            "description": "The length of a usual session in minutes. This value is currently not used but could be used to create server events in the future.",
+            "env_variable": "SESSION_LENGTH",
+            "default_value": "14400",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|gte:0|lt:86400",
+            "field_type": "text"
+        },
+        {
+            "name": "Discord Bot Token",
+            "description": "The token of the Discord application.",
+            "env_variable": "FOUNDRY_BOT_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:80",
+            "field_type": "text"
+        },
+        {
+            "name": "Pterodactyl API Key",
+            "description": "The API Key for the Foundry VTT server.\r\n\r\nMake sure you give the API key the following permissions:\r\nControl: START, STOP, RESTART\r\nFile: READ, READ-CONTENT\r\nStartup: READ, UPDATE",
+            "env_variable": "FOUNDRY_PTERODACTYL_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:80",
+            "field_type": "text"
+        },
+        {
+            "name": "Time Zone",
+            "description": "The time zone the bot should use to determine when to send reminders.\r\nExample: Europe\/Berlin",
+            "env_variable": "TZ",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:30",
+            "field_type": "text"
+        }
+    ]
+}
