@@ -129,42 +129,83 @@ class BotConfig: Savable {
             String.self,
             forKey: .pterodactylHost
         ) ?? Self.default.pterodactylHost
+        
         self.pterodactylServerID = try container.decodeIfPresent(
             String.self,
             forKey: .pterodactylServerID
         ) ?? Self.default.pterodactylServerID
+        
         self.sessionLength = try container.decodeIfPresent(
             TimeInterval.self,
             forKey: .sessionLength
         ) ?? Self.default.sessionLength
+        
         self.bookingIntervalStartTime = try container.decodeIfPresent(
             TimeInterval.self,
             forKey: .bookingIntervalStartTime
         ) ?? Self.default.bookingIntervalStartTime
+        
         self.bookingIntervalEndTime = try container.decodeIfPresent(
             TimeInterval.self,
             forKey: .bookingIntervalEndTime
         ) ?? Self.default.bookingIntervalEndTime
+        
         self.sessionReminderTime = try container.decodeIfPresent(
             TimeInterval.self,
             forKey: .sessionReminderTime
         ) ?? Self.default.sessionReminderTime
-        self.shouldNotifyAtSessionStart = try container.decodeIfPresent(
+        
+        // Decode either from a JSON bool or a JSON integer
+        // Note: Decoding from int is needed for compatibility with Pterodactyl, which seems to not be able to insert JSON bools into the config.
+        self.shouldNotifyAtSessionStart = try Self.decodeOneOrOther(
             Bool.self,
-            forKey: .shouldNotifyAtSessionStart
-        ) ?? Self.default.shouldNotifyAtSessionStart
+            or: Int.self,
+            forKey: CodingKeys.shouldNotifyAtSessionStart,
+            defaultValue: Self.default.shouldNotifyAtSessionStart,
+            from: container,
+            converter: { $0 == 1 }
+        )
+        
         self.sessionStartReminderTime = try container.decodeIfPresent(
             TimeInterval.self,
             forKey: .sessionStartReminderTime
         ) ?? Self.default.sessionStartReminderTime
-        self.reminderChannel = try container.decodeIfPresent(
-            ChannelSnowflake.self,
-            forKey: .reminderChannel
-        ) ?? Self.default.reminderChannel
+        
+        self.reminderChannel = try Self.decodeOneOrOther(
+            ChannelSnowflake?.self,
+            or: Int.self,
+            forKey: CodingKeys.reminderChannel,
+            defaultValue: Self.default.reminderChannel,
+            from: container,
+            converter: { ChannelSnowflake("\($0)") }
+        )
+        
         self.pinnedBookingMessages = try container.decodeIfPresent(
             [PinnedBookingMessage].self,
             forKey: .pinnedBookingMessages
         ) ?? Self.default.pinnedBookingMessages
+    }
+    
+    private static func decodeOneOrOther<T1: Decodable, T2: Decodable, Key: CodingKey>(
+        _ type1: T1.Type,
+        or type2: T2.Type,
+        forKey key: Key,
+        defaultValue: T1,
+        from container: KeyedDecodingContainer<Key>,
+        converter: (T2) -> T1
+    ) throws -> T1 {
+        do {
+            return try container.decodeIfPresent(T1.self, forKey: key) ?? defaultValue
+        } catch let originalError {
+            // Try decoding as T2 instead
+            do {
+                let value = try container.decodeIfPresent(T2.self, forKey: key)
+                return value.flatMap(converter) ?? defaultValue
+            } catch {
+                // When both decoding as T1, as well as decoding as T2 fails, rethrow the original error
+                throw originalError
+            }
+        }
     }
 }
 

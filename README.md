@@ -1,12 +1,24 @@
 #  Foundry World Switcher
 
-Available as a Docker Hub image at [icomputerfreak/foundry-world-switcher](https://hub.docker.com/r/icomputerfreak/foundry-world-switcher).
+This is a Discord bot written purely in Swift that allows one to change the currently active world on their [Foundry VTT](https://foundryvtt.com) server.
+
+## Installation
+You can install this bot as a standalone docker container or as a Pterodactyl server.
+
+### Standalone Docker Container
+This bot is available as a Docker Hub image at [icomputerfreak/foundry-world-switcher](https://hub.docker.com/r/icomputerfreak/foundry-world-switcher).
 Make sure to set the environment variable `TZ` inside the docker container to your timezone (e.g., `TZ=Europe/Berlin`), to avoid the scheduled bot messages being delivered at UTC time.
 
-This is a Discord bot written purely in Swift that allows one to change the currently active world on their [Foundry VTT](https://foundryvtt.com) server.
+### Pterodactyl Server
+To install this bot as a Pterodactyl server, import the egg located at `pterodactyl_eggs/foundry_world_switcher` into Pterodactyl and create a server for it. Everything you need to configure should be available under "Startup".
+
+To update the bot, simply re-install the server. This should not remove any configurations or data, but better make a backup before to be sure.
+
+## Configuration
+
 The bot requires Foundry to be run in a [Pterodactyl](https://pterodactyl.io) server instance.
 
-The modified Pterodactyl egg found in `pterodactyl_egg` is taken directly from [parkervcp/eggs](https://github.com/parkervcp/eggs/tree/master/game_eggs/FoundryVTT) and I modified it by adding a new startup variable called `WORLD_NAME`.
+The modified Pterodactyl egg for running Foundry VTT can be found in `pterodactyl_eggs/foundry_vtt` and is taken directly from [parkervcp/eggs](https://github.com/parkervcp/eggs/tree/master/game_eggs/FoundryVTT) and I modified it by adding a new startup variable called `WORLD_NAME`.
 This startup variable is used to restart the Foundry server, immediately starting a given world when its online.
 
 The Discord bot itself manages the Foundry server via the Pterodactyl API by reading files, changing the startup variable and restarting the server.
@@ -47,14 +59,14 @@ Shows a list of all future reservations
 ### Dungeon Master Commands
 These commands require the permission level `Dungeon Master`.
 
-`/worlds`  
+`/listworlds`  
 Shows a list of all Foundry worlds together with their world IDs
 
-`/restart`  
+`/restartworld`  
 Restarts the Foundry server without switching the world
 
-`/switchworld world_id:<foundry_world_id>`  
-Restarts the Foundry VTT server, switching to the given world. Fails if the world is currently locked.
+`/switchworld world_id:<foundry_world_id> force:[true|false]`  
+Restarts the Foundry VTT server, switching to the given world. Unless `force` is set to `true`, this command fails if the world is currently locked.
 
 `/book event world_id:<foundry_world_id> date:<date> time:<time> location:<voice_channel> topic:<title> role:<server_role>`  
 Creates a new reservation for a session in the given world and notifies the players about the new session date and time.
@@ -71,6 +83,9 @@ Cancel a reservation for a given date.
 `/reschedulebooking date:<date> new_date:<date> new_time:<time>`  
 Reschedule a reservation for a given date to a new date and time.
 **Note**: Only users with `Admin` permissions can reschedule reservations made by other users.
+
+`/lockstate`  
+Returns the current state of the world switching lock
 
 ### Admin Commands
 These commands require the permission level `Admin`.
@@ -116,9 +131,21 @@ List all pinned booking messages.
 `/updatecache`  
 Updates all cached worlds.
 
+`/eventqueue`  
+Debugging command to show the current event scheduler queue.
+
 ### Configuration Options
-* pterodactyl_server_id <Server ID>
-* schedule_channel <Channel ID>
-* session_notifications_channel <Channel ID>
-* session_reminder_time <days> (0 to disable)
+
+You can also use the `/config` command to view and update these values.
+
+* `pterodactylHost`: The hostname of the Pterodactyl panel
+* `pterodactylServerID`: The ID of the server on the Pterodactyl panel
+* `sessionLength`: The length of a session
+* `bookingIntervalStartTime`: The time at which the booking starts in seconds from midnight
+* `bookingIntervalEndTime`: The time at which the booking ends in seconds from `bookingIntervalStartTime`
+* `sessionReminderTime`: The time how much in advance the bot will remind players about a session. Set to 0 to disable.
+* `shouldNotifyAtSessionStart`: Whether the bot should notify players at the start of the session
+* `sessionStartReminderTime`: The time how much in advance the bot will remind players that the session is about to start
+* `reminderChannel`: The channel where the bot will send reminders
+* `pinnedBookingMessages`: This config value is managed by the bot itself and contains references to all pinned booking messages. 
 

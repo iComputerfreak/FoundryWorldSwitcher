@@ -1,7 +1,9 @@
 # ================================
 # Build image
 # ================================
-FROM swift:5.9-jammy as build
+FROM swift:6.0-jammy as build
+
+MAINTAINER Jonas Frey, <dev@jonasfrey.de>
 
 # Install OS updates
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -20,28 +22,26 @@ COPY ./Package.* ./
 RUN swift package resolve --skip-update \
         $([ -f ./Package.resolved ] && echo "--force-resolved-versions" || true)
 
-# Copy entire repo into container
-COPY . .
+# Copy the remaining code into the container now
+# We don't copy everything, so we can re-use this layer even if a non-source file in the root folder changes
+COPY ./Sources ./Sources
 
 # Build everything, with optimizations
-RUN swift build -c release --static-swift-stdlib \
-    # Workaround for https://github.com/apple/swift/pull/68669
-    # This can be removed as soon as 5.9.1 is released, but is harmless if left in.
-    -Xlinker -u -Xlinker _swift_backtrace_isThunkFunction
+RUN swift build -c release --static-swift-stdlib
 
 # Switch to the staging area
 WORKDIR /staging
 
-# Copy main executable to staging area
+# Copy main executable to the staging area
 RUN cp "$(swift build --package-path /build -c release --show-bin-path)/FoundryWorldSwitcher" ./
 
-# Copy resources bundled by SPM to staging area
+# Copy resources bundled by SPM to the staging area
 RUN find -L "$(swift build --package-path /build -c release --show-bin-path)/" -regex '.*\.resources$' -exec cp -Ra {} ./ \;
 
 # ================================
 # Run image
 # ================================
-FROM swift:5.9-jammy-slim
+FROM swift:6.0-jammy-slim
 
 # Make sure all system packages are up to date, and install only essential packages.
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -56,23 +56,27 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
       # libxml2 \
     && rm -r /var/lib/apt/lists/*
 
-# Create a bot user and group with /app as its home directory
-RUN useradd --user-group --create-home --system --skel /dev/null --home-dir /app bot
+# Create a container user with /home/container as its home directory
+RUN adduser --disabled-password --home /home/container container
+
+# Use the container user from now on
+USER container
+ENV USER=container HOME=/home/container
 
 # Switch to the new home directory
-WORKDIR /app
+WORKDIR /home/container
 
 # Copy built executable and any staged resources from builder
-COPY --from=build --chown=bot:bot /staging /app
+COPY --from=build --chown=container:container /staging /home/container
 
 # Provide configuration needed by the built-in crash reporter and some sensible default behaviors.
 ENV SWIFT_ROOT=/usr SWIFT_BACKTRACE=enable=yes,sanitize=yes,threads=all,images=all,interactive=no
 
-# Ensure all further commands run as the bot user
-USER bot:bot
+# Ensure all further commands run as the container user
+USER container:container
 
 # Create a new data directory
-RUN mkdir -p /app/data
+RUN mkdir -p /home/container/data
 
 # Start the bot
 ENTRYPOINT ["./FoundryWorldSwitcher"]
