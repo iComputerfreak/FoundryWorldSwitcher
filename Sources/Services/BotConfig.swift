@@ -149,10 +149,17 @@ class BotConfig: Savable {
             TimeInterval.self,
             forKey: .sessionReminderTime
         ) ?? Self.default.sessionReminderTime
-        self.shouldNotifyAtSessionStart = try container.decodeIfPresent(
-            Bool.self,
-            forKey: .shouldNotifyAtSessionStart
-        ) ?? Self.default.shouldNotifyAtSessionStart
+        
+        // Decode either from a JSON bool or a JSON integer
+        // Note: Decoding from int is needed for compatibility with Pterodactyl, which seems to not be able to insert JSON bools into the config.
+        if let boolValue = try container.decodeIfPresent(Bool.self, forKey: .shouldNotifyAtSessionStart) {
+            self.shouldNotifyAtSessionStart = boolValue
+        } else if let intValue = try container.decodeIfPresent(Int.self, forKey: .shouldNotifyAtSessionStart) {
+            self.shouldNotifyAtSessionStart = intValue == 1
+        } else {
+            self.shouldNotifyAtSessionStart = Self.default.shouldNotifyAtSessionStart
+        }
+        
         self.sessionStartReminderTime = try container.decodeIfPresent(
             TimeInterval.self,
             forKey: .sessionStartReminderTime
