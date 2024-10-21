@@ -73,7 +73,7 @@ actor PterodactylAPI {
     }
     
     func world(for id: String) async throws -> FoundryWorld {
-        guard let world = try await worlds().first(where: { $0.id == id }) else {
+        guard let world = try await worlds().first(where: { $0.id.lowercased() == id.lowercased() }) else {
             throw PterodactylAPIError.worldDoesNotExist(id)
         }
         return world
