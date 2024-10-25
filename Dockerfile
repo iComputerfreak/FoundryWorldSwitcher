@@ -59,10 +59,6 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
 # Create a container user with /home/container as its home directory
 RUN adduser --disabled-password --home /home/container container
 
-# Use the container user from now on
-USER container
-ENV USER=container HOME=/home/container
-
 # Switch to the new home directory
 WORKDIR /home/container
 
@@ -72,11 +68,12 @@ COPY --from=build --chown=container:container /staging /home/container
 # Provide configuration needed by the built-in crash reporter and some sensible default behaviors.
 ENV SWIFT_ROOT=/usr SWIFT_BACKTRACE=enable=yes,sanitize=yes,threads=all,images=all,interactive=no
 
+# Create a new data directory
+RUN mkdir -p /home/container/data && chown -R container:container /home/container/data
+
 # Ensure all further commands run as the container user
 USER container:container
-
-# Create a new data directory
-RUN mkdir -p /home/container/data
+ENV USER=container HOME=/home/container
 
 # Start the bot
 ENTRYPOINT ["./FoundryWorldSwitcher"]
