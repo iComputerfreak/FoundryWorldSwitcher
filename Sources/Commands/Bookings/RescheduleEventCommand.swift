@@ -93,7 +93,8 @@ struct RescheduleEventCommand: DiscordCommand {
         
         // Save the new event date
         booking.date = newBookingDate
-        await bookingsService.removeBooking(id: booking.id)
+        // Delete and re-create to re-queue all new events
+        await bookingsService.deleteBooking(booking)
         await bookingsService.createBooking(booking)
         
         try await client.respond(
