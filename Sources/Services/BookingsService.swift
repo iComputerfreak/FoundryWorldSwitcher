@@ -9,41 +9,6 @@ import DiscordBM
 import Foundation
 import Logging
 
-// MARK: Storage structures
-private struct BookingList: Codable {
-    var events: [EventBooking]
-    var reservations: [ReservationBooking]
-    
-    var allBookings: [any Booking] {
-        get {
-            events + reservations
-        }
-        set {
-            events = newValue.compactMap { $0 as? EventBooking }
-            reservations = newValue.compactMap { $0 as? ReservationBooking }
-        }
-    }
-    
-    init(bookings: [any Booking]) {
-        self.events = bookings.compactMap { $0 as? EventBooking }
-        self.reservations = bookings.compactMap { $0 as? ReservationBooking }
-    }
-}
-
-private struct BookingsStore: Codable {
-    var bookingsList: BookingList
-    var completedBookingsList: BookingList
-    
-    init(bookings: [any Booking], completedBookings: [any Booking]) {
-        self.bookingsList = .init(bookings: bookings)
-        self.completedBookingsList = .init(bookings: completedBookings)
-    }
-    
-    init() {
-        self.init(bookings: [], completedBookings: [])
-    }
-}
-
 actor BookingsService {
     private enum Constants {
         static let notFoundStatusCode: UInt = 404
