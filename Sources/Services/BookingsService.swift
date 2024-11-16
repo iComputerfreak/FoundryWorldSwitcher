@@ -1,6 +1,6 @@
 //
 //  PersistentBookingsService.swift
-//  
+//
 //
 //  Created by Jonas Frey on 12.04.24.
 //
@@ -9,27 +9,53 @@ import DiscordBM
 import Foundation
 import Logging
 
+// MARK: Storage structures
+private struct BookingList: Codable {
+    var events: [EventBooking]
+    var reservations: [ReservationBooking]
+    
+    var allBookings: [any Booking] {
+        get {
+            events + reservations
+        }
+        set {
+            events = newValue.compactMap { $0 as? EventBooking }
+            reservations = newValue.compactMap { $0 as? ReservationBooking }
+        }
+    }
+    
+    init(bookings: [any Booking]) {
+        self.events = bookings.compactMap { $0 as? EventBooking }
+        self.reservations = bookings.compactMap { $0 as? ReservationBooking }
+    }
+}
+
+private struct BookingsStore: Codable {
+    var bookingsList: BookingList
+    var completedBookingsList: BookingList
+    
+    init(bookings: [any Booking], completedBookings: [any Booking]) {
+        self.bookingsList = .init(bookings: bookings)
+        self.completedBookingsList = .init(bookings: completedBookings)
+    }
+    
+    init() {
+        self.init(bookings: [], completedBookings: [])
+    }
+}
+
 actor BookingsService {
     private enum Constants {
         static let notFoundStatusCode: UInt = 404
+        
+        static let bookingsDataPath: URL = Utils.dataURL.appendingPathComponent("bookings.json")
     }
 
-    static var logger: Logger = .init(label: String(describing: BookingsService.self))
-    static var reservationBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("reservation_bookings.json")
-    static var eventBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("event_bookings.json")
+    static let logger: Logger = .init(label: String(describing: BookingsService.self))
     
     let scheduler: Scheduler
-    private(set) var reservationBookings: [ReservationBooking] = loadBookings(from: reservationBookingsDataPath)
-    private(set) var eventBookings: [EventBooking] = loadBookings(from: eventBookingsDataPath)
-    
-    /// All bookings
-    private(set) var bookings: [any Booking] {
-        get {
-            reservationBookings + eventBookings
-        }
-        set {
-            reservationBookings = newValue.compactMap { $0 as? ReservationBooking }
-            eventBookings = newValue.compactMap { $0 as? EventBooking }
+    private var bookings: [any Booking] {
+        didSet {
             saveBookings()
             Task { [weak self] in
                 do {
@@ -40,9 +66,14 @@ actor BookingsService {
             }
         }
     }
+    private var completedBookings: [any Booking]
     
     init(scheduler: Scheduler) {
         self.scheduler = scheduler
+        
+        let bookingsStore: BookingsStore = (try? Self.load(from: Constants.bookingsDataPath, defaultValue: nil)) ?? .init()
+        self.bookings = bookingsStore.bookingsList.allBookings
+        self.completedBookings = bookingsStore.completedBookingsList.allBookings
     }
     
     /// Returns the booking for the given date, or `nil` if no booking exists for that date
@@ -81,34 +112,43 @@ actor BookingsService {
         bookings.removeAll(where: { $0.id == id })
         saveBookings()
     }
+    
+    func completeBooking(booking: any Booking) async {
+        removeBooking(id: booking.id)
+        
+        // Keep track of the completed booking
+    }
 }
 
-// MARK: - Saving
+// MARK: - Loading / Saving
 extension BookingsService {
     func saveBookings() {
         do {
-            try save(self.reservationBookings, at: Self.reservationBookingsDataPath)
-            try save(self.eventBookings, at: Self.eventBookingsDataPath)
+            let store = BookingsStore(
+                bookings: bookings,
+                completedBookings: completedBookings
+            )
+            try save(store, at: Constants.bookingsDataPath)
         } catch {
             Self.logger.error("Failed to save bookings: \(error)")
         }
     }
     
-    private func save<B: Booking>(_ bookings: [B], at url: URL) throws {
-        let data = try JSONEncoder().encode(bookings)
+    private func save<T: Encodable>(_ object: T, at url: URL) throws {
+        let data = try JSONEncoder().encode(object)
         try data.write(to: url)
     }
     
-    private static func loadBookings<B: Booking>(from url: URL) -> [B] {
+    private static func load<T: Decodable>(from url: URL, defaultValue: T) throws -> T {
         do {
             guard FileManager.default.fileExists(atPath: url.path) else {
-                return []
+                return defaultValue
             }
             let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode([B].self, from: data)
+            return try JSONDecoder().decode(T.self, from: data)
         } catch {
             Self.logger.error("Failed to load bookings: \(error)")
-            return []
+            throw error
         }
     }
 }
