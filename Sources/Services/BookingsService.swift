@@ -19,7 +19,7 @@ actor BookingsService {
     static let logger: Logger = .init(label: String(describing: BookingsService.self))
     
     let scheduler: Scheduler
-    private var bookings: [any Booking] {
+    private(set) var bookings: [any Booking] {
         didSet {
             saveBookings()
             Task { [weak self] in
@@ -31,14 +31,18 @@ actor BookingsService {
             }
         }
     }
-    private var completedBookings: [any Booking]
+    
+    var activeBookings: [any Booking] {
+        bookings.filter { !$0.wasCancelled }
+    }
+    
+    var cancelledBookings: [any Booking] {
+        bookings.filter { $0.wasCancelled }
+    }
     
     init(scheduler: Scheduler) {
         self.scheduler = scheduler
-        
-        let bookingsStore: BookingsStore = (try? Self.load(from: Constants.bookingsDataPath, defaultValue: nil)) ?? .init()
-        self.bookings = bookingsStore.bookingsList.allBookings
-        self.completedBookings = bookingsStore.completedBookingsList.allBookings
+        self.bookings = Self.loadBookings(from: Constants.bookingsDataPath)
     }
     
     /// Returns the booking for the given date, or `nil` if no booking exists for that date
@@ -53,8 +57,8 @@ actor BookingsService {
     }
     
     /// Returns the booking with the given ID, or `nil` if no booking exists with that ID
-    func booking(id: UUID) -> (any Booking)? {
-        bookings.first(where: { $0.id == id })
+    func booking(id: UUID, includeCancelled: Bool = false) -> (any Booking)? {
+        bookings.first(where: { $0.id == id && (includeCancelled || !$0.wasCancelled) })
     }
     
     /// Adds the given booking to the store
@@ -78,10 +82,14 @@ actor BookingsService {
         saveBookings()
     }
     
-    func completeBooking(booking: any Booking) async {
-        removeBooking(id: booking.id)
-        
-        // Keep track of the completed booking
+    /// Cancels the booking with the given ID and unqueues any associated events
+    func cancelBooking(id: UUID) async {
+        guard var bookingIndex = bookings.firstIndex(where: { $0.id == id }) else {
+            Self.logger.warning("Trying to cancel booking with ID \(id), but no booking with that ID exists.")
+            return
+        }
+        await scheduler.unqueue(bookings[bookingIndex].associatedEvents)
+        bookings[bookingIndex].wasCancelled = true
     }
 }
 
@@ -89,14 +97,17 @@ actor BookingsService {
 extension BookingsService {
     func saveBookings() {
         do {
-            let store = BookingsStore(
-                bookings: bookings,
-                completedBookings: completedBookings
-            )
-            try save(store, at: Constants.bookingsDataPath)
+            let list = BookingList(bookings: bookings)
+            try save(list, at: Constants.bookingsDataPath)
         } catch {
             Self.logger.error("Failed to save bookings: \(error)")
         }
+    }
+    
+    static func loadBookings(from url: URL) -> [any Booking] {
+        let bookingList: BookingList? = try? Self.load(from: Constants.bookingsDataPath, defaultValue: nil)
+        // Migrate old files if they exist
+        return bookingList?.allBookings ?? migrateOldData() ?? []
     }
     
     private func save<T: Encodable>(_ object: T, at url: URL) throws {

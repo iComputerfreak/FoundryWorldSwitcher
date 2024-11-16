@@ -2,7 +2,7 @@
 
 import Foundation
 
-extension URLError: LocalizedError {
+extension URLError: @retroactive LocalizedError {
     public var errorDescription: String? {
         return "URLError(code: \(self.code.description), localizedDescription: \(self.localizedDescription), userInfo: \(self.userInfo), " +
         "errorUserInfo: \(self.errorUserInfo), failureURL: \(self.failureURLString ?? "nil"))"

@@ -99,7 +99,7 @@ enum DiscordCommandError: Error, LocalizedError {
     }
 }
 
-extension StringIntDoubleBool.Error: LocalizedError {
+extension StringIntDoubleBool.Error: @retroactive LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .valueIsNotOfType(let type, let value):
@@ -108,7 +108,7 @@ extension StringIntDoubleBool.Error: LocalizedError {
     }
 }
 
-extension Interaction.Error: LocalizedError {
+extension Interaction.Error: @retroactive LocalizedError {
     public var errorDescription: String? {
         switch self {
         case let .optionNotFoundInCommand(name, _):

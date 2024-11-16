@@ -19,6 +19,8 @@ protocol Booking: Codable, Hashable, Identifiable {
     var worldID: String { get set }
     /// The scheduler events associated with this booking
     var associatedEvents: [SchedulerEvent] { get }
+    /// Whether the booking was cancelled
+    var wasCancelled: Bool { get set }
 }
 
 // MARK: - Booking Interval

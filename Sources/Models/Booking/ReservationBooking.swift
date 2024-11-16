@@ -14,6 +14,7 @@ struct ReservationBooking: Booking {
     var author: UserSnowflake
     var worldID: String
     var associatedEvents: [SchedulerEvent] = []
+    var wasCancelled: Bool = false
     
     /// Creates a new booking without any associated event or player role information
     init(date: Date, author: UserSnowflake, worldID: String) {

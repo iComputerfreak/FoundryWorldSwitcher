@@ -20,6 +20,7 @@ struct EventBooking: Booking {
     /// The topic of the booking (e.g., "Session 13")
     var topic: String
     var associatedEvents: [SchedulerEvent] = []
+    var wasCancelled: Bool = false
     
     var sessionReminderTime: Date {
         date.addingTimeInterval(-BotConfig.shared.sessionReminderTime)
