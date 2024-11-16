@@ -50,7 +50,7 @@ struct CancelBookingCommand: DiscordCommand {
         if booking.author != user.id {
             let userPermissions = Permissions.shared.permissionsLevel(of: user.id, roles: member.roles)
             guard userPermissions == .admin else {
-                throw DiscordCommandError.deleteBookingPermissionDenied(required: .admin)
+                throw DiscordCommandError.cancelBookingPermissionDenied(required: .admin)
             }
         }
         
@@ -61,7 +61,7 @@ struct CancelBookingCommand: DiscordCommand {
         if booking.bookingIntervalStartDate < .now && .now < booking.bookingIntervalEndDate {
             try WorldLockService.shared.unlockWorldSwitching()
         }
-        await bookingsService.deleteBooking(booking)
+        await bookingsService.cancelBooking(id: booking.id)
         
         try await client.respond(
             token: interaction.token,
