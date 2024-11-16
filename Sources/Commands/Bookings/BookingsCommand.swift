@@ -9,7 +9,7 @@ import DiscordBM
 import Foundation
 import Logging
 
-struct BookingsCommands: DiscordCommand {
+struct BookingsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "bookings"
     let description = "Shows a list of all future reservations"

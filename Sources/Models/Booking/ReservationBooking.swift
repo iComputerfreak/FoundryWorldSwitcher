@@ -31,10 +31,6 @@ struct ReservationBooking: Booking {
                 dueDate: bookingIntervalEndDate,
                 eventType: .unlockWorldSwitching
             ),
-            SchedulerEvent(
-                dueDate: bookingIntervalEndDate,
-                eventType: .removeBooking(id: id)
-            ),
         ]
     }
 }

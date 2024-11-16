@@ -19,7 +19,7 @@ enum DiscordCommands {
         RestartWorldCommand(),
         SwitchWorldCommand(),
         HelpCommand(),
-        BookingsCommands(),
+        BookingsCommand(),
         BookCommand(),
         EventQueueCommand(),
         LockWorldCommand(),
@@ -31,6 +31,7 @@ enum DiscordCommands {
         ConfigCommand(),
         ListPinsCommand(),
         UpdateCacheCommand(),
+        DeleteBookingCommand(),
     ]
     
     static func register(bot: BotGatewayManager) async throws {

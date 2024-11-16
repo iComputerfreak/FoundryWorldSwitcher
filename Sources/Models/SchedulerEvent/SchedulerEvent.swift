@@ -38,8 +38,9 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
         case let .sendSessionStartsReminder(bookingID: bookingID):
             try await handleSendSessionStartsReminder(bookingID: bookingID)
             
-        case let .removeBooking(id: bookingID):
-            try await handleRemoveBooking(id: bookingID)
+        case .removeBooking:
+            // Do nothing. We don't delete bookings anymore when they are completed
+            break
         }
     }
 }
@@ -122,13 +123,5 @@ extension SchedulerEvent {
                 embeds: [Utils.createBookingEmbed(for: booking)]
             )
         ).guardSuccess()
-    }
-}
-
-// MARK: - Delete Booking
-extension SchedulerEvent {
-    private func handleRemoveBooking(id: UUID) async throws {
-        Self.logger.debug("Removing booking with ID \(id)")
-        await bookingsService.removeBooking(id: id)
     }
 }

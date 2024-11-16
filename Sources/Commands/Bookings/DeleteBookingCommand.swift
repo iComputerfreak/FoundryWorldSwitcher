@@ -29,13 +29,6 @@ struct DeleteBookingCommand: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        guard 
-            let member = interaction.member,
-            let user = member.user
-        else {
-            throw DiscordCommandError.noUser
-        }
-        
         guard let dateString = try applicationCommand.option(named: "date")?.requireString() else {
             throw DiscordCommandError.missingArgument(argumentName: "date")
         }

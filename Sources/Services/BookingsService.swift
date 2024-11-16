@@ -84,7 +84,7 @@ actor BookingsService {
     
     /// Cancels the booking with the given ID and unqueues any associated events
     func cancelBooking(id: UUID) async {
-        guard var bookingIndex = bookings.firstIndex(where: { $0.id == id }) else {
+        guard let bookingIndex = bookings.firstIndex(where: { $0.id == id }) else {
             Self.logger.warning("Trying to cancel booking with ID \(id), but no booking with that ID exists.")
             return
         }

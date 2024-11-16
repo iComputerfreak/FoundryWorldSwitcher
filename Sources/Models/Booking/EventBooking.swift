@@ -55,10 +55,6 @@ struct EventBooking: Booking {
                 dueDate: bookingIntervalEndDate,
                 eventType: .unlockWorldSwitching
             ),
-            SchedulerEvent(
-                dueDate: bookingIntervalEndDate,
-                eventType: .removeBooking(id: id)
-            ),
         ]
         // Only add the initial reminder, if it lies in the future
         if sessionReminderTime > .now {
