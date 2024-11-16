@@ -127,6 +127,31 @@ extension BookingsService {
             throw error
         }
     }
+    
+    // TODO: Remove migration code after some time. This was added at 2024-11-16.
+    private static func migrateOldData() -> [any Booking]? {
+        let reservationBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("reservation_bookings.json")
+        let eventBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("event_bookings.json")
+        
+        guard
+            FileManager.default.fileExists(atPath: reservationBookingsDataPath.path),
+            FileManager.default.fileExists(atPath: eventBookingsDataPath.path)
+        else { return nil }
+        
+        do {
+            let reservationBookings: [ReservationBooking] = try load(from: reservationBookingsDataPath, defaultValue: [])
+            let eventBookings: [EventBooking] = try load(from: eventBookingsDataPath, defaultValue: [])
+            
+            // Delete the old files after successfully reading them
+            try FileManager.default.removeItem(at: reservationBookingsDataPath)
+            try FileManager.default.removeItem(at: eventBookingsDataPath)
+            
+            return reservationBookings + eventBookings
+        } catch {
+            Self.logger.error("Failed to load old booking data: \(error)")
+            return nil
+        }
+    }
 }
 
 // MARK: - Pinned Bookings
