@@ -33,11 +33,19 @@ actor BookingsService {
     }
     
     var activeBookings: [any Booking] {
-        bookings.filter { !$0.wasCancelled }
+        bookings
+            .filter { $0.bookingIntervalEndDate > .now }
+            .filter { !$0.wasCancelled }
     }
     
     var cancelledBookings: [any Booking] {
         bookings.filter { $0.wasCancelled }
+    }
+    
+    var completedBookings: [any Booking] {
+        bookings
+            .filter { $0.bookingIntervalEndDate < .now }
+            .filter { !$0.wasCancelled }
     }
     
     init(scheduler: Scheduler) {
@@ -175,7 +183,7 @@ extension BookingsService {
         
         var errors: [Error] = []
         for message in messages {
-            let filteredBookings = bookings
+            let filteredBookings = activeBookings
                 .filter { booking in
                     guard let worldID = message.worldID else {
                         return true

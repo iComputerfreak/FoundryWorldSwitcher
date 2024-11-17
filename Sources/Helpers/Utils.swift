@@ -118,6 +118,9 @@ extension Utils {
             embed = createBookingEmbed(for: booking, world: world.title)
         }
         
+        if booking.wasCancelled {
+            embed.title? += " (Cancelled)"
+        }
         embed.type = .rich
         
         if let author = try? await bot.client.getUser(id: booking.author).decode() {

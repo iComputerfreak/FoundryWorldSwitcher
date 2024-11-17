@@ -32,6 +32,7 @@ enum DiscordCommands {
         ListPinsCommand(),
         UpdateCacheCommand(),
         DeleteBookingCommand(),
+        SessionLogCommand()
     ]
     
     static func register(bot: BotGatewayManager) async throws {
