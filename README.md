@@ -9,6 +9,23 @@ You can install this bot as a standalone docker container or as a Pterodactyl se
 This bot is available as a Docker Hub image at [icomputerfreak/foundry-world-switcher](https://hub.docker.com/r/icomputerfreak/foundry-world-switcher).
 Make sure to set the environment variable `TZ` inside the docker container to your timezone (e.g., `TZ=Europe/Berlin`), to avoid the scheduled bot messages being delivered at UTC time.
 
+#### Docker Compose File
+Replace the two tokens in this file below and create a `config` directory next to the `docker-compose.yml` file. After starting the bot once using `docker compose up`, stop it again and modify the config at `config/botConfig.json`.
+
+```
+services:
+  foundry-world-switcher:
+    image: icomputerfreak/foundry-world-switcher
+    container_name: foundry-world-switcher
+    restart: unless-stopped
+    volumes:
+      - ./config:/home/container/data
+    environment:
+      - FOUNDRY_BOT_TOKEN=YOUR_DISCORD_BOT_TOKEN
+      - FOUNDRY_PTERODACTYL_TOKEN=YOUR_PTERODACTYL_API_TOKEN
+      - TZ=Europe/Berlin
+```
+
 ### Pterodactyl Server
 To install this bot as a Pterodactyl server, import the egg located at `pterodactyl_eggs/foundry_world_switcher` into Pterodactyl and create a server for it. Everything you need to configure should be available under "Startup".
 
