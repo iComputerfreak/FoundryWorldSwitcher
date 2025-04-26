@@ -18,7 +18,7 @@ To update the bot, simply re-install the server. This should not remove any conf
 
 The bot requires Foundry to be run in a [Pterodactyl](https://pterodactyl.io) server instance.
 
-The modified Pterodactyl egg for running Foundry VTT can be found in `pterodactyl_eggs/foundry_vtt` and is taken directly from [parkervcp/eggs](https://github.com/parkervcp/eggs/tree/master/game_eggs/FoundryVTT) and I modified it by adding a new startup variable called `WORLD_NAME`.
+The modified Pterodactyl egg for running Foundry VTT can be found in `pterodactyl_eggs/foundry_vtt` and is taken directly from [parkervcp/eggs](https://github.com/parkervcp/eggs/tree/master/game_eggs/FoundryVTT) and I modified it by adding a new startup variable called `WORLD_NAME`. An egg configuration for the Pelican Panel fork of Pterodactyl is available as well in the same directory.  
 This startup variable is used to restart the Foundry server, immediately starting a given world when its online.
 
 The Discord bot itself manages the Foundry server via the Pterodactyl API by reading files, changing the startup variable and restarting the server.
