@@ -74,4 +74,18 @@ struct EventBooking: Booking {
             )
         }
     }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.date = try container.decode(Date.self, forKey: .date)
+        self.author = try container.decode(UserSnowflake.self, forKey: .author)
+        self.worldID = try container.decode(String.self, forKey: .worldID)
+        self.campaignRoleSnowflake = try container.decode(RoleSnowflake.self, forKey: .campaignRoleSnowflake)
+        self.location = try container.decode(ChannelSnowflake.self, forKey: .location)
+        self.topic = try container.decode(String.self, forKey: .topic)
+        self.associatedEvents = try container.decode([SchedulerEvent].self, forKey: .associatedEvents)
+        // This key was introduced in version 2.9.0 and may not exist on disk
+        self.wasCancelled = try container.decodeIfPresent(Bool.self, forKey: .wasCancelled) ?? false
+    }
 }
