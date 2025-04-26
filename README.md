@@ -56,6 +56,9 @@ Shows information about a specific world
 `/bookings`  
 Shows a list of all future reservations
 
+`/sessionlog role:<discord_role>`  
+Shows a list of all past bookings. Optionally, you can supply a specific campaign role to only list sessions of that group.
+
 ### Dungeon Master Commands
 These commands require the permission level `Dungeon Master`.
 
