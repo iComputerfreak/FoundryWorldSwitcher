@@ -11,7 +11,7 @@ import AsyncHTTPClient
 import Logging
 
 // The current version printed to the console on start
-let version: String = "2.9.0"
+let version: String = "2.9.1"
 
 private let logger = Logger(label: "Main")
 
