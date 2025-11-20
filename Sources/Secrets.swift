@@ -36,10 +36,9 @@ struct Secrets: Savable {
     }
     
     init() {
-        self.init(
-            botToken: "< PUT YOUR DISCORD BOT TOKEN HERE >",
-            pterodactylAPIKey: "< PUT YOUR PTERODACTYL API KEY HERE >"
-        )
+        // We should not use this initializer. Is it even needed?
+        assertionFailure()
+        self.init(botToken: "", pterodactylAPIKey: "")
     }
     
     static func load() throws -> Self {

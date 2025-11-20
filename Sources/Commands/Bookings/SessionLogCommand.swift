@@ -26,14 +26,23 @@ struct SessionLogCommand: DiscordCommand {
     ) async throws {
         let role = applicationCommand.option(named: "role")?.value?.stringValue.flatMap(RoleSnowflake.init)
         
-        let pastEvents = await bookingsService.completedBookings.filter { $0 is EventBooking }
-        let bookingEmbed = try await Utils.createBookingEmbeds(for: pastEvents)
-        
+        let pastEvents = await bookingsService.completedBookings
+            .compactMap { $0 as? EventBooking }
+            .filter { booking in
+                guard let role else { return true }
+                return booking.campaignRoleSnowflake == role
+            }
+
+        let bookingMessages = try await Utils.createBookingMessages(for: pastEvents)
+
         let payload: Payloads.EditWebhookMessage
-        if bookingEmbed.isEmpty {
+        if bookingMessages.isEmpty {
             payload = .init(content: "There are no past event bookings.")
         } else {
-            payload = .init(embeds: bookingEmbed, allowed_mentions: .init())
+            payload = .init(
+                content: "## Past Sessions (latest 10 sessions)\n" + bookingMessages.joined(separator: "\n\n"),
+                allowed_mentions: .init()
+            )
         }
         
         try await client.respond(token: interaction.token, payload: payload)

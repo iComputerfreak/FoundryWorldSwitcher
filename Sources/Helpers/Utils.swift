@@ -106,7 +106,7 @@ extension Utils {
         }
         return bookingEmbeds
     }
-    
+
     static func createBookingEmbed(for booking: any Booking) async throws -> Embed {
         let world = try await PterodactylAPI.shared.world(for: booking.worldID)
         
@@ -129,11 +129,11 @@ extension Utils {
         
         return embed
     }
-    
+
     static private func createBookingEmbed(for booking: EventBooking, world: String) -> Embed {
         let date = Utils.outputDateFormatter.string(from: booking.date)
         let time = Utils.timeFormatter.string(from: booking.date)
-        
+
         return .init(
             title: "\(date) at \(time)",
             description: """
@@ -141,6 +141,28 @@ extension Utils {
             > \(booking.topic)
             """.trimmingCharacters(in: .whitespacesAndNewlines)
         )
+    }
+
+    static func createBookingMessages(for bookings: [EventBooking]) async throws -> [String] {
+        let bookings = bookings.sorted(by: { $0.date < $1.date })
+        let worlds = try await PterodactylAPI.shared.worlds()
+
+        var bookingMessages: [String] = []
+        // We only show the last 10 bookings to avoid hitting Discord's character limit
+        // TODO: Add pagination?
+        for booking in bookings.suffix(10) {
+            let date = Utils.outputDateFormatter.string(from: booking.date)
+            let time = Utils.timeFormatter.string(from: booking.date)
+            let world = worlds.first(where: { $0.id == booking.worldID })?.title ?? "<unknown>"
+            bookingMessages.append(
+                """
+                > \(date) at \(time)
+                > \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\(world)'.
+                > \(booking.wasCancelled ? "~~\(booking.topic)~~ (cancelled)" : booking.topic)
+                """.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        }
+        return bookingMessages
     }
     
     static private func createBookingEmbed(for booking: any Booking, world: String) -> Embed {
