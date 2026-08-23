@@ -48,7 +48,7 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             break
 
         case let .closeDatePoll(pollID: pollID):
-            try await handleCloseDatePoll(pollID: pollID, datePolls: context.datePolls)
+            try await handleCloseDatePoll(pollID: pollID, context: context)
 
         case let .sendDatePollReminder(pollID: pollID, userID: userID):
             try await handleDatePollReminder(pollID: pollID, userID: userID, datePolls: context.datePolls)
@@ -64,13 +64,13 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
 
 // MARK: - Date Polls
 extension SchedulerEvent {
-    private func handleCloseDatePoll(pollID: String, datePolls: DatePollsService) async throws {
-        guard let poll = try await datePolls.closePoll(id: pollID) else { return }
+    private func handleCloseDatePoll(pollID: String, context: GuildContext) async throws {
+        guard let poll = try await context.datePolls.closePoll(id: pollID) else { return }
         guard let messageID = poll.messageID else { return }
         try await bot.client.updateMessage(
             channelId: poll.channelID,
             messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll)
+            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
         ).guardSuccess()
     }
 
@@ -167,7 +167,7 @@ extension SchedulerEvent {
         do {
             let message = try await bot.client.createMessage(
                 channelId: poll.channelID,
-                payload: DatePollRenderer.createMessagePayload(for: poll)
+                payload: DatePollRenderer.createMessagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
             ).decode()
             do {
                 try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)

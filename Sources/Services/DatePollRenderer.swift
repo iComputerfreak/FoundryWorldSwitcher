@@ -12,16 +12,16 @@ enum DatePollRenderer {
         static let checkboxGroupSize = 10
     }
 
-    static func webhookPayload(for poll: DatePoll) -> Payloads.EditWebhookMessage {
-        .init(componentsV2: pollComponents(for: poll))
+    static func webhookPayload(for poll: DatePoll, foundryFeaturesEnabled: Bool) -> Payloads.EditWebhookMessage {
+        .init(componentsV2: pollComponents(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled))
     }
 
-    static func messagePayload(for poll: DatePoll) -> Payloads.EditMessage {
-        .init(componentsV2: pollComponents(for: poll))
+    static func messagePayload(for poll: DatePoll, foundryFeaturesEnabled: Bool) -> Payloads.EditMessage {
+        .init(componentsV2: pollComponents(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled))
     }
 
-    static func createMessagePayload(for poll: DatePoll) -> Payloads.CreateMessage {
-        .init(componentsV2: pollComponents(for: poll))
+    static func createMessagePayload(for poll: DatePoll, foundryFeaturesEnabled: Bool) -> Payloads.CreateMessage {
+        .init(componentsV2: pollComponents(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled))
     }
 
     static func creationModal() -> Payloads.InteractionResponse {
@@ -287,7 +287,7 @@ enum DatePollRenderer {
         ))]]
     }
 
-    private static func pollComponents(for poll: DatePoll) -> [Interaction.MessageLayoutComponent] {
+    private static func pollComponents(for poll: DatePoll, foundryFeaturesEnabled: Bool) -> [Interaction.MessageLayoutComponent] {
         var components: [Interaction.MessageLayoutComponent] = [
             .textDisplay(.init(content: "# Session date poll · \(DiscordUtils.mention(id: poll.campaignRoleID))"))
         ]
@@ -314,7 +314,7 @@ enum DatePollRenderer {
             components.append(.container(.init(componentsV2: dateCards)))
         }
 
-        components.append(contentsOf: controls(for: poll).map { .actionRow($0) })
+        components.append(contentsOf: controls(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled).map { .actionRow($0) })
         if let repeatIntervalWeeks = poll.repeatIntervalWeeks {
             let repeatUnit = repeatIntervalWeeks == 1 ? "week" : "weeks"
             components.append(.textDisplay(.init(content: "-# Repeats every \(repeatIntervalWeeks) \(repeatUnit)")))
@@ -327,7 +327,7 @@ enum DatePollRenderer {
         return components
     }
 
-    private static func controls(for poll: DatePoll) -> [Interaction.ActionRow] {
+    private static func controls(for poll: DatePoll, foundryFeaturesEnabled: Bool) -> [Interaction.ActionRow] {
         var buttons: [Interaction.ActionRow.Component] = []
 
         if poll.isOpen {
@@ -375,7 +375,7 @@ enum DatePollRenderer {
             )))
             let finalizedCandidates = poll.finalizedCandidates.sorted { $0.date < $1.date }
             let bookedCandidateIDs = poll.bookedFinalizedCandidateIDs ?? []
-            for candidate in finalizedCandidates where !bookedCandidateIDs.contains(candidate.id) {
+            for candidate in finalizedCandidates where foundryFeaturesEnabled && !bookedCandidateIDs.contains(candidate.id) {
                 buttons.append(.button(.init(
                     style: .primary,
                     label: finalizedCandidates.count == 1 ? "Book" : bookingButtonLabel(for: candidate.date),

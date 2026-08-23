@@ -127,6 +127,9 @@ struct ConfigCommand: DiscordCommand {
             if configKey == .foundryFeaturesEnabled, !context.config.foundryFeaturesEnabled {
                 await context.bookings.cancelAllBookings()
             }
+            if configKey == .foundryFeaturesEnabled {
+                await refreshDatePollMessages(context: context, client: client)
+            }
             try await respond("The value `\(keyString)` was updated to `\(valueString)`.")
         } else if let resetCommand = applicationCommand.option(named: "reset") {
             let keyString = try resetCommand.requireOption(named: "key").requireString()
@@ -137,6 +140,9 @@ struct ConfigCommand: DiscordCommand {
                 throw DiscordCommandError.invalidConfigKey(keyString)
             }
             let newValue = try context.config.resetValue(for: configKey)
+            if configKey == .foundryFeaturesEnabled {
+                await refreshDatePollMessages(context: context, client: client)
+            }
             try await respond("The value `\(keyString)` was reset to its default value `\(newValue)`.")
         } else {
             throw DiscordCommandError.missingSubcommand
@@ -156,6 +162,25 @@ struct ConfigCommand: DiscordCommand {
             }
         )
         return .init(embeds: [embed])
+    }
+
+    private func refreshDatePollMessages(context: GuildContext, client: any DiscordClient) async {
+        let polls = await context.datePolls.publishedPolls()
+        for poll in polls {
+            guard let messageID = poll.messageID else { continue }
+            do {
+                try await client.updateMessage(
+                    channelId: poll.channelID,
+                    messageId: messageID,
+                    payload: DatePollRenderer.messagePayload(
+                        for: poll,
+                        foundryFeaturesEnabled: context.config.foundryFeaturesEnabled
+                    )
+                ).guardSuccess()
+            } catch {
+                logger.warning("Failed to refresh date poll after Foundry feature change: \(error)")
+            }
+        }
     }
     
 }

@@ -77,7 +77,7 @@ struct BookingModalHandler {
                     try await client.updateMessage(
                         channelId: poll.channelID,
                         messageId: messageID,
-                        payload: DatePollRenderer.messagePayload(for: poll)
+                        payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
                     ).guardSuccess()
                 } catch {
                     logger.warning("Failed to remove booked date-poll candidate control: \(error)")

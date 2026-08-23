@@ -63,9 +63,9 @@ struct DatePollComponentHandler {
             case .optOut:
                 try await handleAutomaticReminderOptOut(interaction: interaction, preferences: context.datePollReminderPreferences)
             case .cancel:
-                try await handleCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+                try await handleCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
             case .cancelRepeat:
-                try await handleRepeatCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+                try await handleRepeatCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
             default:
                 throw DatePollError.notFound(component.custom_id)
             }
@@ -259,7 +259,7 @@ struct DatePollComponentHandler {
         }
     }
 
-    private func handleCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func handleCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -276,7 +276,7 @@ struct DatePollComponentHandler {
         try await client.updateMessage(
             channelId: poll.channelID,
             messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll)
+            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
         ).guardSuccess()
         do {
             try await client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
@@ -285,7 +285,7 @@ struct DatePollComponentHandler {
         }
     }
 
-    private func handleRepeatCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func handleRepeatCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -304,7 +304,7 @@ struct DatePollComponentHandler {
                 try await client.updateMessage(
                     channelId: poll.channelID,
                     messageId: messageID,
-                    payload: DatePollRenderer.messagePayload(for: poll)
+                    payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
                 ).guardSuccess()
             } catch {
                 logger.warning("Failed to update date poll after repeat cancellation: \(error)")

@@ -99,6 +99,10 @@ actor DatePollsService {
         return poll
     }
 
+    func publishedPolls() -> [DatePoll] {
+        polls.filter { $0.messageID != nil }
+    }
+
     func editPoll(
         id: String,
         campaignRoleID: RoleSnowflake,
