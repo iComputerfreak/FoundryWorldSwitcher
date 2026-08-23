@@ -15,7 +15,10 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/DiscordBM/DiscordBM", .upToNextMajor(from: "1.0.0")),
+        // .package(url: "https://github.com/DiscordBM/DiscordBM", .upToNextMajor(from: "1.0.0")),
+        // Fork that adds V2 component support. Once this PR is merged, we can switch to the main repo again:
+        // https://github.com/DiscordBM/DiscordBM/pull/111
+        .package(url: "https://github.com/nreilly/DiscordBM", branch: "components-v2-payloads"),
         .package(url: "https://gitlab.com/mflint/HTML2Markdown", .upToNextMajor(from: "1.0.0")),
     ],
     targets: [
