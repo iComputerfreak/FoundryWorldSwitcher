@@ -14,7 +14,7 @@ struct DatePollModalHandler {
         guard let action = DatePollRenderer.interactionAction(from: modal.custom_id) else {
             throw DatePollError.notFound(modal.custom_id)
         }
-        if action.action == "view" {
+        if action.action == .view {
             try await handleVotesModalSubmission(pollID: action.pollID, interaction: interaction)
             return
         }
@@ -29,13 +29,13 @@ struct DatePollModalHandler {
             guard let guildID = interaction.guild_id else { throw DiscordCommandError.noGuild }
             let context = await guildRegistry.context(for: guildID)
             switch action.action {
-            case "create":
+            case .create:
                 try await handleCreation(modal: modal, interaction: interaction, context: context)
-            case "vote":
+            case .vote:
                 try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
-            case "finalize":
+            case .finalize:
                 try await handleFinalization(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
-            case "edit":
+            case .edit:
                 try await handleEdit(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             default:
                 throw DatePollError.notFound(modal.custom_id)

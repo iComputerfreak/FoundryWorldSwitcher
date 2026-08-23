@@ -34,7 +34,7 @@ enum DatePollRenderer {
 
     static func editModal(for poll: DatePoll) -> Payloads.InteractionResponse {
         .modal(.init(
-            custom_id: componentID(action: "edit", pollID: poll.id),
+            custom_id: componentID(action: .edit, pollID: poll.id),
             title: "Edit date poll",
             componentsV2: pollFormComponents(for: poll)
         ))
@@ -115,16 +115,17 @@ enum DatePollRenderer {
             ]
     }
 
-    static func interactionAction(from customID: String) -> (action: String, pollID: String, candidateID: UUID?)? {
+    static func interactionAction(from customID: String) -> (action: DatePollAction, pollID: String, candidateID: UUID?)? {
         let parts = customID.split(separator: ":")
-        guard !parts.isEmpty, parts[0] == Constants.componentPrefix else { return nil }
+        guard (parts.count == 3 || parts.count == 4), parts[0] == Constants.componentPrefix else { return nil }
+        guard let action = DatePollAction(rawValue: String(parts[1])) else { return nil }
         if parts.count == 3 {
-            return (String(parts[1]), String(parts[2]), nil)
+            return (action, String(parts[2]), nil)
         }
-        guard parts.count == 4, parts[1] == "book", let candidateID = UUID(uuidString: String(parts[3])) else {
+        guard parts.count == 4, action == .book, let candidateID = UUID(uuidString: String(parts[3])) else {
             return nil
         }
-        return (String(parts[1]), String(parts[2]), candidateID)
+        return (action, String(parts[2]), candidateID)
     }
 
     static func availabilityModal(for poll: DatePoll, voterID: UserSnowflake) -> Payloads.InteractionResponse {
@@ -159,7 +160,7 @@ enum DatePollRenderer {
                 default: poll.votes[voterID] != nil && selectedCandidateIDs.isEmpty
             ))
         )))
-        return .modal(.init(custom_id: componentID(action: "vote", pollID: poll.id), title: "Set availability", componentsV2: components))
+        return .modal(.init(custom_id: componentID(action: .vote, pollID: poll.id), title: "Set availability", componentsV2: components))
     }
 
     static func candidateIDs(from modal: Interaction.ModalSubmit, poll: DatePoll) throws -> Set<UUID> {
@@ -224,7 +225,7 @@ enum DatePollRenderer {
                 ))
             ))
         }
-        return .modal(.init(custom_id: componentID(action: "finalize", pollID: poll.id), title: "Finalize date", componentsV2: components))
+        return .modal(.init(custom_id: componentID(action: .finalize, pollID: poll.id), title: "Finalize date", componentsV2: components))
     }
 
     static func finalizationCandidateIDs(from modal: Interaction.ModalSubmit, poll: DatePoll) throws -> Set<UUID> {
@@ -263,7 +264,7 @@ enum DatePollRenderer {
             return Interaction.ModalComponent.textDisplay(.init(content: candidateCards.joined(separator: "\n")))
         }
         return .modal(.init(
-            custom_id: componentID(action: "view", pollID: poll.id),
+            custom_id: componentID(action: .view, pollID: poll.id),
             title: "Poll votes",
             componentsV2: components
         ))
@@ -274,7 +275,7 @@ enum DatePollRenderer {
         return [[.button(.init(
             style: .secondary,
             label: "Remind me tomorrow",
-            custom_id: componentID(action: "delay", pollID: poll.id)
+            custom_id: componentID(action: .delay, pollID: poll.id)
         ))]]
     }
 
@@ -282,7 +283,7 @@ enum DatePollRenderer {
         [[.button(.init(
             style: .danger,
             label: "Stop automatic reminders",
-            custom_id: componentID(action: "optout", pollID: poll.id)
+            custom_id: componentID(action: .optOut, pollID: poll.id)
         ))]]
     }
 
@@ -333,7 +334,7 @@ enum DatePollRenderer {
             buttons.append(.button(.init(
                 style: .primary,
                 label: "Set availability",
-                custom_id: componentID(action: "vote", pollID: poll.id)
+                custom_id: componentID(action: .vote, pollID: poll.id)
             )))
         }
 
@@ -341,7 +342,7 @@ enum DatePollRenderer {
             buttons.append(.button(.init(
                 style: .secondary,
                 label: "Remind me",
-                custom_id: componentID(action: "remind", pollID: poll.id)
+                custom_id: componentID(action: .remind, pollID: poll.id)
             )))
         }
 
@@ -349,7 +350,7 @@ enum DatePollRenderer {
             buttons.append(.button(.init(
                 style: .success,
                 label: "Finalize",
-                custom_id: componentID(action: "finalize", pollID: poll.id)
+                custom_id: componentID(action: .finalize, pollID: poll.id)
             )))
         }
 
@@ -357,12 +358,12 @@ enum DatePollRenderer {
             buttons.append(.button(.init(
                 style: .secondary,
                 label: "Edit",
-                custom_id: componentID(action: "edit", pollID: poll.id)
+                custom_id: componentID(action: .edit, pollID: poll.id)
             )))
             buttons.append(.button(.init(
                 style: .danger,
                 label: "Cancel",
-                custom_id: componentID(action: "cancel", pollID: poll.id)
+                custom_id: componentID(action: .cancel, pollID: poll.id)
             )))
         }
 
@@ -370,7 +371,7 @@ enum DatePollRenderer {
             buttons.append(.button(.init(
                 style: .secondary,
                 label: "View votes",
-                custom_id: componentID(action: "view", pollID: poll.id)
+                custom_id: componentID(action: .view, pollID: poll.id)
             )))
             let finalizedCandidates = poll.finalizedCandidates.sorted { $0.date < $1.date }
             let bookedCandidateIDs = poll.bookedFinalizedCandidateIDs ?? []
@@ -378,7 +379,7 @@ enum DatePollRenderer {
                 buttons.append(.button(.init(
                     style: .primary,
                     label: finalizedCandidates.count == 1 ? "Book" : bookingButtonLabel(for: candidate.date),
-                    custom_id: componentID(action: "book", pollID: poll.id, candidateID: candidate.id)
+                    custom_id: componentID(action: .book, pollID: poll.id, candidateID: candidate.id)
                 )))
             }
         }
@@ -387,7 +388,7 @@ enum DatePollRenderer {
             buttons.append(.button(.init(
                 style: .danger,
                 label: "Cancel repeat",
-                custom_id: componentID(action: "cancel-repeat", pollID: poll.id)
+                custom_id: componentID(action: .cancelRepeat, pollID: poll.id)
             )))
         }
 
@@ -395,7 +396,7 @@ enum DatePollRenderer {
             return [[.button(.init(
                 style: .secondary,
                 label: "Poll is closed",
-                custom_id: componentID(action: "vote", pollID: poll.id),
+                custom_id: componentID(action: .vote, pollID: poll.id),
                 disabled: true
             ))]]
         }
@@ -494,8 +495,8 @@ enum DatePollRenderer {
         return result
     }
 
-    private static func componentID(action: String, pollID: String, candidateID: UUID? = nil) -> String {
-        let componentID = "\(Constants.componentPrefix):\(action):\(pollID)"
+    private static func componentID(action: DatePollAction, pollID: String, candidateID: UUID? = nil) -> String {
+        let componentID = "\(Constants.componentPrefix):\(action.rawValue):\(pollID)"
         return candidateID.map { "\(componentID):\($0.uuidString)" } ?? componentID
     }
 

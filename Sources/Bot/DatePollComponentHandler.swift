@@ -19,26 +19,26 @@ struct DatePollComponentHandler {
         if let guildID = interaction.guild_id {
             context = await guildRegistry.context(for: guildID)
         } else {
-            guard action.action == "delay" || action.action == "optout" else { throw DiscordCommandError.noGuild }
+            guard action.action == .delay || action.action == .optOut else { throw DiscordCommandError.noGuild }
             context = try await guildRegistry.context(forDatePollID: action.pollID)
         }
-        if action.action == "vote" {
+        if action.action == .vote {
             try await showAvailabilityModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             return
         }
-        if action.action == "finalize" {
+        if action.action == .finalize {
             try await showFinalizationModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             return
         }
-        if action.action == "edit" {
+        if action.action == .edit {
             try await showEditModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             return
         }
-        if action.action == "view" {
+        if action.action == .view {
             try await showVotesModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             return
         }
-        if action.action == "book", let candidateID = action.candidateID {
+        if action.action == .book, let candidateID = action.candidateID {
             try await showBookingModal(
                 pollID: action.pollID,
                 candidateID: candidateID,
@@ -56,15 +56,15 @@ struct DatePollComponentHandler {
 
         do {
             switch action.action {
-            case "remind":
+            case .remind:
                 try await handleReminder(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
-            case "delay":
+            case .delay:
                 try await handleReminderDelay(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
-            case "optout":
+            case .optOut:
                 try await handleAutomaticReminderOptOut(interaction: interaction, preferences: context.datePollReminderPreferences)
-            case "cancel":
+            case .cancel:
                 try await handleCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
-            case "cancel-repeat":
+            case .cancelRepeat:
                 try await handleRepeatCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             default:
                 throw DatePollError.notFound(component.custom_id)
