@@ -40,13 +40,13 @@ struct DatePollComponentHandler {
     }
 
     private func showAvailabilityModal(pollID: String, interaction: Interaction) async throws {
-        guard let userID = interaction.member?.user?.id else {
+        guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
         do {
             let poll = try await datePollsService.pollForVoteModal(
                 pollID: pollID,
-                voterID: userID,
+                roles: member.roles,
                 guildID: interaction.guild_id,
                 channelID: interaction.channel_id,
                 messageID: interaction.message?.id

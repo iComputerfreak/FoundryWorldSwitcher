@@ -70,40 +70,52 @@ actor DatePollsService {
         pollID: String,
         voterID: UserSnowflake,
         candidateIDs: Set<UUID>,
+        currentVoterIDs: Set<UserSnowflake>,
         guildID: GuildSnowflake?,
         channelID: ChannelSnowflake?,
         messageID: MessageSnowflake?
-    ) throws -> DatePoll {
+    ) async throws -> DatePoll {
         let index = try votePollIndex(
             pollID: pollID,
-            voterID: voterID,
             guildID: guildID,
             channelID: channelID,
             messageID: messageID
         )
+        guard currentVoterIDs.contains(voterID) else { throw DatePollError.unauthorizedVoter }
+
+        let removedVoterIDs = polls[index].requiredVoterIDs.subtracting(currentVoterIDs)
+        let removedReminderEvents = removedVoterIDs.compactMap { polls[index].reminders[$0]?.scheduledEventID }
+        polls[index].requiredVoterIDs = currentVoterIDs
+        polls[index].votes = polls[index].votes.filter { currentVoterIDs.contains($0.key) }
+        polls[index].reminders = polls[index].reminders.filter { currentVoterIDs.contains($0.key) }
+
         let validCandidateIDs = Set(polls[index].candidates.map(\.id))
         guard candidateIDs.isSubset(of: validCandidateIDs) else {
             throw DatePollError.invalidCandidates
         }
         polls[index].votes[voterID] = DatePollVote(candidateIDs: candidateIDs)
         savePolls()
+        await scheduler.unqueue(ids: removedReminderEvents)
         return polls[index]
     }
 
     func pollForVoteModal(
         pollID: String,
-        voterID: UserSnowflake,
+        roles: [RoleSnowflake],
         guildID: GuildSnowflake?,
         channelID: ChannelSnowflake?,
         messageID: MessageSnowflake?
     ) throws -> DatePoll {
-        polls[try votePollIndex(
+        let index = try votePollIndex(
             pollID: pollID,
-            voterID: voterID,
             guildID: guildID,
             channelID: channelID,
             messageID: messageID
-        )]
+        )
+        guard roles.contains(polls[index].campaignRoleID) else {
+            throw DatePollError.unauthorizedVoter
+        }
+        return polls[index]
     }
 
     func requestReminder(pollID: String, voterID: UserSnowflake) async throws -> DatePoll {
@@ -242,7 +254,6 @@ actor DatePollsService {
 
     private func votePollIndex(
         pollID: String,
-        voterID: UserSnowflake,
         guildID: GuildSnowflake?,
         channelID: ChannelSnowflake?,
         messageID: MessageSnowflake?
@@ -253,9 +264,6 @@ actor DatePollsService {
         guard polls[index].isOpen else { throw DatePollError.unavailablePoll }
         guard polls[index].guildID == guildID, polls[index].channelID == channelID, polls[index].messageID == messageID else {
             throw DatePollError.notFound(pollID)
-        }
-        guard polls[index].requiredVoterIDs.contains(voterID) else {
-            throw DatePollError.unauthorizedVoter
         }
         return index
     }

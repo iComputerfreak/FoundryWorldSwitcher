@@ -30,7 +30,7 @@ Proposed command: `/datepoll create`.
 - Initial version limit: 20 dates. Checkbox groups allow 10 options each, so 20 dates use two groups plus one no-availability checkbox within Discord's five-modal-component limit.
 - Each poll receives a unique, eight-character ID for `/datepoll finalize` and `/datepoll cancel`.
 - Poll posts in command channel. Creator receives success/error through normal interaction flow.
-- Capture the campaign-role member IDs at creation. This snapshot defines required voters, even if the role changes later.
+- Capture campaign-role member IDs at creation for initial status. Refresh the role roster when a vote is submitted; added members can vote, departed members stop counting, and their pending reminders are removed.
 
 No selected world, target channel, or automatic booking integration in first version.
 
@@ -53,8 +53,8 @@ Votes are visible. The shared message uses Components V2 containers and text dis
 
 ## Voting Rules
 
-- Required voter: a user in the campaign-role member snapshot.
-- Only required voters may vote or request reminders.
+- Required voter: a user in the campaign role when roster was last refreshed.
+- Current role members may open the availability modal. Vote submission refreshes roster and rejects users no longer in role.
 - One persisted vote per required voter per poll.
 - A vote is a set of candidate date IDs, not additive reaction history.
 - Modal submission replaces the user's prior vote.
@@ -102,7 +102,7 @@ Each poll needs:
 - Stable eight-character poll ID.
 - Discord guild, channel, and message IDs.
 - Owner user ID.
-- Campaign role ID and snapshot of required voter IDs.
+- Campaign role ID and required voter IDs from most recent vote refresh.
 - Creation, deadline, close, and finalization timestamps.
 - Optional description.
 - Ordered candidate date IDs and date values.
@@ -133,7 +133,7 @@ Extend scheduler event types for poll deadline and reminders. Events reference p
 - A component interaction must receive acknowledgement within Discord's short response deadline.
 - Discord checkbox groups allow 10 options and modals allow five top-level components. Initial 20-date limit remains valid.
 - Disable controls when poll reaches deadline, finalizes, or cancels.
-- Bot needs access to campaign-role membership at poll creation. Cache/intents must support reliable role-member lookup.
+- Bot needs access to campaign-role membership at poll creation and vote submission. Cache/intents must support reliable role-member lookup.
 
 ## Permissions
 

@@ -20,22 +20,28 @@ struct DatePollModalHandler {
             guard let action = DatePollRenderer.interactionAction(from: modal.custom_id), action.action == "vote" else {
                 throw DatePollError.notFound(modal.custom_id)
             }
-            guard let userID = interaction.member?.user?.id else {
+            guard let member = interaction.member, let userID = member.user?.id, let guildID = interaction.guild_id else {
                 throw DiscordCommandError.noUser
             }
             let poll = try await datePollsService.pollForVoteModal(
                 pollID: action.pollID,
-                voterID: userID,
-                guildID: interaction.guild_id,
+                roles: member.roles,
+                guildID: guildID,
                 channelID: interaction.channel_id,
                 messageID: interaction.message?.id
+            )
+            let currentVoterIDs = try await DatePollMemberResolver.voterIDs(
+                for: poll.campaignRoleID,
+                guildID: guildID,
+                client: client
             )
             let candidateIDs = try DatePollRenderer.candidateIDs(from: modal, poll: poll)
             let updatedPoll = try await datePollsService.vote(
                 pollID: action.pollID,
                 voterID: userID,
                 candidateIDs: candidateIDs,
-                guildID: interaction.guild_id,
+                currentVoterIDs: currentVoterIDs,
+                guildID: guildID,
                 channelID: interaction.channel_id,
                 messageID: interaction.message?.id
             )

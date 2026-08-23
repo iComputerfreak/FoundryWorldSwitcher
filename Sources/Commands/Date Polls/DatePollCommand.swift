@@ -85,7 +85,7 @@ struct DatePollCommand: DiscordCommand {
         let dates = try parseDates(try subcommand.requireOption(named: "dates").requireString())
         let description = subcommand.option(named: "description")?.value?.stringValue
         let deadline = try parseDeadline(subcommand.option(named: "deadline")?.value?.stringValue)
-        let voters = try await requiredVoters(for: roleID, guildID: guildID, client: client)
+        let voters = try await DatePollMemberResolver.voterIDs(for: roleID, guildID: guildID, client: client)
         guard !voters.isEmpty else {
             throw DatePollError.invalidCandidates
         }
@@ -204,25 +204,6 @@ struct DatePollCommand: DiscordCommand {
             throw DiscordCommandError.dateIsInThePast(date)
         }
         return deadline
-    }
-
-    private func requiredVoters(
-        for roleID: RoleSnowflake,
-        guildID: GuildSnowflake,
-        client: any DiscordClient
-    ) async throws -> Set<UserSnowflake> {
-        var voters: Set<UserSnowflake> = []
-        var after: UserSnowflake?
-        while true {
-            let members = try await client.listGuildMembers(guildId: guildID, limit: 1_000, after: after).decode()
-            for member in members {
-                guard let user = member.user, user.bot != true, member.roles.contains(roleID) else { continue }
-                voters.insert(user.id)
-            }
-            guard members.count == 1_000, let lastUserID = members.last?.user?.id else { break }
-            after = lastUserID
-        }
-        return voters
     }
 
     private func updatePollMessage(for poll: DatePoll, client: any DiscordClient) async throws {

@@ -79,7 +79,7 @@ All state uses direct JSON writes. No atomic-write, corruption recovery, schema 
 
 ## Documentation Drift And Open Work
 
-- Date polls use checkbox modals, a Components V2 shared message, JSON-backed role voter snapshots, scheduler-backed per-user reminders, and short IDs. Components V2 is permanent per Discord message and forbids embeds/content. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
+- Date polls use checkbox modals, a Components V2 shared message, JSON-backed role voter rosters refreshed on vote, scheduler-backed per-user reminders, and short IDs. Components V2 is permanent per Discord message and forbids embeds/content. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
 - README names `/reschedulebooking`; registered command is `/rescheduleevent`.
 - README says forced switch unlocks world switching; implementation does not.
 - README says Discord scheduled event creation is planned; `createServerEvent` exists but no command uses it.

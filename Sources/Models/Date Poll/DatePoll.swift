@@ -13,7 +13,7 @@ struct DatePoll: Codable, Identifiable {
     let channelID: ChannelSnowflake
     var messageID: MessageSnowflake?
     let campaignRoleID: RoleSnowflake
-    let requiredVoterIDs: Set<UserSnowflake>
+    var requiredVoterIDs: Set<UserSnowflake>
     let createdAt: Date
     let deadline: Date
     let description: String?
