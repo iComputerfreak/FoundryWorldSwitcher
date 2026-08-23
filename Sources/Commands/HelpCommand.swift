@@ -21,32 +21,16 @@ struct HelpCommand: DiscordCommand {
         context: GuildContext,
         client: DiscordClient
     ) async throws {
-        guard context.config.foundryFeaturesEnabled else {
-            try await client.respond(
-                token: interaction.token,
-                message: """
-                Foundry features are disabled for this server.
-
-                - Use `/datepoll` to create a session date poll.
-
-                *Bot version: \(version)*
-                """
-            )
-            return
-        }
+        let commands = DiscordCommands.commands
+            .filter { context.config.foundryFeaturesEnabled || !$0.requiresFoundryFeatures }
+            .sorted { $0.name < $1.name }
+        let commandList = commands.map { "- `/\($0.name)` - \($0.description)" }.joined(separator: "\n")
         try await client.respond(
             token: interaction.token,
-            // TODO: Update
             message: """
-            You can use this bot to view information about the FoundryVTT server and manage the currently running world.
-            
-            - Use `/worldinfo` to show the currently running world
-            - Use `/listworlds` to list all worlds and their IDs.
-            - Use `/switchworld <world_id>` to change the active world
-            
-            - Use `/book event <world_id> <date> <time> <location> <topic> <role>` to create a booking for a new session. Your players and you will be reminded about the session and the world will be locked on the day of your session.
-            - Use `/book reservation <world_id> <date>` to create a new booking to prepare for a session. You will not receive a notification, but the world will be locked on the day of your booking.
-            
+            ## Available commands
+            \(commandList)
+
             *Bot version: \(version)*
             """
         )
