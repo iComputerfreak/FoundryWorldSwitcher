@@ -21,6 +21,19 @@ struct HelpCommand: DiscordCommand {
         context: GuildContext,
         client: DiscordClient
     ) async throws {
+        guard context.config.foundryFeaturesEnabled else {
+            try await client.respond(
+                token: interaction.token,
+                message: """
+                Foundry features are disabled for this server.
+
+                - Use `/datepoll` to create a session date poll.
+
+                *Bot version: \(version)*
+                """
+            )
+            return
+        }
         try await client.respond(
             token: interaction.token,
             // TODO: Update

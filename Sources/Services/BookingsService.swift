@@ -169,6 +169,16 @@ actor BookingsService {
         await scheduler.unqueue(bookings[bookingIndex].associatedEvents)
         bookings[bookingIndex].wasCancelled = true
         await bookingConflicts.remove(bookingID: bookings[bookingIndex].id, guildID: guildID)
+        _ = try? WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: bookings[bookingIndex].id)
+    }
+
+    /// Cancels every active booking when this guild loses Foundry feature access.
+    func cancelAllBookings() async {
+        let bookingIDs = activeBookings.map(\.id)
+        for bookingID in bookingIDs {
+            await cancelBooking(id: bookingID)
+        }
+        saveBookings()
     }
 }
 

@@ -13,6 +13,7 @@ protocol DiscordCommand {
     var description: String { get }
     var options: [ApplicationCommand.Option]? { get }
     var permissionsLevel: BotPermissionLevel { get }
+    var requiresFoundryFeatures: Bool { get }
     var requiresImmediateResponse: Bool { get }
     var logger: Logger { get }
     
@@ -27,6 +28,10 @@ protocol DiscordCommand {
 
 extension DiscordCommand {
     var requiresImmediateResponse: Bool {
+        false
+    }
+
+    var requiresFoundryFeatures: Bool {
         false
     }
 

@@ -26,4 +26,7 @@ struct GuildConfigStored: Codable {
 
     /// Guild booking messages to refresh after booking changes.
     var pinnedBookingMessages: [PinnedBookingMessage]
+
+    /// Whether this guild may use Foundry worlds, bookings, locks, and related commands. Missing legacy values default to enabled.
+    var foundryFeaturesEnabled: Bool?
 }

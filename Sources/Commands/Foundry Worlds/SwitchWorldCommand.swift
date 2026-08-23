@@ -14,6 +14,7 @@ struct SwitchWorldCommand: DiscordCommand {
     let name = "switchworld"
     let description = "Switches the currently active Foundry VTT world"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
+    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(

@@ -15,6 +15,7 @@ struct WorldInfoCommand: DiscordCommand {
     let name = "worldinfo"
     let description = "Displays information about the current world or a given world ID"
     let permissionsLevel: BotPermissionLevel = .user
+    let requiresFoundryFeatures = true
     let options: [ApplicationCommand.Option]? = [
         .init(
             type: .string,

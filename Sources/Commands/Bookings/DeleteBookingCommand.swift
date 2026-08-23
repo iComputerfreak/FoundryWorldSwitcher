@@ -14,6 +14,7 @@ struct DeleteBookingCommand: DiscordCommand {
     let name = "deletebooking"
     let description = "Deletes a booking for a specific date, removing it from the session log as well."
     let permissionsLevel: BotPermissionLevel = .admin
+    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         ApplicationCommand.Option(

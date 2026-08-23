@@ -14,6 +14,7 @@ struct RestartWorldCommand: DiscordCommand {
     let name = "restartworld"
     let description = "Restarts the Foundry VTT Server"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

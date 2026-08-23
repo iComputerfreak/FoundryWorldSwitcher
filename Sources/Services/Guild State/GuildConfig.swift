@@ -34,6 +34,9 @@ final class GuildConfig: BookingConfiguration {
     /// Messages pinned by this guild that show its booking list.
     var pinnedBookingMessages: [PinnedBookingMessage] { didSet { save() } }
 
+    /// Whether this guild may use Foundry worlds, bookings, locks, and related commands.
+    var foundryFeaturesEnabled: Bool { didSet { save() } }
+
     /// Default values used for new guild configuration files and resets.
     private static let defaultStored = GuildConfigStored(
         sessionLength: 4 * GlobalConstants.secondsPerHour,
@@ -43,7 +46,8 @@ final class GuildConfig: BookingConfiguration {
         shouldNotifyAtSessionStart: true,
         sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
         reminderChannel: nil,
-        pinnedBookingMessages: []
+        pinnedBookingMessages: [],
+        foundryFeaturesEnabled: true
     )
 
     /// Loads configuration from `dataPath`, creating defaults when absent.
@@ -58,6 +62,7 @@ final class GuildConfig: BookingConfiguration {
         sessionStartReminderTime = stored.sessionStartReminderTime
         reminderChannel = stored.reminderChannel
         pinnedBookingMessages = stored.pinnedBookingMessages
+        foundryFeaturesEnabled = stored.foundryFeaturesEnabled ?? true
 
         if !FileManager.default.fileExists(atPath: dataPath.path) {
             save()
@@ -81,6 +86,8 @@ final class GuildConfig: BookingConfiguration {
             return Utils.durationString(for: sessionStartReminderTime)
         case .reminderChannel:
             return reminderChannel.map(DiscordUtils.mention(id:)) ?? "None"
+        case .foundryFeaturesEnabled:
+            return foundryFeaturesEnabled ? "true" : "false"
         case .pterodactylHost, .pterodactylServerID:
             throw DiscordCommandError.invalidConfigKey(key.rawValue)
         }
@@ -110,6 +117,11 @@ final class GuildConfig: BookingConfiguration {
             sessionStartReminderTime = try DurationParser.duration(from: value)
         case .reminderChannel:
             reminderChannel = ChannelSnowflake(value)
+        case .foundryFeaturesEnabled:
+            guard ["true", "false"].contains(value.lowercased()) else {
+                throw DiscordCommandError.invalidConfigKey(value)
+            }
+            foundryFeaturesEnabled = value.lowercased() == "true"
         case .pterodactylHost, .pterodactylServerID:
             throw DiscordCommandError.invalidConfigKey(key.rawValue)
         }
@@ -132,6 +144,8 @@ final class GuildConfig: BookingConfiguration {
             sessionStartReminderTime = Self.defaultStored.sessionStartReminderTime
         case .reminderChannel:
             reminderChannel = Self.defaultStored.reminderChannel
+        case .foundryFeaturesEnabled:
+            foundryFeaturesEnabled = Self.defaultStored.foundryFeaturesEnabled ?? true
         case .pterodactylHost, .pterodactylServerID:
             throw DiscordCommandError.invalidConfigKey(key.rawValue)
         }
@@ -149,7 +163,8 @@ final class GuildConfig: BookingConfiguration {
                 shouldNotifyAtSessionStart: shouldNotifyAtSessionStart,
                 sessionStartReminderTime: sessionStartReminderTime,
                 reminderChannel: reminderChannel,
-                pinnedBookingMessages: pinnedBookingMessages
+                pinnedBookingMessages: pinnedBookingMessages,
+                foundryFeaturesEnabled: foundryFeaturesEnabled
             )
             try JSONEncoder().encode(stored).write(to: dataPath)
         } catch {

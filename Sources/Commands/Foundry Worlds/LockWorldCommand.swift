@@ -14,6 +14,7 @@ struct LockWorldCommand: DiscordCommand {
     let name = "lockworld"
     let description = "Locks a world, preventing others from switching to another world"
     let permissionsLevel: BotPermissionLevel = .admin
+    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(

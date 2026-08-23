@@ -124,6 +124,9 @@ struct ConfigCommand: DiscordCommand {
                 }
             }
             try context.config.setValue(valueString, for: configKey)
+            if configKey == .foundryFeaturesEnabled, !context.config.foundryFeaturesEnabled {
+                await context.bookings.cancelAllBookings()
+            }
             try await respond("The value `\(keyString)` was updated to `\(valueString)`.")
         } else if let resetCommand = applicationCommand.option(named: "reset") {
             let keyString = try resetCommand.requireOption(named: "key").requireString()

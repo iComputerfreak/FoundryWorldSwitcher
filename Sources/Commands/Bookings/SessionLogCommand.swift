@@ -9,6 +9,7 @@ struct SessionLogCommand: DiscordCommand {
     let name = "sessionlog"
     let description = "Shows a list of all past events"
     let permissionsLevel: BotPermissionLevel = .user
+    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(

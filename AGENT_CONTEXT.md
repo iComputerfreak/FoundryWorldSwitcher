@@ -19,6 +19,7 @@ Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters bo
 - Permission levels: `user`, `dungeonMaster`, `admin`. User and role mappings persist in `permissions.json`; highest assigned level wins.
 - Application owners receive runtime-only admin from `Permissions`; their IDs never enter guild `permissions.json` mappings.
 - Date-poll role snapshots require Guild Members intent enabled in code and Discord Developer Portal.
+- `foundryFeaturesEnabled` is a guild admin config flag, defaulting to true for legacy config. Each Foundry command must explicitly set `requiresFoundryFeatures = true`; protocol default is false. When false, those commands are blocked for every user, including application owner; date polls and configuration remain available. Global command registration means blocked commands remain visible but reject at runtime. Help renders the registered command metadata, filtering disabled Foundry commands.
 - User commands: help, health check, permission lookup, world info, bookings, session log.
 - Dungeon Master commands: list/restart/switch worlds; create, cancel, or reschedule bookings; read lock state.
 - Admin commands: permission management, config, cache refresh, lock management, booking deletion, pin management, scheduler queue inspection. Forced world switch requires admin.
@@ -41,6 +42,7 @@ Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters bo
 - Scheduled locks persist their booking ownership before changing `WORLD_NAME`; Pterodactyl failure releases that same lock.
 - Manual `/switchworld` rejects locked state unless `force:true` is used by the bot application owner. Forced switches preserve existing booking-owned locks. Full `/unlockworld` is application-owner-only.
 - Rescheduling reserves the replacement interval before replacing the booking, preserves its ID, and regenerates its queued events.
+- Disabling Foundry features cancels active bookings, unqueues their events, removes global conflicts, and releases matching booking-owned world locks. Scheduler also ignores stale booking lock and reminder events from disabled guilds; cleanup unlock events still run.
 
 ## Persistent Runtime State
 

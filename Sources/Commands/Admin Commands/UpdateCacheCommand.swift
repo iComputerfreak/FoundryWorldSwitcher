@@ -9,6 +9,7 @@ struct UpdateCacheCommand: DiscordCommand {
     let name = "updatecache"
     let description = "Invalidates and re-fetches the cache"
     let permissionsLevel: BotPermissionLevel = .admin
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

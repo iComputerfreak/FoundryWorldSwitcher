@@ -20,6 +20,7 @@ enum ConfigKey: String, CaseIterable {
     case shouldNotifyAtSessionStart
     case sessionStartReminderTime
     case reminderChannel
+    case foundryFeaturesEnabled
 }
 
 /// Global Pterodactyl target configuration persisted at `data/botConfig.json`.

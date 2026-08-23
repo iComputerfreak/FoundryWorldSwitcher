@@ -9,6 +9,7 @@ struct ListPinsCommand: DiscordCommand {
     let name = "listpins"
     let description = "Lists all pinned schedule messages"
     let permissionsLevel: BotPermissionLevel = .admin
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

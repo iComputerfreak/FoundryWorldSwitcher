@@ -14,6 +14,7 @@ struct RescheduleEventCommand: DiscordCommand {
     let name = "rescheduleevent"
     let description = "Reschedules an event booking"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
+    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(

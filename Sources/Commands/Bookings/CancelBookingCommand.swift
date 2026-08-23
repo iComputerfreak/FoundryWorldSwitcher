@@ -14,6 +14,7 @@ struct CancelBookingCommand: DiscordCommand {
     let name = "cancelbooking"
     let description = "Cancels a booking for a specific date"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
+    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         ApplicationCommand.Option(

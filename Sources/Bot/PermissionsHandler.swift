@@ -19,5 +19,8 @@ struct PermissionsHandler {
         guard permissionLevel >= command.permissionsLevel else {
             throw DiscordCommandError.unauthorized(requiredLevel: command.permissionsLevel)
         }
+        guard !command.requiresFoundryFeatures || context.config.foundryFeaturesEnabled else {
+            throw DiscordCommandError.foundryFeaturesDisabled
+        }
     }
 }

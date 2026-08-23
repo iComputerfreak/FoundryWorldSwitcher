@@ -14,6 +14,7 @@ struct EventQueueCommand: DiscordCommand {
     let name = "eventqueue"
     let description = "Returns a list of all events in the event scheduler queue"
     let permissionsLevel: BotPermissionLevel = .admin
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

@@ -14,6 +14,7 @@ struct LockStateCommand: DiscordCommand {
     let name = "lockstate"
     let description = "Returns the current state of the world switching lock"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

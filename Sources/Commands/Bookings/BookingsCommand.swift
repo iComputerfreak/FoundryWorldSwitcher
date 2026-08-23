@@ -14,6 +14,7 @@ struct BookingsCommand: DiscordCommand {
     let name = "bookings"
     let description = "Shows a list of all future reservations"
     let permissionsLevel: BotPermissionLevel = .user
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

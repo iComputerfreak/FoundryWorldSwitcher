@@ -14,6 +14,7 @@ struct ListWorldsCommand: DiscordCommand {
     let name = "listworlds"
     let description = "Lists all available worlds in Foundry VTT"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

@@ -27,6 +27,7 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             try await handleConsoleMessage(message)
 
         case let .lockWorldSwitching(worldID: worldID):
+            guard context.config.foundryFeaturesEnabled else { return }
             try await handleLockWorldSwitching(worldID: worldID, context: context)
 
         case .unlockWorldSwitching:
@@ -36,9 +37,11 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             try handleUnlockManualWorld(acquiredAt: acquiredAt)
 
         case let .sendSessionReminder(bookingID: bookingID):
+            guard context.config.foundryFeaturesEnabled else { return }
             try await handleSendSessionReminder(bookingID: bookingID, bookings: context.bookings, config: context.config)
 
         case let .sendSessionStartsReminder(bookingID: bookingID):
+            guard context.config.foundryFeaturesEnabled else { return }
             try await handleSendSessionStartsReminder(bookingID: bookingID, bookings: context.bookings, config: context.config)
 
         case .removeBooking:

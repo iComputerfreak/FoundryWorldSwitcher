@@ -32,6 +32,7 @@ struct BookCommand: DiscordCommand {
     let name = "book"
     let description = "Books a reservation or event"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
+    let requiresFoundryFeatures = true
     
     private static let worldOption = ApplicationCommand.Option(
         type: .string,

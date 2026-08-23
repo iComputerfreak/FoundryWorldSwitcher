@@ -14,6 +14,7 @@ struct UnlockWorldCommand: DiscordCommand {
     let name = "unlockworld"
     let description = "Unlocks world switching, allowing others to switch worlds again"
     let permissionsLevel: BotPermissionLevel = .admin
+    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

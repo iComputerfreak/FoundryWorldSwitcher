@@ -32,6 +32,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case wrongDurationFormat(String)
     case noChannel
     case rescheduleBookingPermissionDenied(required: BotPermissionLevel)
+    case foundryFeaturesDisabled
     
     var errorDescription: String? {
         switch self {
@@ -103,6 +104,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case let .rescheduleBookingPermissionDenied(required: required):
             return "You need to have the `\(required.description)` permission level to reschedule bookings of other users."
+
+        case .foundryFeaturesDisabled:
+            return "Foundry features are disabled for this server."
         }
     }
 }

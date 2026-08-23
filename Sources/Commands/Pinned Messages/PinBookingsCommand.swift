@@ -14,6 +14,7 @@ struct PinBookingsCommand: DiscordCommand {
     let name = "pinbookings"
     let description = "Sends the current booking schedule in the channel and updates it when further changes are made"
     let permissionsLevel: BotPermissionLevel = .admin
+    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(

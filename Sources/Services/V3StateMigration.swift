@@ -301,7 +301,8 @@ enum V3StateMigration {
                 shouldNotifyAtSessionStart: shouldNotifyAtSessionStart,
                 sessionStartReminderTime: sessionStartReminderTime,
                 reminderChannel: reminderChannel,
-                pinnedBookingMessages: pinnedBookingMessages
+                pinnedBookingMessages: pinnedBookingMessages,
+                foundryFeaturesEnabled: true
             )
         }
 
