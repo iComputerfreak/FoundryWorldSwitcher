@@ -18,17 +18,19 @@ struct BookingModalHandler {
                 throw DiscordCommandError.noGuild
             }
             let context = await guildRegistry.context(for: guildID)
-            guard context.config.foundryFeaturesEnabled else {
-                throw DiscordCommandError.foundryFeaturesDisabled
-            }
             guard context.permissions.permissionsLevel(of: user.id, roles: member.roles) >= .dungeonMaster else {
                 throw DiscordCommandError.unauthorized(requiredLevel: .dungeonMaster)
             }
 
             let form = try BookingCreationForm(from: modal)
-            let worlds = try await PterodactylAPI.shared.worlds()
-            guard worlds.contains(where: { $0.id == form.worldID }) else {
-                throw DiscordCommandError.worldDoesNotExist(worldID: form.worldID)
+            if form.kind == .reservation || form.worldID != nil {
+                guard context.config.foundryFeaturesEnabled else {
+                    throw DiscordCommandError.foundryFeaturesDisabled
+                }
+                let worlds = try await PterodactylAPI.shared.worlds()
+                guard worlds.contains(where: { $0.id == form.worldID }) else {
+                    throw DiscordCommandError.worldDoesNotExist(worldID: form.worldID ?? "")
+                }
             }
             guard await context.bookings.booking(at: form.date) == nil else {
                 throw DiscordCommandError.bookingAlreadyExists(atDate: form.date)
@@ -38,10 +40,11 @@ struct BookingModalHandler {
             var warning: String?
             switch form.kind {
             case .reservation:
+                guard let worldID = form.worldID else { throw DiscordCommandError.invalidBookingForm }
                 booking = ReservationBooking(
                     date: form.date,
                     author: user.id,
-                    worldID: form.worldID,
+                    worldID: worldID,
                     configuration: context.config
                 )
             case .event:

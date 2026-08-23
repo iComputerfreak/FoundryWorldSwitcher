@@ -106,7 +106,9 @@ actor BookingsService {
     }
 
     func createBookingIfAvailable(_ booking: any Booking) async throws {
-        try await bookingConflicts.reserve(booking, for: guildID, configuration: configuration)
+        if booking.worldID != nil {
+            try await bookingConflicts.reserve(booking, for: guildID, configuration: configuration)
+        }
         await createBooking(booking)
     }
 
@@ -127,18 +129,21 @@ actor BookingsService {
                 configuration: configuration
             )
         } else if let booking = originalBooking as? ReservationBooking {
+            guard let worldID = booking.worldID else { return nil }
             replacementBooking = ReservationBooking(
                 id: booking.id,
                 date: date,
                 author: booking.author,
-                worldID: booking.worldID,
+                worldID: worldID,
                 configuration: configuration
             )
         } else {
             return nil
         }
 
-        try await bookingConflicts.reserve(replacementBooking, for: guildID, configuration: configuration)
+        if replacementBooking.worldID != nil {
+            try await bookingConflicts.reserve(replacementBooking, for: guildID, configuration: configuration)
+        }
         bookings[index] = replacementBooking
         await scheduler.unqueue(originalBooking.associatedEvents)
         await scheduler.schedule(replacementBooking.associatedEvents)
@@ -149,7 +154,9 @@ actor BookingsService {
     func deleteBooking(_ booking: any Booking) async {
         removeBooking(id: booking.id)
         await scheduler.unqueue(booking.associatedEvents)
-        await bookingConflicts.remove(bookingID: booking.id, guildID: guildID)
+        if booking.worldID != nil {
+            await bookingConflicts.remove(bookingID: booking.id, guildID: guildID)
+        }
     }
     
     /// Deletes the booking with the given ID from the store
@@ -168,13 +175,15 @@ actor BookingsService {
         }
         await scheduler.unqueue(bookings[bookingIndex].associatedEvents)
         bookings[bookingIndex].wasCancelled = true
-        await bookingConflicts.remove(bookingID: bookings[bookingIndex].id, guildID: guildID)
-        _ = try? WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: bookings[bookingIndex].id)
+        if bookings[bookingIndex].worldID != nil {
+            await bookingConflicts.remove(bookingID: bookings[bookingIndex].id, guildID: guildID)
+            _ = try? WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: bookings[bookingIndex].id)
+        }
     }
 
     /// Cancels every active booking when this guild loses Foundry feature access.
     func cancelAllBookings() async {
-        let bookingIDs = activeBookings.map(\.id)
+        let bookingIDs = activeBookings.filter { $0.worldID != nil }.map(\.id)
         for bookingID in bookingIDs {
             await cancelBooking(id: bookingID)
         }
@@ -248,6 +257,7 @@ extension BookingsService {
         var errors: [Error] = []
         for message in messages {
             let filteredBookings = activeBookings
+                .filter { pinnedMessagesConfiguration.foundryFeaturesEnabled || $0.worldID == nil }
                 .filter { booking in
                     guard let worldID = message.worldID else {
                         return true

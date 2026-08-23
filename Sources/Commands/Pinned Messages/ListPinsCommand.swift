@@ -9,7 +9,6 @@ struct ListPinsCommand: DiscordCommand {
     let name = "listpins"
     let description = "Lists all pinned schedule messages"
     let permissionsLevel: BotPermissionLevel = .admin
-    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
@@ -18,7 +17,9 @@ struct ListPinsCommand: DiscordCommand {
         client: DiscordClient
     ) async throws {
         guard let guild = interaction.guild_id else { throw DiscordCommandError.noGuild }
-        let pinnedMessages = context.config.pinnedBookingMessages
+        let pinnedMessages = context.config.pinnedBookingMessages.filter {
+            context.config.foundryFeaturesEnabled || $0.worldID == nil
+        }
         
         func formattedMessages() -> String {
             if pinnedMessages.isEmpty {

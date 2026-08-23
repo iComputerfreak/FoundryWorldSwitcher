@@ -13,7 +13,6 @@ struct BookCommand: DiscordCommand {
     let name = "book"
     let description = "Books a reservation or event"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
-    let requiresFoundryFeatures = true
     let requiresImmediateResponse = true
 
     let options: [ApplicationCommand.Option]? = [
@@ -39,7 +38,10 @@ struct BookCommand: DiscordCommand {
               let kind = BookingCreationForm.Kind(rawValue: subcommand.name) else {
             throw DiscordCommandError.missingSubcommand
         }
-        let worlds = try await PterodactylAPI.shared.worlds()
+        guard kind == .event || context.config.foundryFeaturesEnabled else {
+            throw DiscordCommandError.foundryFeaturesDisabled
+        }
+        let worlds = context.config.foundryFeaturesEnabled ? try await PterodactylAPI.shared.worlds() : []
         try await client.createInteractionResponse(
             id: interaction.id,
             token: interaction.token,

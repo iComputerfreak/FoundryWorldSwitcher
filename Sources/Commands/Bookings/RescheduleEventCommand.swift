@@ -14,7 +14,6 @@ struct RescheduleEventCommand: DiscordCommand {
     let name = "rescheduleevent"
     let description = "Reschedules an event booking"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
-    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(
@@ -60,6 +59,9 @@ struct RescheduleEventCommand: DiscordCommand {
         
         guard var booking = await context.bookings.booking(at: eventDate) else {
             throw DiscordCommandError.noBookingFoundAtDate(eventDate)
+        }
+        guard context.config.foundryFeaturesEnabled || booking.worldID == nil else {
+            throw DiscordCommandError.foundryFeaturesDisabled
         }
         
         guard 

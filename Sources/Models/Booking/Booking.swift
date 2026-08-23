@@ -15,8 +15,8 @@ protocol Booking: Codable, Hashable, Identifiable {
     var date: Date { get set }
     /// The user that created the booking
     var author: UserSnowflake { get set }
-    /// The ID of the world on the Pterodactyl server that is being booked
-    var worldID: String { get set }
+    /// The optional ID of the Foundry world associated with this booking.
+    var worldID: String? { get set }
     /// The scheduler events associated with this booking
     var associatedEvents: [SchedulerEvent] { get }
     /// Persisted start of the world-lock interval.
@@ -41,6 +41,7 @@ extension Booking {
 
     @discardableResult
     mutating func initializeBookingInterval(using configuration: any BookingConfiguration) -> Bool {
+        guard worldID != nil else { return false }
         guard
             bookingIntervalStartDate == nil || bookingIntervalEndDate == nil ||
             bookingIntervalEndDate! <= bookingIntervalStartDate!

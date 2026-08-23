@@ -375,7 +375,7 @@ enum DatePollRenderer {
             )))
             let finalizedCandidates = poll.finalizedCandidates.sorted { $0.date < $1.date }
             let bookedCandidateIDs = poll.bookedFinalizedCandidateIDs ?? []
-            for candidate in finalizedCandidates where foundryFeaturesEnabled && !bookedCandidateIDs.contains(candidate.id) {
+            for candidate in finalizedCandidates where !bookedCandidateIDs.contains(candidate.id) {
                 buttons.append(.button(.init(
                     style: .primary,
                     label: finalizedCandidates.count == 1 ? "Book" : bookingButtonLabel(for: candidate.date),

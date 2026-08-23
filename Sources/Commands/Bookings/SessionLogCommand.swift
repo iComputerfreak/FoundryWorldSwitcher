@@ -9,7 +9,6 @@ struct SessionLogCommand: DiscordCommand {
     let name = "sessionlog"
     let description = "Shows a list of all past events"
     let permissionsLevel: BotPermissionLevel = .user
-    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(
@@ -30,6 +29,7 @@ struct SessionLogCommand: DiscordCommand {
         
         let pastEvents = await context.bookings.completedBookings
             .compactMap { $0 as? EventBooking }
+            .filter { context.config.foundryFeaturesEnabled || $0.worldID == nil }
             .filter { booking in
                 guard let role else { return true }
                 return booking.campaignRoleSnowflake == role

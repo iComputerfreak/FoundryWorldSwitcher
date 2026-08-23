@@ -10,14 +10,22 @@ enum BookingRenderer {
         sourcePollID: String? = nil,
         sourceCandidateID: UUID? = nil
     ) -> Payloads.InteractionResponse {
+        let worldOptions = (kind == .event ? [
+            Interaction.ActionRow.StringSelectMenu.Option(
+                label: "No Foundry world",
+                value: BookingCreationForm.noFoundryWorldValue,
+                description: "External or in-person session",
+                default: true
+            )
+        ] : []) + worlds.map {
+            .init(label: String($0.title.prefix(100)), value: $0.id, description: String($0.id.prefix(100)))
+        }
         let worldSelect = Interaction.ModalComponent.label(.init(
             label: "Foundry world",
             component: .stringSelect(.init(
-                custom_id: BookingCreationForm.worldID,
-                options: worlds.map {
-                    .init(label: String($0.title.prefix(100)), value: $0.id, description: String($0.id.prefix(100)))
-                },
-                placeholder: "Select world",
+                custom_id: BookingCreationForm.worldComponentID,
+                options: worldOptions,
+                placeholder: kind == .event ? "No Foundry world" : "Select world",
                 min_values: 1,
                 max_values: 1,
                 required: true

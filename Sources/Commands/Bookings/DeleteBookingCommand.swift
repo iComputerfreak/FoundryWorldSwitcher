@@ -14,7 +14,6 @@ struct DeleteBookingCommand: DiscordCommand {
     let name = "deletebooking"
     let description = "Deletes a booking for a specific date, removing it from the session log as well."
     let permissionsLevel: BotPermissionLevel = .admin
-    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         ApplicationCommand.Option(
@@ -40,12 +39,15 @@ struct DeleteBookingCommand: DiscordCommand {
         guard let booking = await context.bookings.booking(at: date) else {
             throw DiscordCommandError.noBookingFoundAtDate(date)
         }
+        guard context.config.foundryFeaturesEnabled || booking.worldID == nil else {
+            throw DiscordCommandError.foundryFeaturesDisabled
+        }
         
         let bookingEmbed = try await Utils.createBookingEmbed(for: booking)
         
         // MARK: Delete the booking
         // If the booking already started, we have to unlock world switching as well.
-        if booking.bookingIntervalStartDate(using: context.config) < .now && .now < booking.bookingIntervalEndDate(using: context.config) {
+        if booking.worldID != nil, booking.bookingIntervalStartDate(using: context.config) < .now && .now < booking.bookingIntervalEndDate(using: context.config) {
             _ = try WorldLockService.shared.unlockWorldSwitching(guildID: context.guildID, bookingID: booking.id)
         }
         await context.bookings.deleteBooking(booking)

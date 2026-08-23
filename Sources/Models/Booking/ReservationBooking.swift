@@ -12,7 +12,7 @@ struct ReservationBooking: Booking {
     let id: UUID
     var date: Date
     var author: UserSnowflake
-    var worldID: String
+    var worldID: String?
     var associatedEvents: [SchedulerEvent] = []
     var bookingIntervalStartDate: Date?
     var bookingIntervalEndDate: Date?
@@ -49,7 +49,7 @@ struct ReservationBooking: Booking {
         self.id = try container.decode(UUID.self, forKey: .id)
         self.date = try container.decode(Date.self, forKey: .date)
         self.author = try container.decode(UserSnowflake.self, forKey: .author)
-        self.worldID = try container.decode(String.self, forKey: .worldID)
+        self.worldID = try container.decodeIfPresent(String.self, forKey: .worldID)
         self.associatedEvents = try container.decode([SchedulerEvent].self, forKey: .associatedEvents)
         self.bookingIntervalStartDate = try container.decodeIfPresent(Date.self, forKey: .bookingIntervalStartDate)
         self.bookingIntervalEndDate = try container.decodeIfPresent(Date.self, forKey: .bookingIntervalEndDate)

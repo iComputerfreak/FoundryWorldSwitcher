@@ -12,11 +12,11 @@ struct EventBooking: Booking {
     let id: UUID
     var date: Date
     var author: UserSnowflake
-    var worldID: String
+    var worldID: String?
     /// The group of players that are playing at this booking. If the booking is only for DM preparation, set this to `nil`.
     var campaignRoleSnowflake: RoleSnowflake
     /// The channel where the booking is taking place
-    var location: ChannelSnowflake
+    var location: ChannelSnowflake?
     /// The topic of the booking (e.g., "Session 13")
     var topic: String
     var associatedEvents: [SchedulerEvent] = []
@@ -29,9 +29,9 @@ struct EventBooking: Booking {
         id: UUID = UUID(),
         date: Date,
         author: UserSnowflake,
-        worldID: String,
+        worldID: String?,
         campaignRoleSnowflake: RoleSnowflake,
-        location: ChannelSnowflake,
+        location: ChannelSnowflake?,
         topic: String,
         configuration: any BookingConfiguration
     ) {
@@ -42,18 +42,20 @@ struct EventBooking: Booking {
         self.campaignRoleSnowflake = campaignRoleSnowflake
         self.location = location
         self.topic = topic
-        self.bookingIntervalStartDate = defaultBookingIntervalStartDate(using: configuration)
-        self.bookingIntervalEndDate = bookingIntervalStartDate!.addingTimeInterval(configuration.bookingIntervalEndTime)
-        self.associatedEvents = [
-            SchedulerEvent(
-                dueDate: bookingIntervalStartDate!,
-                eventType: .lockWorldSwitching(worldID: worldID)
-            ),
-            SchedulerEvent(
-                dueDate: bookingIntervalEndDate!,
-                eventType: .unlockWorldSwitching
-            ),
-        ]
+        if let worldID {
+            self.bookingIntervalStartDate = defaultBookingIntervalStartDate(using: configuration)
+            self.bookingIntervalEndDate = bookingIntervalStartDate!.addingTimeInterval(configuration.bookingIntervalEndTime)
+            self.associatedEvents = [
+                SchedulerEvent(
+                    dueDate: bookingIntervalStartDate!,
+                    eventType: .lockWorldSwitching(worldID: worldID)
+                ),
+                SchedulerEvent(
+                    dueDate: bookingIntervalEndDate!,
+                    eventType: .unlockWorldSwitching
+                ),
+            ]
+        }
         // Only add the initial reminder, if it lies in the future
         let sessionReminderTime = date.addingTimeInterval(-configuration.sessionReminderTime)
         if sessionReminderTime > .now {
@@ -80,9 +82,9 @@ struct EventBooking: Booking {
         self.id = try container.decode(UUID.self, forKey: .id)
         self.date = try container.decode(Date.self, forKey: .date)
         self.author = try container.decode(UserSnowflake.self, forKey: .author)
-        self.worldID = try container.decode(String.self, forKey: .worldID)
+        self.worldID = try container.decodeIfPresent(String.self, forKey: .worldID)
         self.campaignRoleSnowflake = try container.decode(RoleSnowflake.self, forKey: .campaignRoleSnowflake)
-        self.location = try container.decode(ChannelSnowflake.self, forKey: .location)
+        self.location = try container.decodeIfPresent(ChannelSnowflake.self, forKey: .location)
         self.topic = try container.decode(String.self, forKey: .topic)
         self.associatedEvents = try container.decode([SchedulerEvent].self, forKey: .associatedEvents)
         self.bookingIntervalStartDate = try container.decodeIfPresent(Date.self, forKey: .bookingIntervalStartDate)

@@ -14,7 +14,6 @@ class UpdatePinsCommand: DiscordCommand {
     let name = "updatepins"
     let description = "Updates all pinned booking messages"
     let permissionsLevel: BotPermissionLevel = .admin
-    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,

@@ -14,7 +14,6 @@ struct CancelBookingCommand: DiscordCommand {
     let name = "cancelbooking"
     let description = "Cancels a booking for a specific date"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
-    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         ApplicationCommand.Option(
@@ -47,6 +46,9 @@ struct CancelBookingCommand: DiscordCommand {
         guard let booking = await context.bookings.booking(at: date) else {
             throw DiscordCommandError.noBookingFoundAtDate(date)
         }
+        guard context.config.foundryFeaturesEnabled || booking.worldID == nil else {
+            throw DiscordCommandError.foundryFeaturesDisabled
+        }
         
         // Only admins can delete bookings of other people
         if booking.author != user.id {
@@ -60,7 +62,7 @@ struct CancelBookingCommand: DiscordCommand {
         
         // MARK: Delete the booking
         // If the booking already started, we have to unlock world switching as well.
-        if booking.bookingIntervalStartDate(using: context.config) < .now && .now < booking.bookingIntervalEndDate(using: context.config) {
+        if booking.worldID != nil, booking.bookingIntervalStartDate(using: context.config) < .now && .now < booking.bookingIntervalEndDate(using: context.config) {
             _ = try WorldLockService.shared.unlockWorldSwitching(guildID: context.guildID, bookingID: booking.id)
         }
         await context.bookings.cancelBooking(id: booking.id)

@@ -108,14 +108,19 @@ extension Utils {
     }
 
     static func createBookingEmbed(for booking: any Booking) async throws -> Embed {
-        let world = try await PterodactylAPI.shared.world(for: booking.worldID)
+        let world: FoundryWorld?
+        if let worldID = booking.worldID {
+            world = try await PterodactylAPI.shared.world(for: worldID)
+        } else {
+            world = nil
+        }
         
         var embed: Embed
         
         if let eventBooking = booking as? EventBooking {
-            embed = createBookingEmbed(for: eventBooking, world: world.title)
+            embed = createBookingEmbed(for: eventBooking, world: world?.title)
         } else {
-            embed = createBookingEmbed(for: booking, world: world.title)
+            embed = createBookingEmbed(for: booking, world: world?.title)
         }
         
         if booking.wasCancelled {
@@ -130,22 +135,24 @@ extension Utils {
         return embed
     }
 
-    static private func createBookingEmbed(for booking: EventBooking, world: String) -> Embed {
+    static private func createBookingEmbed(for booking: EventBooking, world: String?) -> Embed {
         let date = Utils.outputDateFormatter.string(from: booking.date)
         let time = Utils.timeFormatter.string(from: booking.date)
 
         return .init(
             title: "\(date) at \(time)",
-            description: """
-            \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\(world)'.
-            > \(booking.topic)
-            """.trimmingCharacters(in: .whitespacesAndNewlines)
+            description: ([
+                world.map { "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\($0)'." }
+                    ?? "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) has a session.",
+                booking.location.map { "Voice channel: \(DiscordUtils.mention(id: $0))." },
+                "> \(booking.topic)",
+            ].compactMap { $0 }).joined(separator: "\n")
         )
     }
 
     static func createBookingMessages(for bookings: [EventBooking]) async throws -> [String] {
         let bookings = bookings.sorted(by: { $0.date < $1.date })
-        let worlds = try await PterodactylAPI.shared.worlds()
+        let worlds = bookings.contains { $0.worldID != nil } ? try await PterodactylAPI.shared.worlds() : []
 
         var bookingMessages: [String] = []
         // We only show the last 10 bookings to avoid hitting Discord's character limit
@@ -153,11 +160,11 @@ extension Utils {
         for booking in bookings.suffix(10) {
             let date = Utils.outputDateFormatter.string(from: booking.date)
             let time = Utils.timeFormatter.string(from: booking.date)
-            let world = worlds.first(where: { $0.id == booking.worldID })?.title ?? "<unknown>"
+            let world = booking.worldID.flatMap { worldID in worlds.first(where: { $0.id == worldID })?.title }
             bookingMessages.append(
                 """
                 > \(date) at \(time)
-                > \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\(world)'.
+                > \(world.map { "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\($0)'." } ?? "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) has a session.")
                 > \(booking.wasCancelled ? "~~\(booking.topic)~~ (cancelled)" : booking.topic)
                 """.trimmingCharacters(in: .whitespacesAndNewlines)
             )
@@ -165,14 +172,14 @@ extension Utils {
         return bookingMessages
     }
     
-    static private func createBookingEmbed(for booking: any Booking, world: String) -> Embed {
+    static private func createBookingEmbed(for booking: any Booking, world: String?) -> Embed {
         let date = Utils.outputDateFormatter.string(from: booking.date)
         
         return .init(
             title: date,
-            description: """
-            \(DiscordUtils.mention(id: booking.author)) is preparing the world '\(world)'.
-            """.trimmingCharacters(in: .whitespacesAndNewlines)
+            description: world.map {
+                "\(DiscordUtils.mention(id: booking.author)) is preparing the world '\($0)'."
+            } ?? "\(DiscordUtils.mention(id: booking.author)) has an external booking."
         )
     }
 }

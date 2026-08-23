@@ -14,7 +14,6 @@ struct PinBookingsCommand: DiscordCommand {
     let name = "pinbookings"
     let description = "Sends the current booking schedule in the channel and updates it when further changes are made"
     let permissionsLevel: BotPermissionLevel = .admin
-    let requiresFoundryFeatures = true
     
     let options: [ApplicationCommand.Option]? = [
         .init(
@@ -37,7 +36,12 @@ struct PinBookingsCommand: DiscordCommand {
         context: GuildContext,
         client: any DiscordClient
     ) async throws {
-        let world = try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
+        guard context.config.foundryFeaturesEnabled || applicationCommand.option(named: "world_id") == nil else {
+            throw DiscordCommandError.foundryFeaturesDisabled
+        }
+        let world = context.config.foundryFeaturesEnabled
+            ? try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
+            : nil
         let role = applicationCommand.option(named: "role")?.value?.stringValue.flatMap(RoleSnowflake.init)
         
         // We cannot use the normal respond mechanic, as this will give us a temporary interaction token

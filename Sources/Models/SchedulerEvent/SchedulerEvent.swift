@@ -287,12 +287,13 @@ extension SchedulerEvent {
         }
         
         let durationString = Utils.durationString(for: config.sessionStartReminderTime, unitStyle: .long)
+        let location = booking.location.map { " in channel \(DiscordUtils.mention(id: $0))" } ?? ""
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
             channelId: reminderChannel,
             payload: .init(
                 content: """
-                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts in \(durationString) in channel \(DiscordUtils.mention(id: booking.location)).
+                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts in \(durationString)\(location).
                 """.trimmingCharacters(in: .whitespacesAndNewlines),
                 embeds: [Utils.createBookingEmbed(for: booking)]
             )

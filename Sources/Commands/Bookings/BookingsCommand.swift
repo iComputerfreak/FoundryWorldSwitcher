@@ -14,7 +14,6 @@ struct BookingsCommand: DiscordCommand {
     let name = "bookings"
     let description = "Shows a list of all future reservations"
     let permissionsLevel: BotPermissionLevel = .user
-    let requiresFoundryFeatures = true
     
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
@@ -22,7 +21,10 @@ struct BookingsCommand: DiscordCommand {
         context: GuildContext,
         client: any DiscordClient
     ) async throws {
-        let bookingEmbeds = try await Utils.createBookingEmbeds(for: context.bookings.allBookings)
+        let bookings = await context.bookings.allBookings.filter {
+            context.config.foundryFeaturesEnabled || $0.worldID == nil
+        }
+        let bookingEmbeds = try await Utils.createBookingEmbeds(for: bookings)
         
         let payload: Payloads.EditWebhookMessage
         if bookingEmbeds.isEmpty {

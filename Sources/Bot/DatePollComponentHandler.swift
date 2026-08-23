@@ -221,9 +221,6 @@ struct DatePollComponentHandler {
             throw DiscordCommandError.noUser
         }
         do {
-            guard context.config.foundryFeaturesEnabled else {
-                throw DiscordCommandError.foundryFeaturesDisabled
-            }
             guard context.permissions.permissionsLevel(of: userID, roles: member.roles) >= .dungeonMaster else {
                 throw DiscordCommandError.unauthorized(requiredLevel: .dungeonMaster)
             }
@@ -237,7 +234,7 @@ struct DatePollComponentHandler {
             guard let dateTime = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: result.candidate.date) else {
                 throw DatePollError.unavailablePoll
             }
-            let worlds = try await PterodactylAPI.shared.worlds()
+            let worlds = context.config.foundryFeaturesEnabled ? try await PterodactylAPI.shared.worlds() : []
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
