@@ -225,6 +225,21 @@ enum DatePollRenderer {
         return candidateIDs
     }
 
+    static func votesModal(for poll: DatePoll) -> Payloads.InteractionResponse {
+        let candidates = orderedCandidates(for: poll)
+        let components = stride(from: 0, to: candidates.count, by: 4).map { start in
+            let candidateCards = candidates[start..<min(start + 4, candidates.count)].map {
+                dateCard(for: $0, poll: poll)
+            }
+            return Interaction.ModalComponent.textDisplay(.init(content: candidateCards.joined(separator: "\n")))
+        }
+        return .modal(.init(
+            custom_id: componentID(action: "view", pollID: poll.id),
+            title: "Poll votes",
+            componentsV2: components
+        ))
+    }
+
     static func reminderComponents(for poll: DatePoll) -> [Interaction.ActionRow] {
         guard poll.deadline > .now.addingTimeInterval(GlobalConstants.secondsPerDay) else { return [] }
         return [[.button(.init(
@@ -243,9 +258,9 @@ enum DatePollRenderer {
         }
         components.append(.textDisplay(.init(content: participationSummary(for: poll))))
 
-        if poll.status != .cancelled {
+        if poll.status != .cancelled && poll.status != .finalized {
             let leadingCandidates = poll.bestCandidates.sorted(by: { $0.date < $1.date })
-            if let leadingCandidate = leadingCandidates.first {
+            if poll.status != .finalized, let leadingCandidate = leadingCandidates.first {
                 components.append(.container(.init(
                     componentsV2: [.textDisplay(.init(content: leadingCandidates.map {
                         leadingDateSummary(for: $0, poll: poll)
@@ -309,6 +324,14 @@ enum DatePollRenderer {
             )))
         }
 
+        if poll.status == .finalized {
+            buttons.append(.button(.init(
+                style: .secondary,
+                label: "View votes",
+                custom_id: componentID(action: "view", pollID: poll.id)
+            )))
+        }
+
         if poll.repeatIntervalWeeks != nil {
             buttons.append(.button(.init(
                 style: .danger,
@@ -331,7 +354,7 @@ enum DatePollRenderer {
     private static func participationSummary(for poll: DatePoll) -> String {
         switch poll.status {
         case .open:
-            var summary = "## Current availability\n**\(poll.votes.count)/\(poll.requiredVoterIDs.count)** members have voted."
+            var summary = "## 🗳️ Current availability\n**\(poll.votes.count)/\(poll.requiredVoterIDs.count)** members have voted."
             if !poll.votes.isEmpty {
                 summary += "\nVoted: \(mentions(for: Array(poll.votes.keys)))"
             }
@@ -343,16 +366,16 @@ enum DatePollRenderer {
             }
             return summary
         case .awaitingFinalization:
-            return "## Voting closed\nA Dungeon Master will finalize a date."
+            return "## ⏳ Voting closed\nA Dungeon Master will finalize a date."
         case .finalized:
             let candidates = poll.finalizedCandidates.sorted { $0.date < $1.date }
             guard !candidates.isEmpty else {
-                return "## Finalized\nThis poll has been finalized."
+                return "## ✅ Finalized\nThis poll has been finalized."
             }
             let dates = candidates.map { "- **\(displayDate($0.date))**" }.joined(separator: "\n")
-            return "## Finalized\nSession dates:\n\(dates)"
+            return "## ✅ Finalized\nSession dates:\n\(dates)"
         case .cancelled:
-            return "## Cancelled\nThis poll was cancelled."
+            return "## 🚫 Cancelled\nThis poll was cancelled."
         }
     }
 

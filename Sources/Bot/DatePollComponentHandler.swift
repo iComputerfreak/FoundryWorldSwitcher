@@ -29,6 +29,10 @@ struct DatePollComponentHandler {
             try await showFinalizationModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             return
         }
+        if action.action == "view" {
+            try await showVotesModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            return
+        }
 
         try await client.createInteractionResponse(
             id: interaction.id,
@@ -121,6 +125,28 @@ struct DatePollComponentHandler {
                 id: interaction.id,
                 token: interaction.token,
                 payload: DatePollRenderer.finalizationModal(for: poll)
+            ).guardSuccess()
+        } catch {
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+            ).guardSuccess()
+        }
+    }
+
+    private func showVotesModal(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+        do {
+            let poll = try await datePolls.pollForVotesModal(
+                pollID: pollID,
+                guildID: interaction.guild_id,
+                channelID: interaction.channel_id,
+                messageID: interaction.message?.id
+            )
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: DatePollRenderer.votesModal(for: poll)
             ).guardSuccess()
         } catch {
             try await client.createInteractionResponse(

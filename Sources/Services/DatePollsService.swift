@@ -182,6 +182,21 @@ actor DatePollsService {
         return polls[index]
     }
 
+    func pollForVotesModal(
+        pollID: String,
+        guildID: GuildSnowflake?,
+        channelID: ChannelSnowflake?,
+        messageID: MessageSnowflake?
+    ) throws -> DatePoll {
+        guard let poll = polls.first(where: { $0.id == pollID }), poll.status == .finalized else {
+            throw DatePollError.unavailablePoll
+        }
+        guard poll.guildID == guildID, poll.channelID == channelID, poll.messageID == messageID else {
+            throw DatePollError.notFound(pollID)
+        }
+        return poll
+    }
+
     func repeatPollSource(pollID: String, eventID: UUID) -> DatePoll? {
         guard let poll = polls.first(where: { $0.id == pollID }), poll.repeatEventID == eventID, poll.repeatIntervalWeeks != nil else {
             return nil

@@ -30,6 +30,8 @@ struct DatePollModalHandler {
                 try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             case "finalize":
                 try await handleFinalization(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
+            case "view":
+                await removeResponse(token: interaction.token, action: "vote viewing")
             default:
                 throw DatePollError.notFound(modal.custom_id)
             }
