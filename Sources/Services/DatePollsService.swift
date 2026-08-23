@@ -306,19 +306,19 @@ actor DatePollsService {
         return polls[index]
     }
 
-    func finalizePoll(id: String, date: Date, userID: UserSnowflake, roles: [RoleSnowflake]) async throws -> DatePoll {
+    func finalizePoll(id: String, candidateIDs: Set<UUID>, userID: UserSnowflake, roles: [RoleSnowflake]) async throws -> DatePoll {
         guard let index = polls.firstIndex(where: { $0.id == id }) else {
             throw DatePollError.notFound(id)
         }
         try authorizeManagement(of: polls[index], userID: userID, roles: roles)
-        guard let candidate = polls[index].candidate(on: date) else {
-            throw DatePollError.invalidFinalizedDate
-        }
+        let validCandidateIDs = Set(polls[index].candidates.map(\.id))
+        guard !candidateIDs.isEmpty, candidateIDs.isSubset(of: validCandidateIDs) else { throw DatePollError.invalidFinalizationSelection }
         guard polls[index].status == .open || polls[index].status == .awaitingFinalization else {
             throw DatePollError.unavailablePoll
         }
         polls[index].status = .finalized
-        polls[index].finalizedCandidateID = candidate.id
+        polls[index].finalizedCandidateIDs = candidateIDs
+        polls[index].finalizedCandidateID = polls[index].candidates.first(where: { candidateIDs.contains($0.id) })?.id
         polls[index].finalizedBy = userID
         polls[index].finalizedAt = .now
         let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID)

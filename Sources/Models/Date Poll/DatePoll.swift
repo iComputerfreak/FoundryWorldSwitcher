@@ -20,6 +20,7 @@ struct DatePoll: Codable, Identifiable {
     let candidates: [DatePollCandidate]
     var status: DatePollStatus
     var finalizedCandidateID: UUID?
+    var finalizedCandidateIDs: Set<UUID>?
     var finalizedBy: UserSnowflake?
     var finalizedAt: Date?
     var votes: [UserSnowflake: DatePollVote]
@@ -55,6 +56,7 @@ struct DatePoll: Codable, Identifiable {
         self.candidates = candidateDates.map(DatePollCandidate.init(date:))
         self.status = .open
         self.finalizedCandidateID = nil
+        self.finalizedCandidateIDs = nil
         self.finalizedBy = nil
         self.finalizedAt = nil
         self.votes = [:]
@@ -104,5 +106,10 @@ struct DatePoll: Codable, Identifiable {
             return []
         }
         return candidates.filter { availableVoters(for: $0).count == highestAvailability }
+    }
+
+    var finalizedCandidates: [DatePollCandidate] {
+        let candidateIDs = finalizedCandidateIDs ?? Set([finalizedCandidateID].compactMap { $0 })
+        return candidates.filter { candidateIDs.contains($0.id) }
     }
 }

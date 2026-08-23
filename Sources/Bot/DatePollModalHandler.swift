@@ -134,13 +134,10 @@ struct DatePollModalHandler {
             channelID: interaction.channel_id,
             messageID: interaction.message?.id
         )
-        let candidateID = try DatePollRenderer.finalizationCandidateID(from: modal, poll: poll)
-        guard let candidate = poll.candidate(id: candidateID) else {
-            throw DatePollError.invalidFinalizationSelection
-        }
+        let candidateIDs = try DatePollRenderer.finalizationCandidateIDs(from: modal, poll: poll)
         let updatedPoll = try await datePolls.finalizePoll(
             id: pollID,
-            date: candidate.date,
+            candidateIDs: candidateIDs,
             userID: userID,
             roles: member.roles
         )

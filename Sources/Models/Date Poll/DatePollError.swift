@@ -29,7 +29,7 @@ enum DatePollError: LocalizedError {
         case .reminderAlreadyScheduled: return "You already requested a reminder for this poll."
         case .reminderCannotBeDelayed: return "This reminder cannot be delayed."
         case .invalidFinalizedDate: return "The selected date is not part of this poll."
-        case .invalidFinalizationSelection: return "Select exactly one date to finalize."
+        case .invalidFinalizationSelection: return "Select one or more dates to finalize."
         case .invalidCreationForm: return "The date poll form is incomplete or invalid."
         case .invalidDeadlineDays: return "Deadline days must be a whole number from 1 to 60."
         case .unauthorizedFinalization: return "Only the poll owner, an admin, or a Dungeon Master in this campaign can manage this poll."

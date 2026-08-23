@@ -174,17 +174,18 @@ enum DatePollRenderer {
 
     static func finalizationModal(for poll: DatePoll) -> Payloads.InteractionResponse {
         let candidates = orderedCandidates(for: poll)
+        let bestCandidateIDs = Set(poll.bestCandidates.map(\.id))
         let components = stride(from: 0, to: candidates.count, by: Constants.checkboxGroupSize).enumerated().map { index, start in
             let candidates = candidates[start..<min(start + Constants.checkboxGroupSize, candidates.count)]
             let options = candidates.map { candidate in
                 Interaction.ActionRow.CheckboxGroup.Option(
                     value: candidate.id.uuidString,
-                    label: "\(displayDate(candidate.date)) · \(availabilityIcon(for: candidate, poll: poll)) \(poll.availableVoters(for: candidate).count)/\(poll.votes.count) available"
+                    label: "\(bestCandidateIDs.contains(candidate.id) ? "⭐ " : "")\(displayDate(candidate.date)) · \(availabilityIcon(for: candidate, poll: poll)) \(poll.availableVoters(for: candidate).count)/\(poll.votes.count) available"
                 )
             }
             return Interaction.ModalComponent.label(.init(
-                label: index == 0 ? "Final session date" : "Additional dates",
-                description: "Select exactly one date.",
+                label: index == 0 ? "Final session dates" : "Additional dates",
+                description: "Select one or more dates.",
                 component: .checkboxGroup(.init(
                     custom_id: finalizationCheckboxGroupID(pollID: poll.id, index: index),
                     options: options,
@@ -197,7 +198,7 @@ enum DatePollRenderer {
         return .modal(.init(custom_id: componentID(action: "finalize", pollID: poll.id), title: "Finalize date", componentsV2: components))
     }
 
-    static func finalizationCandidateID(from modal: Interaction.ModalSubmit, poll: DatePoll) throws -> UUID {
+    static func finalizationCandidateIDs(from modal: Interaction.ModalSubmit, poll: DatePoll) throws -> Set<UUID> {
         guard let components = modal.componentsV2 else { throw DatePollError.invalidFinalizationSelection }
         let expectedGroupIDs = Set(stride(from: 0, to: poll.candidates.count, by: Constants.checkboxGroupSize).enumerated().map {
             finalizationCheckboxGroupID(pollID: poll.id, index: $0.offset)
@@ -218,10 +219,10 @@ enum DatePollRenderer {
             candidateIDs.formUnion(selectedCandidateIDs)
         }
 
-        guard receivedGroupIDs == expectedGroupIDs, candidateIDs.count == 1, let candidateID = candidateIDs.first else {
+        guard receivedGroupIDs == expectedGroupIDs, !candidateIDs.isEmpty else {
             throw DatePollError.invalidFinalizationSelection
         }
-        return candidateID
+        return candidateIDs
     }
 
     static func reminderComponents(for poll: DatePoll) -> [Interaction.ActionRow] {
@@ -243,16 +244,18 @@ enum DatePollRenderer {
         components.append(.textDisplay(.init(content: participationSummary(for: poll))))
 
         if poll.status != .cancelled {
-            if let leadingCandidate = poll.bestCandidates.sorted(by: { $0.date < $1.date }).first {
-                components.append(.container(.init(componentsV2: [
-                    .textDisplay(.init(content: dateCard(for: leadingCandidate, poll: poll)))
-                ], accent_color: leadingAccentColor(for: leadingCandidate, poll: poll))))
+            let leadingCandidates = poll.bestCandidates.sorted(by: { $0.date < $1.date })
+            if let leadingCandidate = leadingCandidates.first {
+                components.append(.container(.init(
+                    componentsV2: [.textDisplay(.init(content: leadingCandidates.map {
+                        leadingDateSummary(for: $0, poll: poll)
+                    }.joined(separator: "\n")))],
+                    accent_color: leadingAccentColor(for: leadingCandidate, poll: poll)
+                )))
             }
 
             components.append(.separator(.init(divider: true, spacing: .large)))
-
-            let candidates = orderedCandidates(for: poll)
-            let dateCards = candidates.map { candidate in
+            let dateCards = orderedCandidates(for: poll).map { candidate in
                 Interaction.MessageLayoutComponent.textDisplay(.init(content: dateCard(for: candidate, poll: poll)))
             }
             components.append(.container(.init(componentsV2: dateCards)))
@@ -329,6 +332,9 @@ enum DatePollRenderer {
         switch poll.status {
         case .open:
             var summary = "## Current availability\n**\(poll.votes.count)/\(poll.requiredVoterIDs.count)** members have voted."
+            if !poll.votes.isEmpty {
+                summary += "\nVoted: \(mentions(for: Array(poll.votes.keys)))"
+            }
             if !poll.outstandingVoterIDs.isEmpty {
                 summary += "\nWaiting: \(mentions(for: poll.outstandingVoterIDs))"
             }
@@ -339,21 +345,19 @@ enum DatePollRenderer {
         case .awaitingFinalization:
             return "## Voting closed\nA Dungeon Master will finalize a date."
         case .finalized:
-            guard let candidateID = poll.finalizedCandidateID, let candidate = poll.candidate(id: candidateID) else {
+            let candidates = poll.finalizedCandidates.sorted { $0.date < $1.date }
+            guard !candidates.isEmpty else {
                 return "## Finalized\nThis poll has been finalized."
             }
-            return "## Finalized\n**\(displayDate(candidate.date))** is the session date."
+            let dates = candidates.map { "- **\(displayDate($0.date))**" }.joined(separator: "\n")
+            return "## Finalized\nSession dates:\n\(dates)"
         case .cancelled:
             return "## Cancelled\nThis poll was cancelled."
         }
     }
 
     private static func dateCard(for candidate: DatePollCandidate, poll: DatePoll) -> String {
-        let isLeading = poll.bestCandidates.contains(where: { $0.id == candidate.id })
         var card = "### \(displayDate(candidate.date))"
-        if isLeading {
-            card += " · Leading"
-        }
         let voters = poll.votes.count
         let attendees = poll.availableVoters(for: candidate)
 
@@ -367,6 +371,11 @@ enum DatePollRenderer {
             return card + "\n✅ Everyone can attend."
         }
         return card + "\n👥 \(mentions(for: attendees)) can attend."
+    }
+
+    private static func leadingDateSummary(for candidate: DatePollCandidate, poll: DatePoll) -> String {
+        let attendees = poll.availableVoters(for: candidate).count
+        return "### \(displayDate(candidate.date))\n\(availabilityIcon(for: candidate, poll: poll)) \(attendees)/\(poll.votes.count) available"
     }
 
     private static func leadingAccentColor(for candidate: DatePollCandidate, poll: DatePoll) -> DiscordColor {
