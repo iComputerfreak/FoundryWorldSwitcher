@@ -8,6 +8,7 @@ import Foundation
 struct DatePoll: Codable, Identifiable {
     let id: String
     let ownerID: UserSnowflake
+    let ownerUsername: String?
     let guildID: GuildSnowflake
     let channelID: ChannelSnowflake
     var messageID: MessageSnowflake?
@@ -27,6 +28,7 @@ struct DatePoll: Codable, Identifiable {
     init(
         id: String,
         ownerID: UserSnowflake,
+        ownerUsername: String,
         guildID: GuildSnowflake,
         channelID: ChannelSnowflake,
         campaignRoleID: RoleSnowflake,
@@ -37,6 +39,7 @@ struct DatePoll: Codable, Identifiable {
     ) {
         self.id = id
         self.ownerID = ownerID
+        self.ownerUsername = ownerUsername
         self.guildID = guildID
         self.channelID = channelID
         self.messageID = nil

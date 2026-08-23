@@ -10,6 +10,14 @@ struct DatePollComponentHandler {
     private let logger = Logger(label: String(describing: Self.self))
 
     func handle(_ component: Interaction.MessageComponent, interaction: Interaction) async throws {
+        guard let action = DatePollRenderer.interactionAction(from: component.custom_id) else {
+            return
+        }
+        if action.action == "vote" {
+            try await showAvailabilityModal(pollID: action.pollID, interaction: interaction)
+            return
+        }
+
         try await client.createInteractionResponse(
             id: interaction.id,
             token: interaction.token,
@@ -17,12 +25,7 @@ struct DatePollComponentHandler {
         ).guardSuccess()
 
         do {
-            guard let action = DatePollRenderer.interactionAction(from: component.custom_id) else {
-                throw DatePollError.notFound(component.custom_id)
-            }
             switch action.action {
-            case "vote":
-                try await handleVote(pollID: action.pollID, component: component, interaction: interaction)
             case "remind":
                 try await handleReminder(pollID: action.pollID, interaction: interaction)
             case "delay":
@@ -36,31 +39,30 @@ struct DatePollComponentHandler {
         }
     }
 
-    private func handleVote(
-        pollID: String,
-        component: Interaction.MessageComponent,
-        interaction: Interaction
-    ) async throws {
+    private func showAvailabilityModal(pollID: String, interaction: Interaction) async throws {
         guard let userID = interaction.member?.user?.id else {
             throw DiscordCommandError.noUser
         }
-        let poll = try await datePollsService.poll(id: pollID)
-        let candidateIDs = try DatePollRenderer.candidateIDs(from: component.values ?? [], poll: poll)
-        let updatedPoll = try await datePollsService.vote(
-            pollID: pollID,
-            voterID: userID,
-            candidateIDs: candidateIDs,
-            guildID: interaction.guild_id,
-            channelID: interaction.channel_id,
-            messageID: interaction.message?.id
-        )
-        guard let messageID = updatedPoll.messageID else { throw DatePollError.missingMessageReference }
-        try await client.updateMessage(
-            channelId: updatedPoll.channelID,
-            messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: updatedPoll)
-        ).guardSuccess()
-        try await client.respond(token: interaction.token, message: "Vote recorded.")
+        do {
+            let poll = try await datePollsService.pollForVoteModal(
+                pollID: pollID,
+                voterID: userID,
+                guildID: interaction.guild_id,
+                channelID: interaction.channel_id,
+                messageID: interaction.message?.id
+            )
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: DatePollRenderer.availabilityModal(for: poll, voterID: userID)
+            ).guardSuccess()
+        } catch {
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+            ).guardSuccess()
+        }
     }
 
     private func handleReminder(pollID: String, interaction: Interaction) async throws {

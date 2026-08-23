@@ -8,12 +8,13 @@ Let a Dungeon Master collect availability from a campaign role for proposed D&D 
 
 Use Discord message components instead of emoji reactions.
 
-- A multi-select menu lists candidate dates and permits selecting every date a user can attend.
-- A distinct `None of these dates` option records no availability.
+- `Set availability` opens a personal modal with checkbox groups for candidate dates.
+- Checkbox groups show current selections and save all changes when modal is submitted.
+- A distinct `No dates work` checkbox records no availability. Submitting no selected dates also records no availability.
 - A `Remind me` button schedules a 24-hour DM reminder for the clicking user.
 - Reminder DM includes `Remind me tomorrow` for one further 24-hour delay.
 
-Components give the bot one authoritative, editable vote per user. They avoid emoji-to-date mapping, reaction gateway handling, and stale reactions. Reactions remain possible but are not recommended.
+Components give the bot one authoritative, editable vote per user. The modal shows current vote state without changing the shared poll message. Reactions remain possible but are not recommended.
 
 ## Create Poll
 
@@ -24,9 +25,9 @@ Proposed command: `/datepoll create`.
 - Command creator becomes poll owner.
 - Candidate and finalized dates accept `dd.MM.yyyy`, `dd.MM`, or `dd.MM.`. Yearless dates resolve to this year when still upcoming, otherwise next year. Future-only dates.
 - Deadline accepts same date formats and expires at 23:59:59 local time. Default deadline is end of local day seven calendar days after creation.
-- Preserve command date order in poll display.
+- Preserve command date order in persistence; render dates chronologically in poll and availability modal.
 - Reject duplicate dates.
-- Initial version limit: 20 dates. This stays below Discord select-menu option limit after reserving one option for `None of these dates`.
+- Initial version limit: 20 dates. Checkbox groups allow 10 options each, so 20 dates use two groups plus one no-availability checkbox within Discord's five-modal-component limit.
 - Each poll receives a unique, eight-character ID for `/datepoll finalize` and `/datepoll cancel`.
 - Poll posts in command channel. Creator receives success/error through normal interaction flow.
 - Capture the campaign-role member IDs at creation. This snapshot defines required voters, even if the role changes later.
@@ -37,18 +38,18 @@ No selected world, target channel, or automatic booking integration in first ver
 
 Message contains:
 
-- Title: `Session date poll`.
-- Campaign role mention, creator, optional description, and voting deadline.
-- Candidate dates with availability count.
-- Current best date or tied best dates.
-- For every best date: list role members unavailable on that date.
+- Title: `<campaign role> · Session date poll`.
+- Optional description and current participation/leading-date summary.
+- Chronological date cards with attendance fraction, leading state, unavailable members, and outstanding voters.
 - `Everyone can attend` only when every required voter selected that date.
 - Visible voting status: voted member count, outstanding member count, and members who selected no date.
-- Multi-select availability control and `Remind me` button while open.
+- `Set availability` and `Remind me` buttons while open.
 - Do not show `Remind me` when its 24-hour delivery time would be after poll deadline.
-- Final state: chosen date, finalizer, and finalization timestamp. Components become disabled.
+- Small footer line: creator and poll ID.
+- Separate small footer line: relative voting deadline.
+- Final state: chosen date. Components become disabled.
 
-Votes are visible. The message displays each candidate's availability and unavailable members; detailed availability lists may be shown in a follow-up message if embed limits require it.
+Votes are visible. The shared message uses Components V2 containers and text displays rather than embeds.
 
 ## Voting Rules
 
@@ -56,9 +57,9 @@ Votes are visible. The message displays each candidate's availability and unavai
 - Only required voters may vote or request reminders.
 - One persisted vote per required voter per poll.
 - A vote is a set of candidate date IDs, not additive reaction history.
-- Selecting dates replaces prior vote.
-- Selecting `None of these dates` replaces all selected dates with no availability.
-- Selecting one or more dates clears no-availability state.
+- Modal submission replaces the user's prior vote.
+- Selecting `No dates work` without dates records no availability.
+- Selecting one or more dates records those dates as available, even when no-availability checkbox remains selected.
 - Users may revise votes at any time while poll is open. Voting ends only at deadline, finalization, or cancellation.
 - Every valid vote updates poll message immediately.
 - Members who have not voted are outstanding, not unavailable. They prevent `Everyone can attend` from appearing.
@@ -98,7 +99,7 @@ Persist polls in dedicated JSON runtime data, separate from bookings.
 
 Each poll needs:
 
-- Stable poll UUID.
+- Stable eight-character poll ID.
 - Discord guild, channel, and message IDs.
 - Owner user ID.
 - Campaign role ID and snapshot of required voter IDs.
@@ -119,16 +120,18 @@ Extend scheduler event types for poll deadline and reminders. Events reference p
 - Deadline event loads current state, transitions open poll to awaiting-finalization, updates message, disables vote controls, and removes reminders.
 - Reminder event loads current poll state. Missing, expired, or non-open polls make event no-ops.
 - Removing/replacing reminder unqueues prior event.
-- Scheduler currently runs only after Discord gateway events. Reminder and deadline timing can slip while disconnected or inactive. Add independent scheduler wakeup before promising precise timing.
+- A 30-second background task runs the scheduler while gateway idle. Gateway events also trigger updates.
 
 ## Discord Integration
 
-- Existing interaction handler supports application commands only. Add message-component routing for select menus and buttons.
+- Existing interaction handler supports application commands only. Add message-component routing to present modals and modal-submit routing to persist votes.
 - Use DiscordBM APIs for every Discord request. Do not add manual REST requests.
-- Component custom IDs include version, action, and poll UUID. Validate IDs, poll state, guild/channel, and voter authorization server-side.
+- Component custom IDs include action, poll ID, and checkbox-group index where needed. Validate IDs, poll state, guild/channel, and voter authorization server-side.
+- Shared poll uses Components V2 containers, text displays, separators, and action rows. Components V2 forbids embeds/content and cannot be removed once set on a message.
+- Discord controls message width. No minimum-width setting exists; Components V2 containers use normal message width.
 - Update existing poll message after each state mutation.
 - A component interaction must receive acknowledgement within Discord's short response deadline.
-- Discord permits at most 25 select-menu options. Initial 20-date limit leaves one no-availability option and capacity for future actions.
+- Discord checkbox groups allow 10 options and modals allow five top-level components. Initial 20-date limit remains valid.
 - Disable controls when poll reaches deadline, finalizes, or cancels.
 - Bot needs access to campaign-role membership at poll creation. Cache/intents must support reliable role-member lookup.
 
@@ -147,8 +150,7 @@ Extend scheduler event types for poll deadline and reminders. Events reference p
 ## Implementation Risks
 
 - Poll creation requires the Guild Members intent in bot code and Discord Developer Portal so role membership can be fetched reliably.
-- Discord embed and message limits may require a compact summary plus follow-up detail message for large roles or many dates.
-- Current scheduler's event-driven cadence is unsuitable for precise deadlines/reminders without an independent timer.
+- Components V2 permits 40 total nested components. Twenty date cards use 37 components with optional description, leaving limited expansion room.
 
 ## Future Work
 

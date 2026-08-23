@@ -73,12 +73,13 @@ struct DatePollCommand: DiscordCommand {
         client: any DiscordClient
     ) async throws {
         guard
-            let ownerID = interaction.member?.user?.id,
+            let owner = interaction.member?.user,
             let guildID = interaction.guild_id,
             let channelID = interaction.channel_id
         else {
             throw DiscordCommandError.noGuild
         }
+        let ownerID = owner.id
 
         let roleID = RoleSnowflake(try subcommand.requireOption(named: "role").requireString())
         let dates = try parseDates(try subcommand.requireOption(named: "dates").requireString())
@@ -91,6 +92,7 @@ struct DatePollCommand: DiscordCommand {
 
         let poll = await datePollsService.createPoll(
             ownerID: ownerID,
+            ownerUsername: owner.username,
             guildID: guildID,
             channelID: channelID,
             campaignRoleID: roleID,

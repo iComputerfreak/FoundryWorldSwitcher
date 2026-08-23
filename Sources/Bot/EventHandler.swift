@@ -24,8 +24,8 @@ struct EventHandler: GatewayEventHandler {
             try await handleApplicationCommand(applicationCommand, interaction: interaction)
         case let .messageComponent(component):
             try await DatePollComponentHandler(client: client).handle(component, interaction: interaction)
-        case .modalSubmit:
-            break
+        case let .modalSubmit(modal):
+            try await DatePollModalHandler(client: client).handle(modal, interaction: interaction)
         }
     }
 

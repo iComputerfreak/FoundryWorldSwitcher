@@ -8,6 +8,7 @@ Swift Discord bot for one Discord guild. Dungeon Masters book Foundry VTT worlds
 
 - Swift Package executable target: `FoundryWorldSwitcher`.
 - Discord integration: DiscordBM gateway, slash-command registration, `DiscordCache` for guild/member data.
+- DiscordBM currently uses `nreilly/DiscordBM` branch `components-v2-payloads` for date-poll checkbox modals. Keep this fork until upstream PR #111 merges; use DiscordBM APIs only.
 - Foundry integration: Pterodactyl Client API. Worlds come from `/data/Data/worlds/<id>/world.json`; current world comes from the `WORLD_NAME` startup variable.
 - External dependencies: DiscordBM and HTML2Markdown. No database or web server.
 - `main.swift` initializes persistent services, Discord gateway/cache, command registration, Pterodactyl world cache, then dispatches gateway events. Scheduler updates run after each gateway event; Discord heartbeats normally provide the polling cadence.
@@ -35,7 +36,7 @@ Swift Discord bot for one Discord guild. Dungeon Masters book Foundry VTT worlds
 ## Scheduling And Locking
 
 - `Scheduler` persists `events.json`. Due events execute ordered by due date; successful events are removed after execution.
-- Scheduler events perform world switching, lock/unlock, and Discord reminders. The scheduler has no independent timer: disconnected/inactive gateway activity delays due work.
+- Scheduler events perform world switching, lock/unlock, Discord reminders, and poll deadlines. A 30-second background task runs updates while gateway idle; gateway events also trigger updates.
 - Lock state is only `data/.worldlock`. It records no world, booking, owner, or expiry. Timed unlocks can therefore release a manually created or newer lock.
 - `lockWorldSwitching` first changes `WORLD_NAME` and restarts Foundry, then creates lock marker.
 - Manual `/switchworld` rejects locked state unless `force:true` is used by admin. Current implementation does not clear lock after forced switch despite README claim.
@@ -78,11 +79,11 @@ All state uses direct JSON writes. No atomic-write, corruption recovery, schema 
 
 ## Documentation Drift And Open Work
 
-- Date polls use Discord components, JSON-backed role voter snapshots, scheduler-backed per-user reminders, and short IDs. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
+- Date polls use checkbox modals, a Components V2 shared message, JSON-backed role voter snapshots, scheduler-backed per-user reminders, and short IDs. Components V2 is permanent per Discord message and forbids embeds/content. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
 - README names `/reschedulebooking`; registered command is `/rescheduleevent`.
 - README says forced switch unlocks world switching; implementation does not.
 - README says Discord scheduled event creation is planned; `createServerEvent` exists but no command uses it.
 - Pterodactyl egg token variables may be user-viewable. Treat panel configuration and generated secret files as sensitive.
-- A failed earliest due scheduler event throws before later due events execute, potentially blocking them until retry succeeds.
+- Failed scheduler events remain queued for retry; other due events continue executing.
 
 Update this document when these contracts or hazards change.

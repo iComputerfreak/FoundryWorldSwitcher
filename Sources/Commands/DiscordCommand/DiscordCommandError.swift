@@ -131,6 +131,9 @@ extension Interaction.Error: @retroactive LocalizedError {
         
         case let .componentWasNotOfKind(kind, _):
             return "The component was not of kind `\(kind)`."
+
+        case let .dataWasNotOfKind(kind, _):
+            return "The interaction data was not of kind `\(kind)`."
         }
     }
 }

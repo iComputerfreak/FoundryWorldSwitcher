@@ -24,6 +24,7 @@ actor DatePollsService {
 
     func createPoll(
         ownerID: UserSnowflake,
+        ownerUsername: String,
         guildID: GuildSnowflake,
         channelID: ChannelSnowflake,
         campaignRoleID: RoleSnowflake,
@@ -35,6 +36,7 @@ actor DatePollsService {
         let poll = DatePoll(
             id: nextIdentifier(),
             ownerID: ownerID,
+            ownerUsername: ownerUsername,
             guildID: guildID,
             channelID: channelID,
             campaignRoleID: campaignRoleID,
@@ -72,16 +74,13 @@ actor DatePollsService {
         channelID: ChannelSnowflake?,
         messageID: MessageSnowflake?
     ) throws -> DatePoll {
-        guard let index = polls.firstIndex(where: { $0.id == pollID }) else {
-            throw DatePollError.notFound(pollID)
-        }
-        guard polls[index].isOpen else { throw DatePollError.unavailablePoll }
-        guard polls[index].guildID == guildID, polls[index].channelID == channelID, polls[index].messageID == messageID else {
-            throw DatePollError.notFound(pollID)
-        }
-        guard polls[index].requiredVoterIDs.contains(voterID) else {
-            throw DatePollError.unauthorizedVoter
-        }
+        let index = try votePollIndex(
+            pollID: pollID,
+            voterID: voterID,
+            guildID: guildID,
+            channelID: channelID,
+            messageID: messageID
+        )
         let validCandidateIDs = Set(polls[index].candidates.map(\.id))
         guard candidateIDs.isSubset(of: validCandidateIDs) else {
             throw DatePollError.invalidCandidates
@@ -89,6 +88,22 @@ actor DatePollsService {
         polls[index].votes[voterID] = DatePollVote(candidateIDs: candidateIDs)
         savePolls()
         return polls[index]
+    }
+
+    func pollForVoteModal(
+        pollID: String,
+        voterID: UserSnowflake,
+        guildID: GuildSnowflake?,
+        channelID: ChannelSnowflake?,
+        messageID: MessageSnowflake?
+    ) throws -> DatePoll {
+        polls[try votePollIndex(
+            pollID: pollID,
+            voterID: voterID,
+            guildID: guildID,
+            channelID: channelID,
+            messageID: messageID
+        )]
     }
 
     func requestReminder(pollID: String, voterID: UserSnowflake) async throws -> DatePoll {
@@ -223,6 +238,26 @@ actor DatePollsService {
             identifier = String((0..<Constants.identifierLength).map { _ in alphabet.randomElement()! })
         } while polls.contains(where: { $0.id == identifier })
         return identifier
+    }
+
+    private func votePollIndex(
+        pollID: String,
+        voterID: UserSnowflake,
+        guildID: GuildSnowflake?,
+        channelID: ChannelSnowflake?,
+        messageID: MessageSnowflake?
+    ) throws -> Int {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }) else {
+            throw DatePollError.notFound(pollID)
+        }
+        guard polls[index].isOpen else { throw DatePollError.unavailablePoll }
+        guard polls[index].guildID == guildID, polls[index].channelID == channelID, polls[index].messageID == messageID else {
+            throw DatePollError.notFound(pollID)
+        }
+        guard polls[index].requiredVoterIDs.contains(voterID) else {
+            throw DatePollError.unauthorizedVoter
+        }
+        return index
     }
 
     private func savePolls() {
