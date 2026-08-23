@@ -41,6 +41,15 @@ actor GlobalBookingConflictService {
         save()
     }
 
+    /// Removes conflict records owned by guilds the bot no longer belongs to.
+    func prune(guildIDs: Set<GuildSnowflake>) {
+        let originalCount = records.count
+        records.removeAll { !guildIDs.contains($0.guildID) }
+        if records.count != originalCount {
+            save()
+        }
+    }
+
     /// Reserves an active booking interval when it does not conflict globally.
     func reserve(
         _ booking: any Booking,

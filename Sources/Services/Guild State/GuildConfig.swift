@@ -98,7 +98,7 @@ final class GuildConfig: BookingConfiguration {
             }
             bookingIntervalStartTime = time
         case .bookingIntervalEndTime:
-            guard let seconds = TimeInterval(value) else {
+            guard let seconds = TimeInterval(value), seconds > 0 else {
                 throw DiscordCommandError.wrongDurationFormat(value)
             }
             bookingIntervalEndTime = seconds

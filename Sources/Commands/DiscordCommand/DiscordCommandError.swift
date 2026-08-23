@@ -24,9 +24,11 @@ enum DiscordCommandError: Error, LocalizedError {
     case bookingAlreadyExists(atDate: Date)
     case worldSwitchingIsLocked
     case forceSwitchWorldPermissionDenied(required: BotPermissionLevel)
+    case globalWorldUnlockPermissionDenied
     case noMessageID
     case dateIsInThePast(Date)
     case invalidConfigKey(String)
+    case reminderChannelNotInGuild
     case wrongDurationFormat(String)
     case noChannel
     case rescheduleBookingPermissionDenied(required: BotPermissionLevel)
@@ -77,6 +79,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case let .forceSwitchWorldPermissionDenied(required: required):
             return "You need to have the `\(required.description)` permission level to force a world switch."
+
+        case .globalWorldUnlockPermissionDenied:
+            return "Only the bot application owner can unlock world switching."
             
         case .noMessageID:
             return "Unable to retrieve the message ID."
@@ -86,6 +91,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case let .invalidConfigKey(key):
             return "The config key `\(key)` does not exist."
+
+        case .reminderChannelNotInGuild:
+            return "The reminder channel must belong to this server."
         
         case let .wrongDurationFormat(value):
             return "'\(value)' is not a valid duration. Please use the format `1h 2m`."

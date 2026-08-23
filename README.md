@@ -90,7 +90,7 @@ Shows a list of all Foundry worlds together with their world IDs
 Restarts the Foundry server without switching the world
 
 `/switchworld world_id:<foundry_world_id> force:[true|false]`  
-Restarts the Foundry VTT server, switching to the given world. Unless `force` is set to `true`, this command fails if the world is currently locked.
+Restarts the Foundry VTT server, switching to the given world. The bot serializes the entire operation with scheduled booking locks. Unless `force` is set to `true`, this command fails if the world is currently locked. `force:true` requires the bot application owner and does not clear an existing booking lock.
 
 `/book event world_id:<foundry_world_id> date:<date> time:<time> location:<voice_channel> topic:<title> role:<server_role>`  
 Creates a new reservation for a session in the given world and notifies the players about the new session date and time.
@@ -124,13 +124,13 @@ Changes the permission level of a server role
 Lists all non-User permissions
 
 `/switchworld world_id:<foundry_world_id> force:true`  
-Restarts the Foundry VTT server, switching to the given world, even if the world is currently locked. If the world was locked, it is unlocked.
+Can only be used by the bot application owner. Restarts the Foundry VTT server, switching to the given world even if it is locked, without clearing the lock.
 
 `/lockworld <world_id>`  
 Locks the given world until 5:00 AM the next day
 
 `/unlockworld`  
-Unlocks the given world
+Can only be used by the bot application owner. Clears the global world-switching lock.
 
 `/config`
 Change different bot configuration settings
@@ -170,5 +170,5 @@ You can also use the `/config` command to view and update these values.
 * `sessionReminderTime`: The time how much in advance the bot will remind players about a session. Set to 0 to disable.
 * `shouldNotifyAtSessionStart`: Whether the bot should notify players at the start of the session
 * `sessionStartReminderTime`: The time how much in advance the bot will remind players that the session is about to start
-* `reminderChannel`: The channel where the bot will send reminders
+* `reminderChannel`: A channel in the current server where the bot will send reminders
 * `pinnedBookingMessages`: This config value is managed by the bot itself and contains references to all pinned booking messages. 

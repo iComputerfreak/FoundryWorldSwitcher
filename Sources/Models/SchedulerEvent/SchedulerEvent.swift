@@ -102,6 +102,10 @@ extension SchedulerEvent {
             Self.logger.warning("Skipping lock event \(id): no active booking owns it.")
             return
         }
+        guard booking.bookingIntervalEndDate(using: context.config) > .now else {
+            Self.logger.warning("Skipping lock event \(id): booking interval has ended.")
+            return
+        }
 
         Self.logger.debug("Locking world '\(worldID)'")
         try WorldLockService.shared.lockWorldSwitching(guildID: context.guildID, bookingID: booking.id)

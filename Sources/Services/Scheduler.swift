@@ -38,6 +38,10 @@ actor Scheduler {
             do {
                 try await executor(event)
                 unqueue(event)
+            } catch WorldLockError.alreadyLocked {
+                // Another lock owns this interval; retrying cannot resolve it.
+                unqueue(event)
+                Self.logger.error("Skipping scheduled lock event \(event.id): world switching is already locked.")
             } catch {
                 errors.append(error)
                 Self.logger.error("Error executing scheduled event \(event.id): \(error)")

@@ -11,11 +11,14 @@ import Logging
 
 enum WorldLockError: LocalizedError {
     case alreadyLocked
+    case manualOperationInProgress
     
     var errorDescription: String? {
         switch self {
         case .alreadyLocked:
             return "World switching is already locked."
+        case .manualOperationInProgress:
+            return "A world switch is already in progress."
         }
     }
 }
@@ -32,6 +35,27 @@ final class WorldLockService {
     
     private let fileManager = FileManager.default
     private let lock = NSLock()
+    private var manualOperationID: UUID?
+
+    /// Atomically reserves the global manual world-switch operation slot.
+    func beginManualWorldSwitching(force: Bool) throws -> UUID {
+        lock.lock()
+        defer { lock.unlock() }
+        guard manualOperationID == nil else { throw WorldLockError.manualOperationInProgress }
+        guard force || !isWorldSwitchingLocked() else { throw WorldLockError.alreadyLocked }
+
+        let operationID = UUID()
+        manualOperationID = operationID
+        return operationID
+    }
+
+    /// Releases the manual world-switch operation slot owned by `operationID`.
+    func endManualWorldSwitching(operationID: UUID) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard manualOperationID == operationID else { return }
+        manualOperationID = nil
+    }
     
     @discardableResult
     func lockWorldSwitching() throws -> WorldLockRecord {
@@ -84,6 +108,7 @@ final class WorldLockService {
     private func writeLock(guildID: GuildSnowflake?, bookingID: UUID?) throws -> WorldLockRecord {
         lock.lock()
         defer { lock.unlock() }
+        guard manualOperationID == nil else { throw WorldLockError.manualOperationInProgress }
         guard !isWorldSwitchingLocked() else { throw WorldLockError.alreadyLocked }
 
         let record = WorldLockRecord(guildID: guildID, bookingID: bookingID, acquiredAt: .now)

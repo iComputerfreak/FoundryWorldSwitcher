@@ -92,11 +92,9 @@ struct RescheduleEventCommand: DiscordCommand {
             newBookingDate = updateTime(of: newBookingDate, to: newTime)
         }
         
-        // Save the new event date
-        booking.date = newBookingDate
-        // Delete and re-create to re-queue all new events
-        await context.bookings.deleteBooking(booking)
-        try await context.bookings.createBookingIfAvailable(booking)
+        guard let booking = try await context.bookings.rescheduleBooking(id: booking.id, to: newBookingDate) else {
+            throw DiscordCommandError.noBookingFoundAtDate(eventDate)
+        }
         
         try await client.respond(
             token: interaction.token,

@@ -31,25 +31,25 @@ Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters bo
 - Each booking creates persisted scheduler events: switch and lock at booking interval start, then unlock at interval end. Event bookings also queue configured reminders.
 - Booking interval start is seconds from local midnight. Interval end is a duration from interval start, not seconds from midnight. Defaults: 06:00 start, 23 hours duration, therefore 05:00 next day.
 - `sessionLength` controls displayed session metadata; it does not control world-lock interval.
-- `BookingsService` persists changes and asynchronously refreshes registered booking messages. Completed and cancelled bookings remain for session history.
+- `BookingsService` persists changes and asynchronously refreshes registered booking messages. Completed and cancelled bookings remain for session history. World-lock interval dates snapshot at creation; legacy records initialize from their queued lock/unlock events or config once at load.
 
 ## Scheduling And Locking
 
 - `Scheduler` persists `events.json`. Due events execute ordered by due date; successful events are removed after execution.
 - Scheduler events perform world switching, lock/unlock, Discord reminders, and poll deadlines. A 30-second background task runs updates while gateway idle; gateway events also trigger updates.
-- Global lock state is `data/world-lock.json`, containing optional guild and booking ownership plus acquisition time. Scheduled booking unlocks only release their own lock; manual locks have no booking owner.
+- Global lock state is `data/world-lock.json`, containing optional guild and booking ownership plus acquisition time. Scheduled booking unlocks only release their own lock; manual locks have no booking owner. Manual switches acquire a process-global operation slot before lookup or Pterodactyl changes; scheduled locks cannot enter until it releases.
 - Scheduled locks persist their booking ownership before changing `WORLD_NAME`; Pterodactyl failure releases that same lock.
-- Manual `/switchworld` rejects locked state unless `force:true` is used by the bot application owner. Current implementation does not clear lock after forced switch despite README claim.
-- Rescheduling changes booking date but currently retains its original `associatedEvents`; recreate or update queue when fixing this behavior.
+- Manual `/switchworld` rejects locked state unless `force:true` is used by the bot application owner. Forced switches preserve existing booking-owned locks. Full `/unlockworld` is application-owner-only.
+- Rescheduling reserves the replacement interval before replacing the booking, preserves its ID, and regenerates its queued events.
 
 ## Persistent Runtime State
 
 Runtime data directory: executable sibling `data/`; Docker mounts it at `/home/container/data`.
 
-- Version 3.0 performs a one-time root-to-guild migration before `BotConfig.shared` can read or create `botConfig.json`. It runs only when `data/guilds/` does not exist, root `botConfig.json` already exists, and Discord reports exactly one bot guild. The migration moves root guild state to that guild, rebuilds conflicts, archives source state in `data/migration-backups/v3/`, and leaves root `botConfig.json` with global Pterodactyl configuration only. `data/guilds/` is the completion indicator; no marker exists.
+- Version 3.0 performs a one-time root-to-guild migration before `BotConfig.shared` can read or create `botConfig.json`. It runs only when `data/guilds/` does not exist, root `botConfig.json` already exists, and Discord reports exactly one bot guild. Migration builds and verifies state in `data/.v3-migration-staging/`, verifies backups in `data/migration-backups/v3/`, safely writes global output, then atomically moves staged guild state to `data/guilds/`. Incomplete staging restores root global output and is removed for retry. `data/guilds/` is the completion indicator; no marker exists.
 - Root `botConfig.json` and root secrets retain global Pterodactyl target configuration. Runtime services have no legacy root-state fallback.
 - Guild state belongs in `data/guilds/<guild-id>/`: `config.json`, `permissions.json`, `bookings.json`, `events.json`, and `date_polls.json`.
-- Root `booking_conflicts.json` indexes active booking intervals across guilds because the Foundry target and world lock are global.
+- Root `booking_conflicts.json` indexes active booking intervals across guilds because the Foundry target and world lock are global. Startup prunes records for guilds the bot no longer belongs to before loading current guild contexts.
 - `GuildContext` owns per-guild config, permissions, scheduler, bookings, and polls. Obtain contexts through `GuildRegistry`; do not add guild-local singletons.
 - `GuildRegistry` supplies the process-scoped application owner ID to each context's `Permissions`. `Permissions.isApplicationOwner(_:)` authorizes forced world switching and owner admin access is never persisted.
 - `world-lock.json`: global manual-switch block record. V3 migration converts legacy `.worldlock` to a manual record before archiving it.
@@ -62,7 +62,7 @@ Guild state types live one-per-file under `Sources/Services/Guild State/`. Docum
 ## Configuration And Secrets
 
 - Required config: `pterodactylHost` and `pterodactylServerID`. Startup logs errors when absent but continues until API use.
-- Reminder config: `sessionReminderTime`, `shouldNotifyAtSessionStart`, `sessionStartReminderTime`, and `reminderChannel`.
+- Reminder config: `sessionReminderTime`, `shouldNotifyAtSessionStart`, `sessionStartReminderTime`, and `reminderChannel`. `/config set reminderChannel` fetches the channel and accepts only one owned by the invoking guild.
 - Secrets prefer runtime data files, then environment variables: `FOUNDRY_BOT_TOKEN` and `FOUNDRY_PTERODACTYL_TOKEN`.
 - Runtime timezone controls parsed dates, booking intervals, and scheduled messages. Set `TZ` explicitly in Docker/Pterodactyl.
 
@@ -85,7 +85,6 @@ Guild state types live one-per-file under `Sources/Services/Guild State/`. Docum
 
 - Date polls use checkbox modals for voting/finalization, a Components V2 shared message, JSON-backed role voter rosters refreshed on vote, scheduler-backed per-user reminders, and short IDs. Components V2 is permanent per Discord message and forbids embeds/content. Poll owners/admins can manage any owned/all polls; other Dungeon Masters must hold campaign role. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
 - README names `/reschedulebooking`; registered command is `/rescheduleevent`.
-- README says forced switch unlocks world switching; implementation does not.
 - README says Discord scheduled event creation is planned; `createServerEvent` exists but no command uses it.
 - Pterodactyl egg token variables may be user-viewable. Treat panel configuration and generated secret files as sensitive.
 - Failed scheduler events remain queued for retry; other due events continue executing.

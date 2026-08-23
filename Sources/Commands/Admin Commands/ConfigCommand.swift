@@ -117,6 +117,12 @@ struct ConfigCommand: DiscordCommand {
             guard Self.guildConfigKeys.contains(configKey) else {
                 throw DiscordCommandError.invalidConfigKey(keyString)
             }
+            if configKey == .reminderChannel {
+                let channel = try await client.getChannel(id: .init(valueString)).decode()
+                guard channel.guild_id == context.guildID else {
+                    throw DiscordCommandError.reminderChannelNotInGuild
+                }
+            }
             try context.config.setValue(valueString, for: configKey)
             try await respond("The value `\(keyString)` was updated to `\(valueString)`.")
         } else if let resetCommand = applicationCommand.option(named: "reset") {

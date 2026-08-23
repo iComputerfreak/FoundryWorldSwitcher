@@ -21,6 +21,13 @@ struct UnlockWorldCommand: DiscordCommand {
         context: GuildContext,
         client: any DiscordClient
     ) async throws {
+        guard let user = interaction.member?.user else {
+            throw DiscordCommandError.noUser
+        }
+        guard context.permissions.isApplicationOwner(user.id) else {
+            throw DiscordCommandError.globalWorldUnlockPermissionDenied
+        }
+
         try WorldLockService.shared.unlockWorldSwitching()
         
         try await client.respond(

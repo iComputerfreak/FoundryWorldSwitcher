@@ -36,6 +36,11 @@ actor GuildRegistry {
         return context
     }
 
+    /// Prunes conflict records for guilds no longer served by this bot.
+    func pruneBookingConflicts(guildIDs: Set<GuildSnowflake>) async {
+        await bookingConflicts.prune(guildIDs: guildIDs)
+    }
+
     /// Returns the sole loaded context containing a date poll with `pollID`.
     func context(forDatePollID pollID: String) async throws -> GuildContext {
         var matches: [GuildContext] = []

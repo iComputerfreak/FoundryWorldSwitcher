@@ -6,6 +6,8 @@ enum V3StateMigration {
     private static let backupDirectory = Utils.dataURL
         .appendingPathComponent("migration-backups", isDirectory: true)
         .appendingPathComponent("v3", isDirectory: true)
+    private static let stagingDirectory = Utils.dataURL
+        .appendingPathComponent(".v3-migration-staging", isDirectory: true)
 
     /// Migrates root state only before `BotConfig.shared` can read or create its config file.
     static func runIfNeeded(guildIDs: [GuildSnowflake]) throws {
@@ -17,22 +19,22 @@ enum V3StateMigration {
         else {
             return
         }
+        try recoverIncompleteMigration()
         guard guildIDs.count == 1, let guildID = guildIDs.first else {
             throw MigrationError.requiresExactlyOneGuild(guildIDs.count)
         }
 
-        let targetDirectory = Utils.dataURL
-            .appendingPathComponent("guilds", isDirectory: true)
-            .appendingPathComponent(guildID.rawValue, isDirectory: true)
-        let targets = TargetPaths(directory: targetDirectory)
+        guard !FileManager.default.fileExists(atPath: backupDirectory.path) else {
+            throw MigrationError.backupExists(backupDirectory.path)
+        }
+        let staging = StagingPaths(guildID: guildID)
         let legacy = LegacyPaths()
         let worldLockPath = Utils.dataURL.appendingPathComponent("world-lock.json")
         guard
-            !targets.all.contains(where: { FileManager.default.fileExists(atPath: $0.path) }),
             !(FileManager.default.fileExists(atPath: legacy.worldLock.path)
                 && FileManager.default.fileExists(atPath: worldLockPath.path))
         else {
-            throw MigrationError.targetStateExists(targetDirectory.path)
+            throw MigrationError.targetStateExists(worldLockPath.path)
         }
 
         let rootConfig = try LegacyRootConfig.load(from: rootConfigURL)
@@ -47,24 +49,51 @@ enum V3StateMigration {
             ?? encoded([DatePoll]()))
         let conflicts = try conflictRecords(from: bookings, guildID: guildID, configuration: rootConfig)
 
-        try FileManager.default.createDirectory(at: targetDirectory, withIntermediateDirectories: true)
-        try write(config, to: targets.config, decoding: GuildConfigStored.self)
-        try write(permissions, to: targets.permissions, decoding: LegacyPermissions.self)
-        try write(bookings, to: targets.bookings, decoding: BookingList.self)
-        try write(events, to: targets.events, decoding: [SchedulerEvent].self)
-        try write(datePolls, to: targets.datePolls, decoding: [DatePoll].self)
-        try write(conflicts, to: Utils.dataURL.appendingPathComponent("booking_conflicts.json"), decoding: [GlobalBookingRecord].self)
-        if FileManager.default.fileExists(atPath: legacy.worldLock.path) {
-            try write(
-                WorldLockRecord(guildID: nil, bookingID: nil, acquiredAt: .now),
-                to: worldLockPath,
-                decoding: WorldLockRecord.self
-            )
-        }
+        do {
+            try FileManager.default.createDirectory(at: staging.guildDirectory, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: staging.globalDirectory, withIntermediateDirectories: true)
+            try write(config, to: staging.targets.config, decoding: GuildConfigStored.self)
+            try write(permissions, to: staging.targets.permissions, decoding: LegacyPermissions.self)
+            try write(bookings, to: staging.targets.bookings, decoding: BookingList.self)
+            try write(events, to: staging.targets.events, decoding: [SchedulerEvent].self)
+            try write(datePolls, to: staging.targets.datePolls, decoding: [DatePoll].self)
+            try write(conflicts, to: staging.conflicts, decoding: [GlobalBookingRecord].self)
+            try write(GlobalBotConfig(rootConfig: rootConfig), to: staging.rootConfig, decoding: GlobalBotConfig.self)
+            if FileManager.default.fileExists(atPath: legacy.worldLock.path) {
+                try write(
+                    WorldLockRecord(guildID: nil, bookingID: nil, acquiredAt: .now),
+                    to: staging.worldLock,
+                    decoding: WorldLockRecord.self
+                )
+            }
 
-        let sources = legacy.guildStateFiles.filter { FileManager.default.fileExists(atPath: $0.path) }
-        try archive(sources + [rootConfigURL], removing: sources)
-        try encoded(GlobalBotConfig(rootConfig: rootConfig)).write(to: rootConfigURL)
+            let sources = legacy.guildStateFiles.filter { FileManager.default.fileExists(atPath: $0.path) }
+            try backup(sources + [rootConfigURL, staging.conflictTarget, worldLockPath], to: staging.backups)
+            try FileManager.default.createDirectory(
+                at: backupDirectory.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try FileManager.default.moveItem(at: staging.backups, to: backupDirectory)
+
+            // This marker makes interrupted global replacement recoverable on the next boot.
+            try Data().write(to: staging.globalWriteMarker)
+            try replaceWithVerified(staging.conflicts, at: staging.conflictTarget, decoding: [GlobalBookingRecord].self)
+            if FileManager.default.fileExists(atPath: staging.worldLock.path) {
+                try replaceWithVerified(staging.worldLock, at: worldLockPath, decoding: WorldLockRecord.self)
+            }
+            try replaceWithVerified(staging.rootConfig, at: rootConfigURL, decoding: GlobalBotConfig.self)
+            try FileManager.default.moveItem(at: staging.guildsDirectory, to: guildsDirectory)
+
+            for source in sources {
+                try? FileManager.default.removeItem(at: source)
+            }
+            try? FileManager.default.removeItem(at: staging.directory)
+        } catch {
+            try? restoreGlobalOutputs(from: backupDirectory)
+            try? FileManager.default.removeItem(at: backupDirectory)
+            try? FileManager.default.removeItem(at: staging.directory)
+            throw error
+        }
     }
 
     private static func conflictRecords(
@@ -84,22 +113,67 @@ enum V3StateMigration {
         return try encoded(records)
     }
 
-    private static func archive(_ sources: [URL], removing removedSources: [URL]) throws {
-        guard !sources.isEmpty else { return }
-        guard !FileManager.default.fileExists(atPath: backupDirectory.path) else {
-            throw MigrationError.backupExists(backupDirectory.path)
+    private static func recoverIncompleteMigration() throws {
+        guard FileManager.default.fileExists(atPath: stagingDirectory.path) else { return }
+        let staging = StagingPaths(directory: stagingDirectory)
+        if FileManager.default.fileExists(atPath: staging.globalWriteMarker.path) {
+            let backups = FileManager.default.fileExists(atPath: backupDirectory.path) ? backupDirectory : staging.backups
+            try restoreGlobalOutputs(from: backups)
+            try? FileManager.default.removeItem(at: backupDirectory)
+        } else {
+            // Backup publication completed before global replacement. It belongs to this incomplete attempt.
+            try? FileManager.default.removeItem(at: backupDirectory)
         }
-        try FileManager.default.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
+        try FileManager.default.removeItem(at: stagingDirectory)
+    }
+
+    private static func backup(_ sources: [URL], to directory: URL) throws {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for source in sources {
-            let backup = backupDirectory.appendingPathComponent(source.lastPathComponent)
+            guard FileManager.default.fileExists(atPath: source.path) else { continue }
+            let backup = directory.appendingPathComponent(source.lastPathComponent)
             try FileManager.default.copyItem(at: source, to: backup)
             guard try Data(contentsOf: source) == Data(contentsOf: backup) else {
                 throw MigrationError.backupVerificationFailed(source.lastPathComponent)
             }
         }
-        for source in removedSources {
-            try FileManager.default.removeItem(at: source)
+    }
+
+    private static func replaceWithVerified<T: Decodable>(_ source: URL, at destination: URL, decoding type: T.Type) throws {
+        try Data(contentsOf: source).write(to: destination, options: .atomic)
+        _ = try JSONDecoder().decode(type, from: Data(contentsOf: destination))
+    }
+
+    private static func restoreGlobalOutputs(from backups: URL) throws {
+        guard FileManager.default.fileExists(atPath: backups.path) else {
+            throw MigrationError.backupMissing(backups.path)
         }
+        try restore(
+            Utils.dataURL.appendingPathComponent("botConfig.json"),
+            from: backups.appendingPathComponent("botConfig.json"),
+            decoding: LegacyRootConfig.self
+        )
+        try restore(
+            Utils.dataURL.appendingPathComponent("booking_conflicts.json"),
+            from: backups.appendingPathComponent("booking_conflicts.json"),
+            decoding: [GlobalBookingRecord].self
+        )
+        try restore(
+            Utils.dataURL.appendingPathComponent("world-lock.json"),
+            from: backups.appendingPathComponent("world-lock.json"),
+            decoding: WorldLockRecord.self
+        )
+    }
+
+    private static func restore<T: Decodable>(_ destination: URL, from backup: URL, decoding type: T.Type) throws {
+        guard FileManager.default.fileExists(atPath: backup.path) else {
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            return
+        }
+        try Data(contentsOf: backup).write(to: destination, options: .atomic)
+        _ = try JSONDecoder().decode(type, from: Data(contentsOf: destination))
     }
 
     private static func write<T: Decodable>(_ value: T, to url: URL, decoding type: T.Type) throws where T: Encodable {
@@ -150,7 +224,38 @@ enum V3StateMigration {
         var bookings: URL { directory.appendingPathComponent("bookings.json") }
         var events: URL { directory.appendingPathComponent("events.json") }
         var datePolls: URL { directory.appendingPathComponent("date_polls.json") }
-        var all: [URL] { [config, permissions, bookings, events, datePolls] }
+    }
+
+    private struct StagingPaths {
+        let directory: URL
+        let guildsDirectory: URL
+        let guildDirectory: URL
+        let targets: TargetPaths
+        let globalDirectory: URL
+        let rootConfig: URL
+        let conflicts: URL
+        let worldLock: URL
+        let backups: URL
+        let globalWriteMarker: URL
+
+        init(guildID: GuildSnowflake) {
+            self.init(directory: stagingDirectory, guildID: guildID)
+        }
+
+        init(directory: URL, guildID: GuildSnowflake? = nil) {
+            self.directory = directory
+            guildsDirectory = directory.appendingPathComponent("guilds", isDirectory: true)
+            guildDirectory = guildsDirectory.appendingPathComponent(guildID?.rawValue ?? "unknown", isDirectory: true)
+            targets = TargetPaths(directory: guildDirectory)
+            globalDirectory = directory.appendingPathComponent("global", isDirectory: true)
+            rootConfig = globalDirectory.appendingPathComponent("botConfig.json")
+            conflicts = globalDirectory.appendingPathComponent("booking_conflicts.json")
+            worldLock = globalDirectory.appendingPathComponent("world-lock.json")
+            backups = directory.appendingPathComponent("backups", isDirectory: true)
+            globalWriteMarker = directory.appendingPathComponent("global-outputs-started")
+        }
+
+        var conflictTarget: URL { Utils.dataURL.appendingPathComponent("booking_conflicts.json") }
     }
 
     private struct LegacyPermissions: Codable {
@@ -285,6 +390,7 @@ enum V3StateMigration {
         case targetStateExists(String)
         case backupExists(String)
         case backupVerificationFailed(String)
+        case backupMissing(String)
 
         var errorDescription: String? {
             switch self {
@@ -296,6 +402,8 @@ enum V3StateMigration {
                 return "V3 migration backup already exists at \(path)."
             case let .backupVerificationFailed(name):
                 return "V3 migration could not verify backup for \(name)."
+            case let .backupMissing(path):
+                return "V3 migration backup is missing at \(path)."
             }
         }
     }

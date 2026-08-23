@@ -69,6 +69,8 @@ if BotConfig.shared.pterodactylServerID.isEmpty {
 // MARK: - Register services
 private let guildRegistry = GuildRegistry(applicationOwnerID: applicationOwnerID)
 
+await guildRegistry.pruneBookingConflicts(guildIDs: Set(guilds.map(\.id)))
+
 for guild in guilds {
     _ = await guildRegistry.context(for: guild.id)
 }

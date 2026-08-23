@@ -43,21 +43,19 @@ struct SwitchWorldCommand: DiscordCommand {
             throw DiscordCommandError.noUser
         }
         
-        let world = try await parseWorld(from: applicationCommand, optionName: "world_id")
-        
-        // Only the application owner can use `force:true` to switch while locked.
-        if WorldLockService.shared.isWorldSwitchingLocked() {
-            guard applicationCommand.option(named: "force")?.value?.boolValue == true else {
-                throw DiscordCommandError.worldSwitchingIsLocked
-            }
-            
+        let force = applicationCommand.option(named: "force")?.value?.boolValue == true
+        if force {
             // Application ownership is separate from guild-local administrator permission.
             guard context.permissions.isApplicationOwner(user.id) else {
                 throw DiscordCommandError.forceSwitchWorldPermissionDenied(required: .admin)
             }
-            
-            // The application owner may now force the switch.
         }
+
+        // The operation slot closes the gap between the lock check and Pterodactyl changes.
+        let operationID = try WorldLockService.shared.beginManualWorldSwitching(force: force)
+        defer { WorldLockService.shared.endManualWorldSwitching(operationID: operationID) }
+
+        let world = try await parseWorld(from: applicationCommand, optionName: "world_id")
         
         try await client.respond(
             token: interaction.token,

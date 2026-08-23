@@ -69,7 +69,11 @@ actor BookingsService {
         self.pinnedMessagesConfiguration = pinnedMessagesConfiguration
         self.guildID = guildID
         self.bookingConflicts = bookingConflicts
-        self.bookings = Self.loadBookings(from: dataPath)
+        let loadedBookings = Self.loadBookings(from: dataPath, configuration: configuration)
+        self.bookings = loadedBookings.bookings
+        if loadedBookings.didInitializeIntervals {
+            saveBookings()
+        }
     }
     
     /// Returns the booking for the given date, or `nil` if no booking exists for that date
@@ -104,6 +108,41 @@ actor BookingsService {
     func createBookingIfAvailable(_ booking: any Booking) async throws {
         try await bookingConflicts.reserve(booking, for: guildID, configuration: configuration)
         await createBooking(booking)
+    }
+
+    /// Replaces a booking after reserving its new interval without releasing its existing one.
+    func rescheduleBooking(id: UUID, to date: Date) async throws -> (any Booking)? {
+        guard let index = bookings.firstIndex(where: { $0.id == id }) else { return nil }
+        let originalBooking = bookings[index]
+        let replacementBooking: any Booking
+        if let booking = originalBooking as? EventBooking {
+            replacementBooking = EventBooking(
+                id: booking.id,
+                date: date,
+                author: booking.author,
+                worldID: booking.worldID,
+                campaignRoleSnowflake: booking.campaignRoleSnowflake,
+                location: booking.location,
+                topic: booking.topic,
+                configuration: configuration
+            )
+        } else if let booking = originalBooking as? ReservationBooking {
+            replacementBooking = ReservationBooking(
+                id: booking.id,
+                date: date,
+                author: booking.author,
+                worldID: booking.worldID,
+                configuration: configuration
+            )
+        } else {
+            return nil
+        }
+
+        try await bookingConflicts.reserve(replacementBooking, for: guildID, configuration: configuration)
+        bookings[index] = replacementBooking
+        await scheduler.unqueue(originalBooking.associatedEvents)
+        await scheduler.schedule(replacementBooking.associatedEvents)
+        return replacementBooking
     }
     
     /// Deletes the given booking from the store and unqueues any associated events
@@ -144,9 +183,17 @@ extension BookingsService {
         }
     }
     
-    static func loadBookings(from url: URL) -> [any Booking] {
+    static func loadBookings(
+        from url: URL,
+        configuration: any BookingConfiguration
+    ) -> (bookings: [any Booking], didInitializeIntervals: Bool) {
         let bookingList: BookingList? = try? Self.load(from: url, defaultValue: nil)
-        return bookingList?.allBookings ?? []
+        var bookings = bookingList?.allBookings ?? []
+        var didInitializeIntervals = false
+        for index in bookings.indices {
+            didInitializeIntervals = bookings[index].initializeBookingInterval(using: configuration) || didInitializeIntervals
+        }
+        return (bookings, didInitializeIntervals)
     }
     
     private func save<T: Encodable>(_ object: T, at url: URL) throws {

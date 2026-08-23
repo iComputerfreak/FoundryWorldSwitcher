@@ -20,10 +20,13 @@ struct EventBooking: Booking {
     /// The topic of the booking (e.g., "Session 13")
     var topic: String
     var associatedEvents: [SchedulerEvent] = []
+    var bookingIntervalStartDate: Date?
+    var bookingIntervalEndDate: Date?
     var wasCancelled: Bool = false
     
     /// Creates a new booking with associated event information and a player role to notify before the event starts
     init(
+        id: UUID = UUID(),
         date: Date,
         author: UserSnowflake,
         worldID: String,
@@ -32,20 +35,22 @@ struct EventBooking: Booking {
         topic: String,
         configuration: any BookingConfiguration
     ) {
-        self.id = UUID()
+        self.id = id
         self.date = date
         self.author = author
         self.worldID = worldID
         self.campaignRoleSnowflake = campaignRoleSnowflake
         self.location = location
         self.topic = topic
+        self.bookingIntervalStartDate = defaultBookingIntervalStartDate(using: configuration)
+        self.bookingIntervalEndDate = bookingIntervalStartDate!.addingTimeInterval(configuration.bookingIntervalEndTime)
         self.associatedEvents = [
             SchedulerEvent(
-                dueDate: bookingIntervalStartDate(using: configuration),
+                dueDate: bookingIntervalStartDate!,
                 eventType: .lockWorldSwitching(worldID: worldID)
             ),
             SchedulerEvent(
-                dueDate: bookingIntervalEndDate(using: configuration),
+                dueDate: bookingIntervalEndDate!,
                 eventType: .unlockWorldSwitching
             ),
         ]
@@ -80,6 +85,8 @@ struct EventBooking: Booking {
         self.location = try container.decode(ChannelSnowflake.self, forKey: .location)
         self.topic = try container.decode(String.self, forKey: .topic)
         self.associatedEvents = try container.decode([SchedulerEvent].self, forKey: .associatedEvents)
+        self.bookingIntervalStartDate = try container.decodeIfPresent(Date.self, forKey: .bookingIntervalStartDate)
+        self.bookingIntervalEndDate = try container.decodeIfPresent(Date.self, forKey: .bookingIntervalEndDate)
         // This key was introduced in version 2.9.0 and may not exist on disk
         self.wasCancelled = try container.decodeIfPresent(Bool.self, forKey: .wasCancelled) ?? false
     }
