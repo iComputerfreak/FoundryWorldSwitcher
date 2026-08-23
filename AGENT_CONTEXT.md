@@ -17,6 +17,7 @@ Swift Discord bot for one Discord guild. Dungeon Masters book Foundry VTT worlds
 - Command registry: `DiscordCommands.commands`. Registration bulk-replaces application commands on bot startup.
 - Permission levels: `user`, `dungeonMaster`, `admin`. User and role mappings persist in `permissions.json`; highest assigned level wins.
 - Bot application owner receives admin on startup when Discord returns an owner.
+- Date-poll role snapshots require Guild Members intent enabled in code and Discord Developer Portal.
 - User commands: help, health check, permission lookup, world info, bookings, session log.
 - Dungeon Master commands: list/restart/switch worlds; create, cancel, or reschedule bookings; read lock state.
 - Admin commands: permission management, config, cache refresh, lock management, booking deletion, pin management, scheduler queue inspection. Forced world switch requires admin.
@@ -77,6 +78,7 @@ All state uses direct JSON writes. No atomic-write, corruption recovery, schema 
 
 ## Documentation Drift And Open Work
 
+- Date polls use Discord components, JSON-backed role voter snapshots, scheduler-backed per-user reminders, and short IDs. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
 - README names `/reschedulebooking`; registered command is `/rescheduleevent`.
 - README says forced switch unlocks world switching; implementation does not.
 - README says Discord scheduled event creation is planned; `createServerEvent` exists but no command uses it.

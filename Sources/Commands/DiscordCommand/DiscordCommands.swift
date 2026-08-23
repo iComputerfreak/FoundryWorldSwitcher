@@ -34,6 +34,7 @@ enum DiscordCommands {
         DeleteBookingCommand(),
         SessionLogCommand(),
         RescheduleEventCommand(),
+        DatePollCommand(),
     ]
     
     static func register(bot: BotGatewayManager) async throws {

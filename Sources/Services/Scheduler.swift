@@ -15,6 +15,7 @@ actor Scheduler {
     static let shared: Scheduler = .init()
     
     private(set) var events: [SchedulerEvent]
+    private var isUpdating = false
     
     init() {
         events = Self.loadEvents()
@@ -22,10 +23,25 @@ actor Scheduler {
     
     /// Checks for due events and executes them
     func update() async throws {
+        guard !isUpdating else { return }
+        isUpdating = true
+        defer { isUpdating = false }
+
+        var errors: [Error] = []
         for event in dueEvents() {
             Self.logger.info("Executing scheduled event: \(event)")
-            try await event.execute()
-            unqueue(event)
+            do {
+                try await event.execute()
+                unqueue(event)
+            } catch {
+                errors.append(error)
+                Self.logger.error("Error executing scheduled event \(event.id): \(error)")
+            }
+        }
+        if errors.count > 1 {
+            throw CompoundError(errors: errors)
+        } else if let error = errors.first {
+            throw error
         }
     }
     
@@ -46,7 +62,11 @@ actor Scheduler {
     
     /// Removes multiple events from the scheduler queue
     func unqueue(_ events: [SchedulerEvent]) {
-        let eventIDs = events.map(\.id)
+        unqueue(ids: events.map(\.id))
+    }
+
+    /// Removes events with the given IDs from the scheduler queue.
+    func unqueue(ids eventIDs: [SchedulerEvent.ID]) {
         let eventIDsString = eventIDs.map({ "- \($0.uuidString)" }).joined(separator: "\n")
         Self.logger.info("Unqueued scheduled events with the following IDs:\n\(eventIDsString)")
         self.events.removeAll(where: { eventIDs.contains($0.id) })

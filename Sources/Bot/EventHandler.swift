@@ -18,6 +18,21 @@ struct EventHandler: GatewayEventHandler {
 
     /// Handle Interactions.
     func onInteractionCreate(_ interaction: Interaction) async throws {
+        guard let interactionData = interaction.data else { return }
+        switch interactionData {
+        case let .applicationCommand(applicationCommand):
+            try await handleApplicationCommand(applicationCommand, interaction: interaction)
+        case let .messageComponent(component):
+            try await DatePollComponentHandler(client: client).handle(component, interaction: interaction)
+        case .modalSubmit:
+            break
+        }
+    }
+
+    private func handleApplicationCommand(
+        _ applicationCommand: Interaction.ApplicationCommand,
+        interaction: Interaction
+    ) async throws {
         /// You only have 3 second to respond, so it's better to send
         /// the response right away, and edit the response later.
         /// This will show a loading indicator to users.
@@ -27,44 +42,39 @@ struct EventHandler: GatewayEventHandler {
             payload: .deferredChannelMessageWithSource()
         ).guardSuccess()
 
-        /// Handle the interaction data
-        switch interaction.data {
-        case let .applicationCommand(applicationCommand):
-            // Use the commands defined in main.swift
+        // Use the commands defined in main.swift
+        do {
+            guard let command = DiscordCommands.commands.first(where: { $0.name == applicationCommand.name }) else {
+                throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
+            }
+            guard let member = interaction.member else {
+                throw DiscordCommandError.noMember
+            }
+            guard let username = member.user?.username else {
+                throw DiscordCommandError.noUser
+            }
             do {
-                guard let command = DiscordCommands.commands.first(where: { $0.name == applicationCommand.name }) else {
-                    throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
-                }
-                guard let member = interaction.member else {
-                    throw DiscordCommandError.noMember
-                }
-                guard let username = member.user?.username else {
-                    throw DiscordCommandError.noUser
-                }
-                do {
-                    // Check user permissions
-                    try permissionsHandler.checkAuthorization(of: member, for: command)
-                    try await command.handle(applicationCommand, interaction: interaction, client: client)
-                } catch DiscordCommandError.unauthorized {
-                    logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions.")
-                    try await client.respond(
-                        token: interaction.token,
-                        message: "You need at least permission level `\(command.permissionsLevel)` to execute this command."
-                    )
-                } catch DiscordCommandError.missingArgument(argumentName: let argName) {
-                    try await client.respond(
-                        token: interaction.token,
-                        message: "Error: You need to specify the argument `\(argName)`."
-                    )
-                }
-            } catch {
-                logger.error("Error handling command /\(applicationCommand.name): \(error)")
+                // Check user permissions
+                try permissionsHandler.checkAuthorization(of: member, for: command)
+                try await command.handle(applicationCommand, interaction: interaction, client: client)
+            } catch DiscordCommandError.unauthorized {
+                logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions.")
                 try await client.respond(
                     token: interaction.token,
-                    message: "There was an error running your command:\n\(error.localizedDescription)"
+                    message: "You need at least permission level `\(command.permissionsLevel)` to execute this command."
+                )
+            } catch DiscordCommandError.missingArgument(argumentName: let argName) {
+                try await client.respond(
+                    token: interaction.token,
+                    message: "Error: You need to specify the argument `\(argName)`."
                 )
             }
-        default: break
+        } catch {
+            logger.error("Error handling command /\(applicationCommand.name): \(error)")
+            try await client.respond(
+                token: interaction.token,
+                message: "There was an error running your command:\n\(error.localizedDescription)"
+            )
         }
     }
 }

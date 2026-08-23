@@ -27,6 +27,7 @@ if BotConfig.shared.pterodactylServerID.isEmpty {
 // MARK: -  Register services
 private let scheduler = Scheduler.shared
 let bookingsService = BookingsService(scheduler: scheduler)
+let datePollsService = DatePollsService(scheduler: scheduler)
 
 // MARK: - Set up the bot
 
@@ -44,7 +45,7 @@ let bot = await BotGatewayManager(
     ),
     /// Add all the intents you want
     /// You can also use `Gateway.Intent.unprivileged` or `Gateway.Intent.allCases`
-    intents: []
+    intents: [.guildMembers]
 )
 
 /// Tell the manager to connect to Discord. Use a `Task { }` because it
@@ -101,6 +102,18 @@ try await DiscordCommands.register(bot: bot)
 try await PterodactylAPI.shared.updateCache()
 
 logger.info("Bot started successfully.")
+
+// Keep persisted deadlines and reminders moving while the gateway is idle.
+Task(priority: .background) {
+    while !Task.isCancelled {
+        do {
+            try await scheduler.update()
+        } catch {
+            logger.error("Error running scheduler: \(error.localizedDescription)\n\(error)")
+        }
+        try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+    }
+}
 
 // MARK: - Start the bot
 /// Handle each event in the `bot.events` async stream

@@ -41,7 +41,44 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
         case .removeBooking:
             // Do nothing. We don't delete bookings anymore when they are completed
             break
+
+        case let .closeDatePoll(pollID: pollID):
+            try await handleCloseDatePoll(pollID: pollID)
+
+        case let .sendDatePollReminder(pollID: pollID, userID: userID):
+            try await handleDatePollReminder(pollID: pollID, userID: userID)
         }
+    }
+}
+
+// MARK: - Date Polls
+extension SchedulerEvent {
+    private func handleCloseDatePoll(pollID: String) async throws {
+        guard let poll = try await datePollsService.closePoll(id: pollID) else { return }
+        guard let messageID = poll.messageID else { return }
+        try await bot.client.updateMessage(
+            channelId: poll.channelID,
+            messageId: messageID,
+            payload: DatePollRenderer.messagePayload(for: poll)
+        ).guardSuccess()
+    }
+
+    private func handleDatePollReminder(pollID: String, userID: UserSnowflake) async throws {
+        guard let poll = try await datePollsService.reminderPoll(pollID: pollID, userID: userID) else { return }
+        guard let messageID = poll.messageID else { return }
+        let pollLink = "https://discord.com/channels/\(poll.guildID.rawValue)/\(poll.channelID.rawValue)/\(messageID.rawValue)"
+        let payload = Payloads.CreateMessage(
+            content: "\(DiscordUtils.mention(id: userID)) please vote in the [session date poll](\(pollLink)).",
+            components: DatePollRenderer.reminderComponents(for: poll)
+        )
+
+        do {
+            let channel = try await bot.client.createDm(payload: .init(recipient_id: userID)).decode()
+            try await bot.client.createMessage(channelId: channel.id, payload: payload).guardSuccess()
+        } catch {
+            try await bot.client.createMessage(channelId: poll.channelID, payload: payload).guardSuccess()
+        }
+        await datePollsService.markReminderDelivered(pollID: pollID, userID: userID)
     }
 }
 

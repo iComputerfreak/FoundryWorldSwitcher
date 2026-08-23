@@ -7,3 +7,12 @@ Mention the update briefly in a plan when already writing one. Otherwise, make t
 ## Project Context
 
 Read `AGENT_CONTEXT.md` before non-trivial work for architecture, runtime contracts, deployment details, and known hazards. Keep it current when behavior, persistence, external integrations, deployment, or verification guidance changes.
+
+## Implementation Principles
+
+Respect the existing architecture, code quality, documentation standard, and established patterns. Keep code maintainable and human-readable. Prefer the lightest implementation that correctly meets the requirement.
+Use DiscordBM for Discord API communication. Do not make manual Discord REST requests.
+
+## Verification
+
+Do not add tests. This project does not use them. Verify changes with appropriate builds and manual checks.

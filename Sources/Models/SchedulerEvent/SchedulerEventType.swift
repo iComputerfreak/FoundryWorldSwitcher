@@ -15,4 +15,6 @@ enum SchedulerEventType: Codable, Hashable {
     case sendSessionReminder(bookingID: UUID)
     case sendSessionStartsReminder(bookingID: UUID)
     case removeBooking(id: UUID)
+    case closeDatePoll(pollID: String)
+    case sendDatePollReminder(pollID: String, userID: UserSnowflake)
 }
