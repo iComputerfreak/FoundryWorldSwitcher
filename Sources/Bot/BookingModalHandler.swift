@@ -48,7 +48,7 @@ struct BookingModalHandler {
                     configuration: context.config
                 )
             case .event:
-                guard let campaignRoleID = form.campaignRoleID, let locationID = form.locationID, let topic = form.topic else {
+                guard let campaignRoleID = form.campaignRoleID, let topic = form.topic else {
                     throw DiscordCommandError.invalidBookingForm
                 }
                 booking = EventBooking(
@@ -56,11 +56,11 @@ struct BookingModalHandler {
                     author: user.id,
                     worldID: form.worldID,
                     campaignRoleSnowflake: campaignRoleID,
-                    location: locationID,
+                    location: form.locationID,
                     topic: topic,
                     configuration: context.config
                 )
-                if booking.date > booking.bookingIntervalEndDate(using: context.config) {
+                if booking.worldID != nil, booking.date > booking.bookingIntervalEndDate(using: context.config) {
                     let start = DiscordUtils.timestamp(date: booking.bookingIntervalStartDate(using: context.config), style: .shortDateTime)
                     let end = DiscordUtils.timestamp(date: booking.bookingIntervalEndDate(using: context.config), style: .shortDateTime)
                     warning = "\nThe world will be locked from \(start) to \(end).\n" +
@@ -94,8 +94,32 @@ struct BookingModalHandler {
                 )
             )
         } catch {
+            if let commandError = error as? DiscordCommandError, case .invalidBookingForm = commandError {
+                logger.warning("Invalid booking form components: \(modalComponentSummary(modal))")
+            }
             logger.warning("Failed to create booking from modal: \(error)")
             try await client.respond(token: interaction.token, message: error.localizedDescription)
         }
+    }
+
+    private func modalComponentSummary(_ modal: Interaction.ModalSubmit) -> String {
+        let components = modal.componentsV2 ?? []
+        return components.compactMap { component in
+            guard case let .label(label) = component, let customID = label.component.customId else {
+                return nil
+            }
+            switch label.component {
+            case let .stringSelect(select):
+                return "\(customID)=stringSelect(values: \(select.values?.count ?? 0))"
+            case let .roleSelect(select):
+                return "\(customID)=roleSelect(values: \(select.values?.count ?? 0))"
+            case let .channelSelect(select):
+                return "\(customID)=channelSelect(values: \(select.values?.count ?? 0))"
+            case .textInput:
+                return "\(customID)=textInput"
+            default:
+                return "\(customID)=other"
+            }
+        }.joined(separator: ", ")
     }
 }

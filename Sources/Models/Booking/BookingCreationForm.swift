@@ -40,38 +40,62 @@ struct BookingCreationForm {
         kind = context.kind
         sourcePollID = context.pollID
         sourceCandidateID = context.candidateID
-        guard case let .stringSelect(worldSelect) = values[Self.worldComponentID], let worldValues = worldSelect.values, worldValues.count == 1 else {
-            throw DiscordCommandError.invalidBookingForm
-        }
-        worldID = worldValues[0] == Self.noFoundryWorldValue ? nil : worldValues[0]
-
         switch kind {
         case .reservation:
             guard Set(values.keys) == Set([Self.worldComponentID, Self.dateID]),
-                  worldID != nil,
+                  case let .stringSelect(worldSelect) = values[Self.worldComponentID],
+                  let worldValues = worldSelect.values,
+                  worldValues.count == 1,
+                  worldValues[0] != Self.noFoundryWorldValue,
                   case let .textInput(dateInput) = values[Self.dateID], let dateValue = dateInput.value else {
-                throw DiscordCommandError.invalidBookingForm
+                throw DiscordCommandError.missingBookingWorld
             }
+            worldID = worldValues[0]
             date = try Self.parseDate(dateValue)
             campaignRoleID = nil
             locationID = nil
             topic = nil
 
         case .event:
-            guard Set(values.keys) == Set([Self.worldComponentID, Self.dateTimeID, Self.roleID, Self.locationID, Self.topicID]),
-                  case let .textInput(dateTimeInput) = values[Self.dateTimeID], let dateTimeValue = dateTimeInput.value,
-                  case let .roleSelect(roleSelect) = values[Self.roleID], let roleValues = roleSelect.values, roleValues.count == 1,
-                  case let .channelSelect(locationSelect) = values[Self.locationID],
+            let requiredIDs: Set = [Self.dateTimeID, Self.roleID, Self.topicID]
+            let allowedIDs = requiredIDs.union([Self.worldComponentID, Self.locationID])
+            let receivedIDs = Set(values.keys)
+            guard requiredIDs.isSubset(of: receivedIDs), receivedIDs.isSubset(of: allowedIDs) else {
+                throw DiscordCommandError.invalidBookingForm
+            }
+            guard case let .textInput(dateTimeInput) = values[Self.dateTimeID], let dateTimeValue = dateTimeInput.value,
+                  case let .roleSelect(roleSelect) = values[Self.roleID],
                   case let .textInput(topicInput) = values[Self.topicID], let topicValue = topicInput.value else {
                 throw DiscordCommandError.invalidBookingForm
             }
-            let locationValues = locationSelect.values ?? []
+            let roleValues = roleSelect.values ?? []
+            guard roleValues.count == 1 else { throw DiscordCommandError.missingBookingRole }
+            let worldValues: [String]
+            if let worldComponent = values[Self.worldComponentID] {
+                guard case let .stringSelect(worldSelect) = worldComponent else {
+                    throw DiscordCommandError.invalidBookingForm
+                }
+                worldValues = worldSelect.values ?? []
+            } else {
+                worldValues = []
+            }
+            guard worldValues.count <= 1 else { throw DiscordCommandError.invalidBookingForm }
+            let locationValues: [String]
+            if let locationComponent = values[Self.locationID] {
+                guard case let .channelSelect(locationSelect) = locationComponent else {
+                    throw DiscordCommandError.invalidBookingForm
+                }
+                locationValues = locationSelect.values ?? []
+            } else {
+                locationValues = []
+            }
             guard locationValues.count <= 1 else { throw DiscordCommandError.invalidBookingForm }
+            worldID = worldValues.first == Self.noFoundryWorldValue ? nil : worldValues.first
             date = try Self.parseDateTime(dateTimeValue, defaultEventBookingTime: defaultEventBookingTime)
             campaignRoleID = .init(roleValues[0])
             locationID = locationValues.first.map(ChannelSnowflake.init)
             let trimmedTopic = topicValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmedTopic.isEmpty else { throw DiscordCommandError.invalidBookingForm }
+            guard !trimmedTopic.isEmpty else { throw DiscordCommandError.missingBookingTopic }
             topic = trimmedTopic
         }
     }

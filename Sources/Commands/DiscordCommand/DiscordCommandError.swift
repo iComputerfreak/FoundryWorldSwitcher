@@ -34,6 +34,9 @@ enum DiscordCommandError: Error, LocalizedError {
     case rescheduleBookingPermissionDenied(required: BotPermissionLevel)
     case foundryFeaturesDisabled
     case invalidBookingForm
+    case missingBookingWorld
+    case missingBookingRole
+    case missingBookingTopic
     
     var errorDescription: String? {
         switch self {
@@ -111,6 +114,15 @@ enum DiscordCommandError: Error, LocalizedError {
 
         case .invalidBookingForm:
             return "The booking form is invalid. Please reopen it and try again."
+
+        case .missingBookingWorld:
+            return "Select a Foundry world for this reservation."
+
+        case .missingBookingRole:
+            return "Select a campaign role for this event."
+
+        case .missingBookingTopic:
+            return "Enter a topic for this event."
         }
     }
 }
