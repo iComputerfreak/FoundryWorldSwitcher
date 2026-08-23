@@ -16,3 +16,4 @@ Use DiscordBM for Discord API communication. Do not make manual Discord REST req
 ## Verification
 
 Do not add tests. This project does not use them. Verify changes with appropriate builds and manual checks.
+After code modifications, use Xcode MCP to build the project instead of `swift build`. Fix build failures and rebuild until successful so the latest executable is ready for manual testing.

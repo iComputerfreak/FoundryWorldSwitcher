@@ -93,7 +93,7 @@ struct DatePoll: Codable, Identifiable {
     }
 
     var bestCandidates: [DatePollCandidate] {
-        guard let highestAvailability = candidates.map({ availableVoters(for: $0).count }).max(), highestAvailability > 0 else {
+        guard !votes.isEmpty, let highestAvailability = candidates.map({ availableVoters(for: $0).count }).max() else {
             return []
         }
         return candidates.filter { availableVoters(for: $0).count == highestAvailability }

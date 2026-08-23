@@ -111,28 +111,30 @@ enum DatePollRenderer {
 
     private static func pollComponents(for poll: DatePoll) -> [Interaction.MessageLayoutComponent] {
         var components: [Interaction.MessageLayoutComponent] = [
-            .textDisplay(.init(content: "**Session date poll · \(DiscordUtils.mention(id: poll.campaignRoleID))**"))
+            .textDisplay(.init(content: "# Session date poll · \(DiscordUtils.mention(id: poll.campaignRoleID))"))
         ]
         if let description = poll.description, !description.isEmpty {
             components.append(.textDisplay(.init(content: String(description.prefix(1_000)))))
         }
 
-        components += [
-            .textDisplay(.init(content: participationSummary(for: poll))),
-            .separator(.init(divider: true, spacing: .small)),
-        ]
+        components.append(.textDisplay(.init(content: participationSummary(for: poll))))
 
-        let candidates = orderedCandidates(for: poll)
-        for startIndex in stride(from: 0, to: candidates.count, by: 3) {
-            let dateCards = candidates[startIndex..<min(startIndex + 3, candidates.count)].map { candidate in
-                Interaction.MessageLayoutComponent.textDisplay(.init(content: dateCard(for: candidate, poll: poll)))
-            }
-            components.append(.container(.init(componentsV2: dateCards)))
+        if let leadingCandidate = poll.bestCandidates.sorted(by: { $0.date < $1.date }).first {
+            components.append(.container(.init(componentsV2: [
+                .textDisplay(.init(content: dateCard(for: leadingCandidate, poll: poll)))
+            ], accent_color: leadingAccentColor(for: leadingCandidate, poll: poll))))
         }
 
+        components.append(.separator(.init(divider: true, spacing: .large)))
+
+        let candidates = orderedCandidates(for: poll)
+        let dateCards = candidates.map { candidate in
+            Interaction.MessageLayoutComponent.textDisplay(.init(content: dateCard(for: candidate, poll: poll)))
+        }
+        components.append(.container(.init(componentsV2: dateCards)))
+
         components.append(.actionRow(controls(for: poll)))
-        components.append(.textDisplay(.init(content: "-# Created by \(poll.ownerUsername ?? "unknown") · Poll ID `\(poll.id)`")))
-        components.append(.textDisplay(.init(content: "-# Voting closes \(DiscordUtils.timestamp(date: poll.deadline, style: .relativeTime))")))
+        components.append(.textDisplay(.init(content: "-# Created by \(poll.ownerUsername ?? "unknown") · Poll ID `\(poll.id)` · Voting closes \(DiscordUtils.timestamp(date: poll.deadline, style: .relativeTime))")))
         return components
     }
 
@@ -166,14 +168,8 @@ enum DatePollRenderer {
         switch poll.status {
         case .open:
             var summary = "## Current availability\n**\(poll.votes.count)/\(poll.requiredVoterIDs.count)** members have voted."
-            if poll.bestCandidates.isEmpty {
-                summary += "\nNo leading date yet."
-            } else {
-                let dates = poll.bestCandidates
-                    .sorted { $0.date < $1.date }
-                    .map { Utils.outputDateFormatter.string(from: $0.date) }
-                    .joined(separator: ", ")
-                summary += "\nLeading: **\(dates)**."
+            if !poll.outstandingVoterIDs.isEmpty {
+                summary += "\nWaiting: \(mentions(for: poll.outstandingVoterIDs))"
             }
             if !poll.noAvailabilityVoterIDs.isEmpty {
                 summary += "\nNo dates work: \(mentions(for: poll.noAvailabilityVoterIDs))"
@@ -197,18 +193,30 @@ enum DatePollRenderer {
         if isLeading {
             card += " · Leading"
         }
-        card += "\n**\(poll.availableVoters(for: candidate).count)/\(poll.requiredVoterIDs.count)** can attend"
+        let voters = poll.votes.count
+        let attendees = poll.availableVoters(for: candidate)
 
-        if poll.availableVoters(for: candidate).count == poll.requiredVoterIDs.count {
-            return card + "\nEveryone can attend."
+        if voters == 0 {
+            return card + "\nNo votes yet."
         }
-        let unavailable = poll.unavailableVoters(for: candidate)
-        let outstanding = poll.outstandingVoterIDs
-        card += unavailable.isEmpty ? "\nNo submitted unavailability." : "\nCannot attend: \(mentions(for: unavailable))"
-        if !outstanding.isEmpty {
-            card += "\nWaiting: \(mentions(for: outstanding))"
+        if attendees.isEmpty {
+            return card + "\n❌ No one can attend."
         }
-        return card
+        if attendees.count == voters {
+            return card + "\n✅ Everyone can attend."
+        }
+        return card + "\n👥 \(mentions(for: attendees)) can attend."
+    }
+
+    private static func leadingAccentColor(for candidate: DatePollCandidate, poll: DatePoll) -> DiscordColor {
+        let attendees = poll.availableVoters(for: candidate)
+        if attendees.isEmpty {
+            return 0xED4245
+        }
+        if attendees.count == poll.votes.count {
+            return 0x57F287
+        }
+        return 0xFEE75C
     }
 
     private static func orderedCandidates(for poll: DatePoll) -> [DatePollCandidate] {

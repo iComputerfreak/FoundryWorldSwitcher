@@ -39,14 +39,14 @@ No selected world, target channel, or automatic booking integration in first ver
 Message contains:
 
 - Title: `<campaign role> · Session date poll`.
-- Optional description and current participation/leading-date summary.
-- Chronological date cards with attendance fraction, leading state, unavailable members, and outstanding voters.
-- `Everyone can attend` only when every required voter selected that date.
+- Optional description and current participation summary, including outstanding voters.
+- When votes exist, one leading-date container uses the first chronological best match. Its accent is green when everyone can attend, yellow for partial attendance, or red when no one can attend.
+- One chronological date-card container shows leading state and dynamic attendance text: no votes, no attendees, everyone, or attendee mentions.
+- `Everyone can attend` when every submitted voter selected that date.
 - Visible voting status: voted member count, outstanding member count, and members who selected no date.
 - `Set availability` and `Remind me` buttons while open.
 - Do not show `Remind me` when its 24-hour delivery time would be after poll deadline.
-- Small footer line: creator and poll ID.
-- Separate small footer line: relative voting deadline.
+- Small footer line: creator username, poll ID, and relative voting deadline.
 - Final state: chosen date. Components become disabled.
 
 Votes are visible. The shared message uses Components V2 containers and text displays rather than embeds.
@@ -150,7 +150,7 @@ Extend scheduler event types for poll deadline and reminders. Events reference p
 ## Implementation Risks
 
 - Poll creation requires the Guild Members intent in bot code and Discord Developer Portal so role membership can be fetched reliably.
-- Components V2 permits 40 total nested components. Twenty date cards use 37 components with optional description, leaving limited expansion room.
+- Components V2 permits 40 total nested components. Twenty date cards plus one leading card use 32 components with optional description.
 
 ## Future Work
 
