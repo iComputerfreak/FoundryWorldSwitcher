@@ -11,11 +11,13 @@ struct DatePollCreationForm {
     static let datesID = "datepoll:create:dates"
     static let descriptionID = "datepoll:create:description"
     static let deadlineDaysID = "datepoll:create:deadline-days"
+    static let repeatIntervalID = "datepoll:create:repeat-interval"
 
     let campaignRoleID: RoleSnowflake
     let candidateDates: [Date]
     let description: String?
     let deadline: Date
+    let repeatIntervalWeeks: Int?
 
     init(from modal: Interaction.ModalSubmit) throws {
         guard let components = modal.componentsV2 else { throw DatePollError.invalidCreationForm }
@@ -29,7 +31,7 @@ struct DatePollCreationForm {
             values[customID] = label.component
         }
 
-        guard Set(values.keys) == Set([Self.roleID, Self.datesID, Self.descriptionID, Self.deadlineDaysID]) else {
+        guard Set(values.keys) == Set([Self.roleID, Self.datesID, Self.descriptionID, Self.deadlineDaysID, Self.repeatIntervalID]) else {
             throw DatePollError.invalidCreationForm
         }
         guard case let .roleSelect(roleSelect) = values[Self.roleID], let roleValues = roleSelect.values, roleValues.count == 1 else {
@@ -44,12 +46,16 @@ struct DatePollCreationForm {
         guard case let .textInput(deadlineInput) = values[Self.deadlineDaysID], let deadlineValue = deadlineInput.value else {
             throw DatePollError.invalidCreationForm
         }
+        guard case let .stringSelect(repeatSelect) = values[Self.repeatIntervalID], let repeatValues = repeatSelect.values, repeatValues.count == 1 else {
+            throw DatePollError.invalidCreationForm
+        }
 
         self.campaignRoleID = .init(roleValues[0])
         self.candidateDates = try Self.parseDates(datesValue)
         let description = descriptionInput.value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         self.description = description.isEmpty ? nil : description
         self.deadline = try Self.parseDeadline(days: deadlineValue)
+        self.repeatIntervalWeeks = try Self.parseRepeatInterval(weeks: repeatValues[0])
     }
 
     private static func parseDates(_ value: String) throws -> [Date] {
@@ -114,5 +120,13 @@ struct DatePollCreationForm {
             throw DatePollError.invalidDeadlineDays
         }
         return .now.addingTimeInterval(TimeInterval(days) * GlobalConstants.secondsPerDay)
+    }
+
+    private static func parseRepeatInterval(weeks value: String) throws -> Int? {
+        switch value {
+        case "0": return nil
+        case "1", "2", "3", "4": return Int(value)
+        default: throw DatePollError.invalidCreationForm
+        }
     }
 }

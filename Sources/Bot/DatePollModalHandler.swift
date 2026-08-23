@@ -69,7 +69,8 @@ struct DatePollModalHandler {
             requiredVoterIDs: voters,
             deadline: form.deadline,
             description: form.description,
-            candidateDates: form.candidateDates
+            candidateDates: form.candidateDates,
+            repeatIntervalWeeks: form.repeatIntervalWeeks
         )
 
         do {

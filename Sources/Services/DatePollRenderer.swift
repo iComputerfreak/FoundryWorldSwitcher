@@ -70,6 +70,24 @@ enum DatePollRenderer {
                         value: "7"
                     ))
                 )),
+                .label(.init(
+                    label: "Repeat interval",
+                    description: "Choose how often to create a new poll.",
+                    component: .stringSelect(.init(
+                        custom_id: DatePollCreationForm.repeatIntervalID,
+                        options: [
+                            .init(label: "No repeat", value: "0", default: true),
+                            .init(label: "Every week", value: "1"),
+                            .init(label: "Every 2 weeks", value: "2"),
+                            .init(label: "Every 3 weeks", value: "3"),
+                            .init(label: "Every 4 weeks", value: "4"),
+                        ],
+                        placeholder: "No repeat",
+                        min_values: 1,
+                        max_values: 1,
+                        required: true
+                    ))
+                )),
             ]
         ))
     }
@@ -222,7 +240,6 @@ enum DatePollRenderer {
         if let description = poll.description, !description.isEmpty {
             components.append(.textDisplay(.init(content: String(description.prefix(1_000)))))
         }
-
         components.append(.textDisplay(.init(content: participationSummary(for: poll))))
 
         if poll.status != .cancelled {
@@ -242,6 +259,10 @@ enum DatePollRenderer {
         }
 
         components.append(.actionRow(controls(for: poll)))
+        if let repeatIntervalWeeks = poll.repeatIntervalWeeks {
+            let repeatUnit = repeatIntervalWeeks == 1 ? "week" : "weeks"
+            components.append(.textDisplay(.init(content: "-# Repeats every \(repeatIntervalWeeks) \(repeatUnit)")))
+        }
         var footer = "-# Created by \(poll.ownerUsername ?? "unknown") · Poll ID `\(poll.id)`"
         if poll.status != .cancelled && poll.status != .finalized {
             footer += " · Voting closes \(DiscordUtils.timestamp(date: poll.deadline, style: .relativeTime))"
@@ -282,6 +303,14 @@ enum DatePollRenderer {
                 style: .danger,
                 label: "Cancel",
                 custom_id: componentID(action: "cancel", pollID: poll.id)
+            )))
+        }
+
+        if poll.repeatIntervalWeeks != nil {
+            buttons.append(.button(.init(
+                style: .danger,
+                label: "Cancel repeat",
+                custom_id: componentID(action: "cancel-repeat", pollID: poll.id)
             )))
         }
 

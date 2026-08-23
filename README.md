@@ -80,7 +80,7 @@ Shows a list of all past bookings. Optionally, you can supply a specific campaig
 These commands require the permission level `Dungeon Master`.
 
 `/datepoll`
-Opens a creation form for campaign role, candidate dates, optional description, and deadline days. Enter one date per line. Deadline defaults to seven 24-hour days and accepts 1 to 60 days.
+Opens a creation form for campaign role, candidate dates, optional description, deadline days, and repeat interval. Enter one date per line. Deadline defaults to seven 24-hour days and accepts 1 to 60 days. Repeating polls create a new poll every 1 to 4 weeks with candidate dates shifted by that interval; `Cancel repeat` stops future polls.
 Dates may include a year (`DD.MM.YYYY`) or omit it (`DD.MM` or `DD.MM.`). Yearless dates resolve to this year when still upcoming, otherwise next year.
 
 `/listworlds`  

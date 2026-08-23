@@ -38,7 +38,8 @@ actor DatePollsService {
         requiredVoterIDs: Set<UserSnowflake>,
         deadline: Date,
         description: String?,
-        candidateDates: [Date]
+        candidateDates: [Date],
+        repeatIntervalWeeks: Int?
     ) -> DatePoll {
         let poll = DatePoll(
             id: nextIdentifier(),
@@ -50,7 +51,8 @@ actor DatePollsService {
             requiredVoterIDs: requiredVoterIDs,
             deadline: deadline,
             description: description,
-            candidateDates: candidateDates
+            candidateDates: candidateDates,
+            repeatIntervalWeeks: repeatIntervalWeeks
         )
         polls.append(poll)
         savePolls()
@@ -62,8 +64,15 @@ actor DatePollsService {
             throw DatePollError.notFound(id)
         }
         polls[index].messageID = messageID
+        var events = [SchedulerEvent(dueDate: polls[index].deadline, eventType: .closeDatePoll(pollID: id))]
+        if let repeatIntervalWeeks = polls[index].repeatIntervalWeeks,
+           let repeatDate = Calendar.current.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: polls[index].createdAt) {
+            let repeatEvent = SchedulerEvent(dueDate: repeatDate, eventType: .repeatDatePoll(pollID: id))
+            polls[index].repeatEventID = repeatEvent.id
+            events.append(repeatEvent)
+        }
         savePolls()
-        await scheduler.schedule(.init(dueDate: polls[index].deadline, eventType: .closeDatePoll(pollID: id)))
+        await scheduler.schedule(events)
     }
 
     func discardUnpublishedPoll(id: String) {
@@ -150,6 +159,68 @@ actor DatePollsService {
         }
         try authorizeManagement(of: polls[index], userID: userID, roles: roles)
         return polls[index]
+    }
+
+    func pollForRepeatManagementControl(
+        pollID: String,
+        userID: UserSnowflake,
+        roles: [RoleSnowflake],
+        guildID: GuildSnowflake?,
+        channelID: ChannelSnowflake?,
+        messageID: MessageSnowflake?
+    ) throws -> DatePoll {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }) else {
+            throw DatePollError.notFound(pollID)
+        }
+        guard polls[index].repeatIntervalWeeks != nil else {
+            throw DatePollError.unavailablePoll
+        }
+        guard polls[index].guildID == guildID, polls[index].channelID == channelID, polls[index].messageID == messageID else {
+            throw DatePollError.notFound(pollID)
+        }
+        try authorizeManagement(of: polls[index], userID: userID, roles: roles)
+        return polls[index]
+    }
+
+    func repeatPollSource(pollID: String, eventID: UUID) -> DatePoll? {
+        guard let poll = polls.first(where: { $0.id == pollID }), poll.repeatEventID == eventID, poll.repeatIntervalWeeks != nil else {
+            return nil
+        }
+        return poll
+    }
+
+    func createRepeatingPoll(
+        sourceID: String,
+        eventID: UUID,
+        requiredVoterIDs: Set<UserSnowflake>
+    ) -> DatePoll? {
+        guard let source = repeatPollSource(pollID: sourceID, eventID: eventID),
+              let repeatIntervalWeeks = source.repeatIntervalWeeks else {
+            return nil
+        }
+        let calendar = Calendar.current
+        let candidateDates = source.candidates.compactMap {
+            calendar.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: $0.date)
+        }
+        guard candidateDates.count == source.candidates.count else { return nil }
+
+        var poll = DatePoll(
+            id: nextIdentifier(),
+            ownerID: source.ownerID,
+            ownerUsername: source.ownerUsername ?? "unknown",
+            guildID: source.guildID,
+            channelID: source.channelID,
+            campaignRoleID: source.campaignRoleID,
+            requiredVoterIDs: requiredVoterIDs,
+            deadline: .now.addingTimeInterval(source.deadline.timeIntervalSince(source.createdAt)),
+            description: source.description,
+            candidateDates: candidateDates,
+            repeatIntervalWeeks: repeatIntervalWeeks
+        )
+        poll.repeatSeriesID = source.repeatSeriesID ?? source.id
+        polls.append(poll)
+        savePolls()
+        return poll
     }
 
     func requestReminder(pollID: String, voterID: UserSnowflake) async throws -> DatePoll {
@@ -271,6 +342,29 @@ actor DatePollsService {
         savePolls()
         await scheduler.unqueue(ids: reminderEvents)
         return polls[index]
+    }
+
+    func cancelRepeat(id: String, userID: UserSnowflake, roles: [RoleSnowflake]) async throws -> [DatePoll] {
+        guard let index = polls.firstIndex(where: { $0.id == id }) else {
+            throw DatePollError.notFound(id)
+        }
+        try authorizeManagement(of: polls[index], userID: userID, roles: roles)
+        guard polls[index].repeatIntervalWeeks != nil else {
+            throw DatePollError.unavailablePoll
+        }
+
+        let seriesID = polls[index].repeatSeriesID ?? polls[index].id
+        let indices = polls.indices.filter { polls[$0].repeatSeriesID == seriesID }
+        let eventIDs = indices.compactMap { polls[$0].repeatEventID }
+        for index in indices {
+            polls[index].repeatIntervalWeeks = nil
+            polls[index].repeatEventID = nil
+        }
+        savePolls()
+        if !eventIDs.isEmpty {
+            await scheduler.unqueue(ids: eventIDs)
+        }
+        return indices.map { polls[$0] }
     }
 
     private func nextIdentifier() -> String {

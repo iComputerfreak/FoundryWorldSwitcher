@@ -49,6 +49,9 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
 
         case let .sendDatePollReminder(pollID: pollID, userID: userID):
             try await handleDatePollReminder(pollID: pollID, userID: userID, datePolls: context.datePolls)
+
+        case let .repeatDatePoll(pollID: pollID):
+            try await handleRepeatDatePoll(pollID: pollID, context: context)
         }
     }
 }
@@ -85,6 +88,38 @@ extension SchedulerEvent {
             try await bot.client.createMessage(channelId: poll.channelID, payload: payload).guardSuccess()
         }
         await datePolls.markReminderDelivered(pollID: pollID, userID: userID)
+    }
+
+    private func handleRepeatDatePoll(pollID: String, context: GuildContext) async throws {
+        guard let source = await context.datePolls.repeatPollSource(pollID: pollID, eventID: id) else { return }
+        let voterIDs = try await DatePollMemberResolver.voterIDs(
+            for: source.campaignRoleID,
+            guildID: source.guildID,
+            client: bot.client
+        )
+        guard let poll = await context.datePolls.createRepeatingPoll(
+            sourceID: pollID,
+            eventID: id,
+            requiredVoterIDs: voterIDs
+        ) else {
+            return
+        }
+
+        do {
+            let message = try await bot.client.createMessage(
+                channelId: poll.channelID,
+                payload: DatePollRenderer.createMessagePayload(for: poll)
+            ).decode()
+            do {
+                try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)
+            } catch {
+                try? await bot.client.deleteMessage(channelId: poll.channelID, messageId: message.id).guardSuccess()
+                throw error
+            }
+        } catch {
+            await context.datePolls.discardUnpublishedPoll(id: poll.id)
+            throw error
+        }
     }
 }
 

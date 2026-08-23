@@ -44,6 +44,8 @@ struct DatePollComponentHandler {
                 try await handleReminderDelay(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             case "cancel":
                 try await handleCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            case "cancel-repeat":
+                try await handleRepeatCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             default:
                 throw DatePollError.notFound(component.custom_id)
             }
@@ -152,6 +154,38 @@ struct DatePollComponentHandler {
             try await client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
         } catch {
             logger.warning("Failed to remove date poll cancellation response: \(error)")
+        }
+    }
+
+    private func handleRepeatCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+        guard let member = interaction.member, let userID = member.user?.id else {
+            throw DiscordCommandError.noUser
+        }
+        _ = try await datePolls.pollForRepeatManagementControl(
+            pollID: pollID,
+            userID: userID,
+            roles: member.roles,
+            guildID: interaction.guild_id,
+            channelID: interaction.channel_id,
+            messageID: interaction.message?.id
+        )
+        let polls = try await datePolls.cancelRepeat(id: pollID, userID: userID, roles: member.roles)
+        for poll in polls {
+            guard let messageID = poll.messageID else { continue }
+            do {
+                try await client.updateMessage(
+                    channelId: poll.channelID,
+                    messageId: messageID,
+                    payload: DatePollRenderer.messagePayload(for: poll)
+                ).guardSuccess()
+            } catch {
+                logger.warning("Failed to update date poll after repeat cancellation: \(error)")
+            }
+        }
+        do {
+            try await client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
+        } catch {
+            logger.warning("Failed to remove date poll repeat cancellation response: \(error)")
         }
     }
 }
