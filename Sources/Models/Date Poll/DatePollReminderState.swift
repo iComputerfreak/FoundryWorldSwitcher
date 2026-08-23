@@ -18,4 +18,13 @@ enum DatePollReminderState: Codable, Hashable {
             return nil
         }
     }
+
+    var scheduledDueDate: Date? {
+        switch self {
+        case let .pending(_, dueDate), let .delayed(_, dueDate):
+            return dueDate
+        case .delivered, .delayedDelivered:
+            return nil
+        }
+    }
 }

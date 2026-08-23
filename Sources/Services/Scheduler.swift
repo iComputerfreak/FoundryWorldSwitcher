@@ -81,6 +81,19 @@ actor Scheduler {
         self.events.removeAll(where: { eventIDs.contains($0.id) })
         saveEvents()
     }
+
+    /// Removes deadline and repeat events for the supplied date polls.
+    func unqueueDatePollSchedulingEvents(pollIDs: Set<String>) {
+        events.removeAll { event in
+            switch event.eventType {
+            case let .closeDatePoll(pollID), let .repeatDatePoll(pollID):
+                return pollIDs.contains(pollID)
+            default:
+                return false
+            }
+        }
+        saveEvents()
+    }
     
     /// Removes an event from the scheduler queue
     func unqueue(_ event: SchedulerEvent) {

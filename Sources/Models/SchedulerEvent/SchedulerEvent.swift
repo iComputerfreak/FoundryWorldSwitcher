@@ -50,6 +50,9 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
         case let .sendDatePollReminder(pollID: pollID, userID: userID):
             try await handleDatePollReminder(pollID: pollID, userID: userID, datePolls: context.datePolls)
 
+        case let .sendOutstandingDatePollReminders(pollID: pollID):
+            try await handleOutstandingDatePollReminders(pollID: pollID, context: context)
+
         case let .repeatDatePoll(pollID: pollID):
             try await handleRepeatDatePoll(pollID: pollID, context: context)
         }
@@ -88,6 +91,59 @@ extension SchedulerEvent {
             try await bot.client.createMessage(channelId: poll.channelID, payload: payload).guardSuccess()
         }
         await datePolls.markReminderDelivered(pollID: pollID, userID: userID)
+    }
+
+    private func handleOutstandingDatePollReminders(pollID: String, context: GuildContext) async throws {
+        let source = try await context.datePolls.poll(id: pollID)
+        let voterIDs = try await DatePollMemberResolver.voterIDs(
+            for: source.campaignRoleID,
+            guildID: source.guildID,
+            client: bot.client
+        )
+        let optedOutUserIDs = await context.datePollReminderPreferences.optedOutUsers()
+        guard let reminder = try await context.datePolls.automaticReminderRecipients(
+            pollID: pollID,
+            eventID: id,
+            currentVoterIDs: voterIDs,
+            optedOutUserIDs: optedOutUserIDs
+        ) else {
+            return
+        }
+        guard let messageID = reminder.poll.messageID else {
+            await context.datePolls.completeAutomaticReminder(pollID: pollID, eventID: id)
+            return
+        }
+
+        var firstError: Error?
+        for userID in reminder.recipientIDs {
+            if await context.datePollReminderPreferences.optedOutUsers().contains(userID) {
+                continue
+            }
+            let pollLink = "https://discord.com/channels/\(reminder.poll.guildID.rawValue)/\(reminder.poll.channelID.rawValue)/\(messageID.rawValue)"
+            let content = "\(DiscordUtils.mention(id: userID)) please vote in the [session date poll](\(pollLink))."
+            do {
+                let channel = try await bot.client.createDm(payload: .init(recipient_id: userID)).decode()
+                try await bot.client.createMessage(
+                    channelId: channel.id,
+                    payload: .init(content: content, components: DatePollRenderer.automaticReminderComponents(for: reminder.poll))
+                ).guardSuccess()
+                await context.datePolls.markAutomaticReminderDelivered(pollID: pollID, eventID: id, userID: userID)
+            } catch {
+                do {
+                    try await bot.client.createMessage(
+                        channelId: reminder.poll.channelID,
+                        payload: .init(content: content)
+                    ).guardSuccess()
+                    await context.datePolls.markAutomaticReminderDelivered(pollID: pollID, eventID: id, userID: userID)
+                } catch {
+                    firstError = firstError ?? error
+                }
+            }
+        }
+        if let firstError {
+            throw firstError
+        }
+        await context.datePolls.completeAutomaticReminder(pollID: pollID, eventID: id)
     }
 
     private func handleRepeatDatePoll(pollID: String, context: GuildContext) async throws {

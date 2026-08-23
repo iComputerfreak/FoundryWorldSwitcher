@@ -71,6 +71,17 @@ actor DatePollsService {
             polls[index].repeatEventID = repeatEvent.id
             events.append(repeatEvent)
         }
+        let automaticReminderDate = min(
+            polls[index].createdAt.addingTimeInterval(48 * 60 * 60),
+            polls[index].createdAt.addingTimeInterval(polls[index].deadline.timeIntervalSince(polls[index].createdAt) / 2)
+        )
+        let automaticReminderEvent = SchedulerEvent(
+            dueDate: automaticReminderDate,
+            eventType: .sendOutstandingDatePollReminders(pollID: id)
+        )
+        polls[index].automaticReminderEventID = automaticReminderEvent.id
+        polls[index].automaticReminderDueDate = automaticReminderDate
+        events.append(automaticReminderEvent)
         savePolls()
         await scheduler.schedule(events)
     }
@@ -315,7 +326,7 @@ actor DatePollsService {
             channelID: source.channelID,
             campaignRoleID: source.campaignRoleID,
             requiredVoterIDs: requiredVoterIDs,
-            deadline: .now.addingTimeInterval(source.deadline.timeIntervalSince(source.createdAt)),
+            deadline: .now.addingTimeInterval(source.deadlineDuration ?? source.deadline.timeIntervalSince(source.createdAt)),
             description: source.description,
             candidateDates: candidateDates,
             repeatIntervalWeeks: repeatIntervalWeeks
@@ -361,6 +372,48 @@ actor DatePollsService {
         }
     }
 
+    func automaticReminderRecipients(
+        pollID: String,
+        eventID: UUID,
+        currentVoterIDs: Set<UserSnowflake>,
+        optedOutUserIDs: Set<UserSnowflake>
+    ) async throws -> (poll: DatePoll, recipientIDs: [UserSnowflake])? {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }),
+              polls[index].automaticReminderEventID == eventID,
+              polls[index].isOpen else {
+            return nil
+        }
+
+        let removedVoterIDs = polls[index].requiredVoterIDs.subtracting(currentVoterIDs)
+        let removedReminderEvents = removedVoterIDs.compactMap { polls[index].reminders[$0]?.scheduledEventID }
+        polls[index].requiredVoterIDs = currentVoterIDs
+        polls[index].votes = polls[index].votes.filter { currentVoterIDs.contains($0.key) }
+        polls[index].reminders = polls[index].reminders.filter { currentVoterIDs.contains($0.key) }
+        let deliveredUserIDs = polls[index].automaticReminderDeliveredUserIDs ?? []
+        let recipientIDs = Set(polls[index].outstandingVoterIDs)
+            .subtracting(optedOutUserIDs)
+            .subtracting(deliveredUserIDs)
+        savePolls()
+        await scheduler.unqueue(ids: removedReminderEvents)
+        return (polls[index], Array(recipientIDs))
+    }
+
+    func markAutomaticReminderDelivered(pollID: String, eventID: UUID, userID: UserSnowflake) {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }), polls[index].automaticReminderEventID == eventID else {
+            return
+        }
+        polls[index].automaticReminderDeliveredUserIDs = (polls[index].automaticReminderDeliveredUserIDs ?? []).union([userID])
+        savePolls()
+    }
+
+    func completeAutomaticReminder(pollID: String, eventID: UUID) {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }), polls[index].automaticReminderEventID == eventID else {
+            return
+        }
+        polls[index].automaticReminderEventID = nil
+        savePolls()
+    }
+
     func markReminderDelivered(pollID: String, userID: UserSnowflake) {
         guard let index = polls.firstIndex(where: { $0.id == pollID }) else { return }
         switch polls[index].reminders[userID] {
@@ -402,8 +455,9 @@ actor DatePollsService {
         }
         guard polls[index].status == .open else { return nil }
         polls[index].status = .awaitingFinalization
-        let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID)
+        let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID) + [polls[index].automaticReminderEventID].compactMap { $0 }
         polls[index].reminders.removeAll()
+        polls[index].automaticReminderEventID = nil
         savePolls()
         await scheduler.unqueue(ids: reminderEvents)
         return polls[index]
@@ -424,8 +478,9 @@ actor DatePollsService {
         polls[index].finalizedCandidateID = polls[index].candidates.first(where: { candidateIDs.contains($0.id) })?.id
         polls[index].finalizedBy = userID
         polls[index].finalizedAt = .now
-        let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID)
+        let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID) + [polls[index].automaticReminderEventID].compactMap { $0 }
         polls[index].reminders.removeAll()
+        polls[index].automaticReminderEventID = nil
         savePolls()
         await scheduler.unqueue(ids: reminderEvents)
         return polls[index]
@@ -440,8 +495,9 @@ actor DatePollsService {
             throw DatePollError.unavailablePoll
         }
         polls[index].status = .cancelled
-        let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID)
+        let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID) + [polls[index].automaticReminderEventID].compactMap { $0 }
         polls[index].reminders.removeAll()
+        polls[index].automaticReminderEventID = nil
         savePolls()
         await scheduler.unqueue(ids: reminderEvents)
         return polls[index]

@@ -18,7 +18,7 @@ struct DatePollComponentHandler {
         if let guildID = interaction.guild_id {
             context = await guildRegistry.context(for: guildID)
         } else {
-            guard action.action == "delay" else { throw DiscordCommandError.noGuild }
+            guard action.action == "delay" || action.action == "optout" else { throw DiscordCommandError.noGuild }
             context = try await guildRegistry.context(forDatePollID: action.pollID)
         }
         if action.action == "vote" {
@@ -50,6 +50,8 @@ struct DatePollComponentHandler {
                 try await handleReminder(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             case "delay":
                 try await handleReminderDelay(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            case "optout":
+                try await handleAutomaticReminderOptOut(interaction: interaction, preferences: context.datePollReminderPreferences)
             case "cancel":
                 try await handleCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             case "cancel-repeat":
@@ -110,6 +112,17 @@ struct DatePollComponentHandler {
         }
         _ = try await datePolls.delayReminder(pollID: pollID, userID: userID)
         try await client.respond(token: interaction.token, message: "I will remind you once more in 24 hours.")
+    }
+
+    private func handleAutomaticReminderOptOut(
+        interaction: Interaction,
+        preferences: DatePollReminderPreferences
+    ) async throws {
+        guard let userID = interaction.user?.id ?? interaction.member?.user?.id else {
+            throw DiscordCommandError.noUser
+        }
+        await preferences.optOut(userID)
+        try await client.respond(token: interaction.token, message: "Automatic date-poll reminders are disabled for this server.")
     }
 
     private func showFinalizationModal(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {

@@ -22,6 +22,9 @@ struct GuildStatePaths {
     /// Guild date polls.
     let datePolls: URL
 
+    /// Guild users opted out of automatic date-poll reminders.
+    let datePollReminderPreferences: URL
+
     /// Creates the guild state directory and resolves all file paths.
     init(guildID: GuildSnowflake) {
         directory = Utils.dataURL
@@ -32,6 +35,7 @@ struct GuildStatePaths {
         bookings = directory.appendingPathComponent("bookings.json")
         events = directory.appendingPathComponent("events.json")
         datePolls = directory.appendingPathComponent("date_polls.json")
+        datePollReminderPreferences = directory.appendingPathComponent("date_poll_reminder_preferences.json")
 
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

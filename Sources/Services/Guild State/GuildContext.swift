@@ -23,6 +23,9 @@ final class GuildContext {
     /// Guild date-poll service.
     let datePolls: DatePollsService
 
+    /// Guild preferences for automatic date-poll reminders.
+    let datePollReminderPreferences: DatePollReminderPreferences
+
     /// Shared global booking-conflict service.
     let bookingConflicts: GlobalBookingConflictService
 
@@ -47,6 +50,7 @@ final class GuildContext {
             bookingConflicts: bookingConflicts
         )
         self.datePolls = .init(scheduler: scheduler, dataPath: paths.datePolls, permissions: permissions)
+        self.datePollReminderPreferences = .init(dataPath: paths.datePollReminderPreferences)
     }
 
     /// Rebuilds this guild's entries in the shared booking-conflict index.
