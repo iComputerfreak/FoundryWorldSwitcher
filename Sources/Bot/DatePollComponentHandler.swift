@@ -3,6 +3,7 @@
 //
 
 import DiscordBM
+import Foundation
 import Logging
 
 struct DatePollComponentHandler {
@@ -35,6 +36,15 @@ struct DatePollComponentHandler {
         }
         if action.action == "view" {
             try await showVotesModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            return
+        }
+        if action.action == "book", let candidateID = action.candidateID {
+            try await showBookingModal(
+                pollID: action.pollID,
+                candidateID: candidateID,
+                interaction: interaction,
+                context: context
+            )
             return
         }
 
@@ -191,6 +201,54 @@ struct DatePollComponentHandler {
                 id: interaction.id,
                 token: interaction.token,
                 payload: DatePollRenderer.votesModal(for: poll)
+            ).guardSuccess()
+        } catch {
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+            ).guardSuccess()
+        }
+    }
+
+    private func showBookingModal(
+        pollID: String,
+        candidateID: UUID,
+        interaction: Interaction,
+        context: GuildContext
+    ) async throws {
+        guard let member = interaction.member, let userID = member.user?.id else {
+            throw DiscordCommandError.noUser
+        }
+        do {
+            guard context.config.foundryFeaturesEnabled else {
+                throw DiscordCommandError.foundryFeaturesDisabled
+            }
+            guard context.permissions.permissionsLevel(of: userID, roles: member.roles) >= .dungeonMaster else {
+                throw DiscordCommandError.unauthorized(requiredLevel: .dungeonMaster)
+            }
+            let result = try await context.datePolls.finalizedCandidateForBookingControl(
+                pollID: pollID,
+                candidateID: candidateID,
+                guildID: interaction.guild_id,
+                channelID: interaction.channel_id,
+                messageID: interaction.message?.id
+            )
+            guard let dateTime = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: result.candidate.date) else {
+                throw DatePollError.unavailablePoll
+            }
+            let worlds = try await PterodactylAPI.shared.worlds()
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: BookingRenderer.creationModal(
+                    kind: .event,
+                    worlds: worlds,
+                    dateTime: dateTime,
+                    campaignRoleID: result.poll.campaignRoleID,
+                    sourcePollID: pollID,
+                    sourceCandidateID: candidateID
+                )
             ).guardSuccess()
         } catch {
             try await client.createInteractionResponse(

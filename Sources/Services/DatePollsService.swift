@@ -296,6 +296,37 @@ actor DatePollsService {
         return poll
     }
 
+    func finalizedCandidateForBookingControl(
+        pollID: String,
+        candidateID: UUID,
+        guildID: GuildSnowflake?,
+        channelID: ChannelSnowflake?,
+        messageID: MessageSnowflake?
+    ) throws -> (poll: DatePoll, candidate: DatePollCandidate) {
+        let poll = try pollForVotesModal(
+            pollID: pollID,
+            guildID: guildID,
+            channelID: channelID,
+            messageID: messageID
+        )
+        guard let candidate = poll.finalizedCandidates.first(where: { $0.id == candidateID }),
+              !(poll.bookedFinalizedCandidateIDs ?? []).contains(candidateID) else {
+            throw DatePollError.unavailablePoll
+        }
+        return (poll, candidate)
+    }
+
+    func markFinalizedCandidateBooked(pollID: String, candidateID: UUID) -> DatePoll? {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }),
+              polls[index].status == .finalized,
+              polls[index].finalizedCandidates.contains(where: { $0.id == candidateID }) else {
+            return nil
+        }
+        polls[index].bookedFinalizedCandidateIDs = (polls[index].bookedFinalizedCandidateIDs ?? []).union([candidateID])
+        savePolls()
+        return polls[index]
+    }
+
     func repeatPollSource(pollID: String, eventID: UUID) -> DatePoll? {
         guard let poll = polls.first(where: { $0.id == pollID }), poll.repeatEventID == eventID, poll.repeatIntervalWeeks != nil else {
             return nil

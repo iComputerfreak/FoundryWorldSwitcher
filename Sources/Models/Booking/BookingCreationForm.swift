@@ -21,9 +21,11 @@ struct BookingCreationForm {
     let campaignRoleID: RoleSnowflake?
     let locationID: ChannelSnowflake?
     let topic: String?
+    let sourcePollID: String?
+    let sourceCandidateID: UUID?
 
     init(from modal: Interaction.ModalSubmit) throws {
-        guard let kind = Self.kind(from: modal.custom_id), let components = modal.componentsV2 else {
+        guard let context = Self.modalContext(from: modal.custom_id), let components = modal.componentsV2 else {
             throw DiscordCommandError.invalidBookingForm
         }
         var values: [String: Interaction.ActionRow.Component] = [:]
@@ -34,7 +36,9 @@ struct BookingCreationForm {
             values[customID] = label.component
         }
 
-        self.kind = kind
+        kind = context.kind
+        sourcePollID = context.pollID
+        sourceCandidateID = context.candidateID
         guard case let .stringSelect(worldSelect) = values[Self.worldID], let worldValues = worldSelect.values, worldValues.count == 1 else {
             throw DiscordCommandError.invalidBookingForm
         }
@@ -69,8 +73,19 @@ struct BookingCreationForm {
     }
 
     static func kind(from customID: String) -> Kind? {
-        guard customID.hasPrefix(modalPrefix) else { return nil }
-        return Kind(rawValue: String(customID.dropFirst(modalPrefix.count)))
+        modalContext(from: customID)?.kind
+    }
+
+    static func modalContext(from customID: String) -> (kind: Kind, pollID: String?, candidateID: UUID?)? {
+        let parts = customID.split(separator: ":")
+        guard parts.count == 2 || parts.count == 4, parts.first == "booking", let kind = Kind(rawValue: String(parts[1])) else {
+            return nil
+        }
+        if parts.count == 2 {
+            return (kind, nil, nil)
+        }
+        guard let candidateID = UUID(uuidString: String(parts[3])) else { return nil }
+        return (kind, String(parts[2]), candidateID)
     }
 
     private static func parseDate(_ value: String) throws -> Date {

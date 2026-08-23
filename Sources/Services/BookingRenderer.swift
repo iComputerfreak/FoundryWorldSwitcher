@@ -1,9 +1,14 @@
 import DiscordBM
+import Foundation
 
 enum BookingRenderer {
     static func creationModal(
         kind: BookingCreationForm.Kind,
-        worlds: [FoundryWorld]
+        worlds: [FoundryWorld],
+        dateTime: Date? = nil,
+        campaignRoleID: RoleSnowflake? = nil,
+        sourcePollID: String? = nil,
+        sourceCandidateID: UUID? = nil
     ) -> Payloads.InteractionResponse {
         let worldSelect = Interaction.ModalComponent.label(.init(
             label: "Foundry world",
@@ -22,7 +27,7 @@ enum BookingRenderer {
         switch kind {
         case .reservation:
             return .modal(.init(
-                custom_id: BookingCreationForm.modalPrefix + kind.rawValue,
+                custom_id: modalID(kind: kind, sourcePollID: sourcePollID, sourceCandidateID: sourceCandidateID),
                 title: "Create reservation",
                 componentsV2: [
                     worldSelect,
@@ -42,7 +47,7 @@ enum BookingRenderer {
 
         case .event:
             return .modal(.init(
-                custom_id: BookingCreationForm.modalPrefix + kind.rawValue,
+                custom_id: modalID(kind: kind, sourcePollID: sourcePollID, sourceCandidateID: sourceCandidateID),
                 title: "Create event booking",
                 componentsV2: [
                     worldSelect,
@@ -54,6 +59,7 @@ enum BookingRenderer {
                             style: .short,
                             max_length: 16,
                             required: true,
+                            value: dateTime.map { dateTimeFormatter.string(from: $0) },
                             placeholder: "31.12.2026 19:00"
                         ))
                     )),
@@ -83,13 +89,31 @@ enum BookingRenderer {
                         component: .roleSelect(.init(
                             custom_id: BookingCreationForm.roleID,
                             placeholder: "Select campaign role",
-                            min_values: 0,
+                            default_values: campaignRoleID.map { [.init(id: $0)] },
+                            min_values: campaignRoleID == nil ? 0 : 1,
                             max_values: 1,
-                            required: false
+                            required: campaignRoleID != nil
                         ))
                     )),
                 ]
             ))
         }
     }
+
+    private static func modalID(
+        kind: BookingCreationForm.Kind,
+        sourcePollID: String?,
+        sourceCandidateID: UUID?
+    ) -> String {
+        guard let sourcePollID, let sourceCandidateID else {
+            return BookingCreationForm.modalPrefix + kind.rawValue
+        }
+        return "\(BookingCreationForm.modalPrefix)\(kind.rawValue):\(sourcePollID):\(sourceCandidateID.uuidString)"
+    }
+
+    private static let dateTimeFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd.MM.yyyy HH:mm"
+        return formatter
+    }()
 }

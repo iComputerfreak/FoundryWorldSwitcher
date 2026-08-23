@@ -66,6 +66,23 @@ struct BookingModalHandler {
             }
 
             try await context.bookings.createBookingIfAvailable(booking)
+            if let sourcePollID = form.sourcePollID,
+               let sourceCandidateID = form.sourceCandidateID,
+               let poll = await context.datePolls.markFinalizedCandidateBooked(
+                   pollID: sourcePollID,
+                   candidateID: sourceCandidateID
+               ),
+               let messageID = poll.messageID {
+                do {
+                    try await client.updateMessage(
+                        channelId: poll.channelID,
+                        messageId: messageID,
+                        payload: DatePollRenderer.messagePayload(for: poll)
+                    ).guardSuccess()
+                } catch {
+                    logger.warning("Failed to remove booked date-poll candidate control: \(error)")
+                }
+            }
             try await client.respond(
                 token: interaction.token,
                 payload: .init(

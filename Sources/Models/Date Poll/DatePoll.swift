@@ -22,6 +22,7 @@ struct DatePoll: Codable, Identifiable {
     var status: DatePollStatus
     var finalizedCandidateID: UUID?
     var finalizedCandidateIDs: Set<UUID>?
+    var bookedFinalizedCandidateIDs: Set<UUID>?
     var finalizedBy: UserSnowflake?
     var finalizedAt: Date?
     var votes: [UserSnowflake: DatePollVote]
@@ -62,6 +63,7 @@ struct DatePoll: Codable, Identifiable {
         self.status = .open
         self.finalizedCandidateID = nil
         self.finalizedCandidateIDs = nil
+        self.bookedFinalizedCandidateIDs = []
         self.finalizedBy = nil
         self.finalizedAt = nil
         self.votes = [:]

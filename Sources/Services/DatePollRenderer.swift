@@ -115,10 +115,16 @@ enum DatePollRenderer {
             ]
     }
 
-    static func interactionAction(from customID: String) -> (action: String, pollID: String)? {
+    static func interactionAction(from customID: String) -> (action: String, pollID: String, candidateID: UUID?)? {
         let parts = customID.split(separator: ":")
-        guard parts.count == 3, parts[0] == Constants.componentPrefix else { return nil }
-        return (String(parts[1]), String(parts[2]))
+        guard !parts.isEmpty, parts[0] == Constants.componentPrefix else { return nil }
+        if parts.count == 3 {
+            return (String(parts[1]), String(parts[2]), nil)
+        }
+        guard parts.count == 4, parts[1] == "book", let candidateID = UUID(uuidString: String(parts[3])) else {
+            return nil
+        }
+        return (String(parts[1]), String(parts[2]), candidateID)
     }
 
     static func availabilityModal(for poll: DatePoll, voterID: UserSnowflake) -> Payloads.InteractionResponse {
@@ -366,6 +372,15 @@ enum DatePollRenderer {
                 label: "View votes",
                 custom_id: componentID(action: "view", pollID: poll.id)
             )))
+            let finalizedCandidates = poll.finalizedCandidates.sorted { $0.date < $1.date }
+            let bookedCandidateIDs = poll.bookedFinalizedCandidateIDs ?? []
+            for candidate in finalizedCandidates where !bookedCandidateIDs.contains(candidate.id) {
+                buttons.append(.button(.init(
+                    style: .primary,
+                    label: finalizedCandidates.count == 1 ? "Book" : bookingButtonLabel(for: candidate.date),
+                    custom_id: componentID(action: "book", pollID: poll.id, candidateID: candidate.id)
+                )))
+            }
         }
 
         if poll.repeatIntervalWeeks != nil {
@@ -479,8 +494,14 @@ enum DatePollRenderer {
         return result
     }
 
-    private static func componentID(action: String, pollID: String) -> String {
-        "\(Constants.componentPrefix):\(action):\(pollID)"
+    private static func componentID(action: String, pollID: String, candidateID: UUID? = nil) -> String {
+        let componentID = "\(Constants.componentPrefix):\(action):\(pollID)"
+        return candidateID.map { "\(componentID):\($0.uuidString)" } ?? componentID
+    }
+
+    private static func bookingButtonLabel(for date: Date) -> String {
+        let components = Calendar.current.dateComponents([.day, .month], from: date)
+        return String(format: "Book %02d.%02d.", components.day ?? 0, components.month ?? 0)
     }
 
     private static func checkboxGroupID(pollID: String, index: Int) -> String {
