@@ -18,6 +18,7 @@ struct UnlockWorldCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         try WorldLockService.shared.unlockWorldSwitching()

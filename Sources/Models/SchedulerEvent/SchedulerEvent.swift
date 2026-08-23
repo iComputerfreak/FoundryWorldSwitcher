@@ -21,40 +21,42 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
         self.eventType = eventType
     }
     
-    func execute() async throws {
+    func execute(in context: GuildContext) async throws {
         switch eventType {
         case let .consoleMessage(message):
             try await handleConsoleMessage(message)
-            
+
         case let .lockWorldSwitching(worldID: worldID):
-            try await handleLockWorldSwitching(worldID: worldID)
-            
+            try await handleLockWorldSwitching(worldID: worldID, context: context)
+
         case .unlockWorldSwitching:
-            try await handleUnlockWorld()
-            
+            try await handleUnlockWorld(context: context)
+
+        case let .unlockManualWorldSwitching(acquiredAt: acquiredAt):
+            try handleUnlockManualWorld(acquiredAt: acquiredAt)
+
         case let .sendSessionReminder(bookingID: bookingID):
-            try await handleSendSessionReminder(bookingID: bookingID)
-            
+            try await handleSendSessionReminder(bookingID: bookingID, bookings: context.bookings, config: context.config)
+
         case let .sendSessionStartsReminder(bookingID: bookingID):
-            try await handleSendSessionStartsReminder(bookingID: bookingID)
-            
+            try await handleSendSessionStartsReminder(bookingID: bookingID, bookings: context.bookings, config: context.config)
+
         case .removeBooking:
-            // Do nothing. We don't delete bookings anymore when they are completed
             break
 
         case let .closeDatePoll(pollID: pollID):
-            try await handleCloseDatePoll(pollID: pollID)
+            try await handleCloseDatePoll(pollID: pollID, datePolls: context.datePolls)
 
         case let .sendDatePollReminder(pollID: pollID, userID: userID):
-            try await handleDatePollReminder(pollID: pollID, userID: userID)
+            try await handleDatePollReminder(pollID: pollID, userID: userID, datePolls: context.datePolls)
         }
     }
 }
 
 // MARK: - Date Polls
 extension SchedulerEvent {
-    private func handleCloseDatePoll(pollID: String) async throws {
-        guard let poll = try await datePollsService.closePoll(id: pollID) else { return }
+    private func handleCloseDatePoll(pollID: String, datePolls: DatePollsService) async throws {
+        guard let poll = try await datePolls.closePoll(id: pollID) else { return }
         guard let messageID = poll.messageID else { return }
         try await bot.client.updateMessage(
             channelId: poll.channelID,
@@ -63,8 +65,12 @@ extension SchedulerEvent {
         ).guardSuccess()
     }
 
-    private func handleDatePollReminder(pollID: String, userID: UserSnowflake) async throws {
-        guard let poll = try await datePollsService.reminderPoll(pollID: pollID, userID: userID) else { return }
+    private func handleDatePollReminder(
+        pollID: String,
+        userID: UserSnowflake,
+        datePolls: DatePollsService
+    ) async throws {
+        guard let poll = try await datePolls.reminderPoll(pollID: pollID, userID: userID) else { return }
         guard let messageID = poll.messageID else { return }
         let pollLink = "https://discord.com/channels/\(poll.guildID.rawValue)/\(poll.channelID.rawValue)/\(messageID.rawValue)"
         let payload = Payloads.CreateMessage(
@@ -78,7 +84,7 @@ extension SchedulerEvent {
         } catch {
             try await bot.client.createMessage(channelId: poll.channelID, payload: payload).guardSuccess()
         }
-        await datePollsService.markReminderDelivered(pollID: pollID, userID: userID)
+        await datePolls.markReminderDelivered(pollID: pollID, userID: userID)
     }
 }
 
@@ -91,33 +97,62 @@ extension SchedulerEvent {
 
 // MARK: - Lock World
 extension SchedulerEvent {
-    private func handleLockWorldSwitching(worldID: String) async throws {
+    private func handleLockWorldSwitching(worldID: String, context: GuildContext) async throws {
+        guard let booking = await context.bookings.booking(associatedEventID: id) else {
+            Self.logger.warning("Skipping lock event \(id): no active booking owns it.")
+            return
+        }
+
         Self.logger.debug("Locking world '\(worldID)'")
-        // Lock the world with the given ID
-        try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
-        try WorldLockService.shared.lockWorldSwitching()
+        try WorldLockService.shared.lockWorldSwitching(guildID: context.guildID, bookingID: booking.id)
+        do {
+            try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
+        } catch {
+            _ = try? WorldLockService.shared.unlockWorldSwitching(
+                guildID: context.guildID,
+                bookingID: booking.id
+            )
+            throw error
+        }
     }
 }
 
 // MARK: - Unlock World
 extension SchedulerEvent {
-    private func handleUnlockWorld() async throws {
-        Self.logger.debug("Unlocking world switching")
-        // Unlock the world with the given ID
-        try WorldLockService.shared.unlockWorldSwitching()
+    private func handleUnlockWorld(context: GuildContext) async throws {
+        guard let booking = await context.bookings.booking(associatedEventID: id) else {
+            Self.logger.warning("Skipping unlock event \(id): no active booking owns it.")
+            return
+        }
+
+        let unlocked = try WorldLockService.shared.unlockWorldSwitching(
+            guildID: context.guildID,
+            bookingID: booking.id
+        )
+        if !unlocked {
+            Self.logger.debug("Skipping unlock event \(id): current lock has a different owner.")
+        }
+    }
+
+    private func handleUnlockManualWorld(acquiredAt: Date) throws {
+        _ = try WorldLockService.shared.unlockManualWorldSwitching(acquiredAt: acquiredAt)
     }
 }
 
 // MARK: - Send Session Reminder
 extension SchedulerEvent {
-    private func handleSendSessionReminder(bookingID: UUID) async throws {
-        guard let booking = await bookingsService.booking(id: bookingID) as? EventBooking else {
+    private func handleSendSessionReminder(
+        bookingID: UUID,
+        bookings: BookingsService,
+        config: GuildConfig
+    ) async throws {
+        guard let booking = await bookings.booking(id: bookingID) as? EventBooking else {
             Self.logger.error("Booking with ID \(bookingID) not found.")
             return
         }
         
         Self.logger.debug("Sending session reminder for session at \(booking.date)")
-        guard let reminderChannel = BotConfig.shared.reminderChannel else {
+        guard let reminderChannel = config.reminderChannel else {
             Self.logger.warning("There is no reminder channel set up in which to send the message.")
             return
         }
@@ -137,19 +172,23 @@ extension SchedulerEvent {
 
 // MARK: - Send Session Starts Reminder
 extension SchedulerEvent {
-    private func handleSendSessionStartsReminder(bookingID: UUID) async throws {
-        guard let booking = await bookingsService.booking(id: bookingID) as? EventBooking else {
+    private func handleSendSessionStartsReminder(
+        bookingID: UUID,
+        bookings: BookingsService,
+        config: GuildConfig
+    ) async throws {
+        guard let booking = await bookings.booking(id: bookingID) as? EventBooking else {
             Self.logger.error("Booking with ID \(bookingID) not found.")
             return
         }
         
         Self.logger.debug("Sending session starts reminder for session at \(booking.date)")
-        guard let reminderChannel = BotConfig.shared.reminderChannel else {
+        guard let reminderChannel = config.reminderChannel else {
             Self.logger.warning("There is no reminder channel set up in which to send the message.")
             return
         }
         
-        let durationString = Utils.durationString(for: BotConfig.shared.sessionStartReminderTime, unitStyle: .long)
+        let durationString = Utils.durationString(for: config.sessionStartReminderTime, unitStyle: .long)
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
             channelId: reminderChannel,

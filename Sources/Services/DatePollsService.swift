@@ -8,18 +8,25 @@ import Logging
 
 actor DatePollsService {
     private enum Constants {
-        static let dataPath = Utils.dataURL.appendingPathComponent("date_polls.json")
         static let identifierLength = 8
     }
 
     private static let logger = Logger(label: String(describing: DatePollsService.self))
 
     let scheduler: Scheduler
+    let dataPath: URL
+    let permissions: Permissions
     private var polls: [DatePoll]
 
-    init(scheduler: Scheduler) {
+    init(
+        scheduler: Scheduler,
+        dataPath: URL,
+        permissions: Permissions
+    ) {
         self.scheduler = scheduler
-        self.polls = Self.loadPolls()
+        self.dataPath = dataPath
+        self.permissions = permissions
+        self.polls = Self.loadPolls(from: dataPath)
     }
 
     func createPoll(
@@ -286,11 +293,11 @@ actor DatePollsService {
     }
 
     private func authorizeManagement(of poll: DatePoll, userID: UserSnowflake, roles: [RoleSnowflake]) throws {
-        let permissions = Permissions.shared.permissionsLevel(of: userID, roles: roles)
+        let permissionLevel = self.permissions.permissionsLevel(of: userID, roles: roles)
         guard
             poll.ownerID == userID
-                || permissions == .admin
-                || (permissions >= .dungeonMaster && roles.contains(poll.campaignRoleID))
+                || permissionLevel == .admin
+                || (permissionLevel >= .dungeonMaster && roles.contains(poll.campaignRoleID))
         else {
             throw DatePollError.unauthorizedFinalization
         }
@@ -299,16 +306,16 @@ actor DatePollsService {
     private func savePolls() {
         do {
             let data = try JSONEncoder().encode(polls)
-            try data.write(to: Constants.dataPath)
+            try data.write(to: dataPath)
         } catch {
             Self.logger.error("Failed to save date polls: \(error)")
         }
     }
 
-    private static func loadPolls() -> [DatePoll] {
-        guard FileManager.default.fileExists(atPath: Constants.dataPath.path) else { return [] }
+    private static func loadPolls(from dataPath: URL) -> [DatePoll] {
+        guard FileManager.default.fileExists(atPath: dataPath.path) else { return [] }
         do {
-            return try JSONDecoder().decode([DatePoll].self, from: Data(contentsOf: Constants.dataPath))
+            return try JSONDecoder().decode([DatePoll].self, from: Data(contentsOf: dataPath))
         } catch {
             logger.error("Failed to load date polls: \(error)")
             return []

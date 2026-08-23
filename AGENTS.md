@@ -13,6 +13,12 @@ Read `AGENT_CONTEXT.md` before non-trivial work for architecture, runtime contra
 Respect the existing architecture, code quality, documentation standard, and established patterns. Keep code maintainable and human-readable. Prefer the lightest implementation that correctly meets the requirement.
 Use DiscordBM for Discord API communication. Do not make manual Discord REST requests.
 
+## Guild State
+
+Guild-local state uses `GuildContext` from `GuildRegistry` and persists below `data/guilds/<guild-id>/`. Pterodactyl target, world lock, and booking conflicts are global. Keep guild-local services instance-scoped; never add a singleton for them.
+V3 root-state migration stays entirely in `V3StateMigration`. It runs only before `BotConfig.shared` reads root config, only when `data/guilds/` is absent, root `data/botConfig.json` exists, and Discord reports exactly one guild. The guild directory indicates migration completion; no marker exists. Do not add legacy root-state runtime fallbacks.
+Keep `Sources/Services/Guild State/` one-type-per-file. Document moved state types and persisted properties with `///`; retain source headers and meaningful existing comments when refactoring.
+
 ## Verification
 
 Do not add tests. This project does not use them. Verify changes with appropriate builds and manual checks.

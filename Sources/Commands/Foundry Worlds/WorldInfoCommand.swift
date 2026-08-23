@@ -27,6 +27,7 @@ struct WorldInfoCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         var world: FoundryWorld?

@@ -27,6 +27,7 @@ struct CancelBookingCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         guard 
@@ -42,13 +43,13 @@ struct CancelBookingCommand: DiscordCommand {
         guard let date = Utils.inputDateFormatter.date(from: dateString) else {
             throw DiscordCommandError.wrongDateFormat(dateString, format: Utils.inputDateFormatter.dateFormat.uppercased())
         }
-        guard let booking = await bookingsService.booking(at: date) else {
+        guard let booking = await context.bookings.booking(at: date) else {
             throw DiscordCommandError.noBookingFoundAtDate(date)
         }
         
         // Only admins can delete bookings of other people
         if booking.author != user.id {
-            let userPermissions = Permissions.shared.permissionsLevel(of: user.id, roles: member.roles)
+            let userPermissions = context.permissions.permissionsLevel(of: user.id, roles: member.roles)
             guard userPermissions == .admin else {
                 throw DiscordCommandError.cancelBookingPermissionDenied(required: .admin)
             }
@@ -58,10 +59,10 @@ struct CancelBookingCommand: DiscordCommand {
         
         // MARK: Delete the booking
         // If the booking already started, we have to unlock world switching as well.
-        if booking.bookingIntervalStartDate < .now && .now < booking.bookingIntervalEndDate {
-            try WorldLockService.shared.unlockWorldSwitching()
+        if booking.bookingIntervalStartDate(using: context.config) < .now && .now < booking.bookingIntervalEndDate(using: context.config) {
+            _ = try WorldLockService.shared.unlockWorldSwitching(guildID: context.guildID, bookingID: booking.id)
         }
-        await bookingsService.cancelBooking(id: booking.id)
+        await context.bookings.cancelBooking(id: booking.id)
         
         try await client.respond(
             token: interaction.token,

@@ -17,18 +17,23 @@ struct ReservationBooking: Booking {
     var wasCancelled: Bool = false
     
     /// Creates a new booking without any associated event or player role information
-    init(date: Date, author: UserSnowflake, worldID: String) {
+    init(
+        date: Date,
+        author: UserSnowflake,
+        worldID: String,
+        configuration: any BookingConfiguration
+    ) {
         self.id = UUID()
         self.date = date
         self.author = author
         self.worldID = worldID
         self.associatedEvents = [
             SchedulerEvent(
-                dueDate: bookingIntervalStartDate,
+                dueDate: bookingIntervalStartDate(using: configuration),
                 eventType: .lockWorldSwitching(worldID: worldID)
             ),
             SchedulerEvent(
-                dueDate: bookingIntervalEndDate,
+                dueDate: bookingIntervalEndDate(using: configuration),
                 eventType: .unlockWorldSwitching
             ),
         ]

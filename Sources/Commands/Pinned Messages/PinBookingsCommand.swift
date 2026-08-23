@@ -33,6 +33,7 @@ struct PinBookingsCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         let world = try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
@@ -45,12 +46,12 @@ struct PinBookingsCommand: DiscordCommand {
         }
         
         // Create an empty message and save its ID
-        let pinnedMessage = try await bot.client.createMessage(
+        let pinnedMessage = try await client.createMessage(
             channelId: channelID,
             payload: .init(content: "Loading bookings...")
         ).decode()
         logger.info("Pinning message \(pinnedMessage.id.rawValue) in channel \(pinnedMessage.channel_id.rawValue).")
-        BotConfig.shared.pinnedBookingMessages.append(
+        context.config.pinnedBookingMessages.append(
             .init(
                 channelID: pinnedMessage.channel_id,
                 messageID: pinnedMessage.id,
@@ -60,9 +61,9 @@ struct PinBookingsCommand: DiscordCommand {
         )
         
         // Delete the interaction response, so only the newly created message remains
-        try await bot.client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
+        try await client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
         
         // Immediately update/create the message
-        try await bookingsService.updatePinnedBookings()
+        try await context.bookings.updatePinnedBookings()
     }
 }

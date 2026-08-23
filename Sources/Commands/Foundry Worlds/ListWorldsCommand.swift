@@ -18,6 +18,7 @@ struct ListWorldsCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         let worlds: [FoundryWorld] = try await PterodactylAPI.shared.worlds()

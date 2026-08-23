@@ -18,6 +18,7 @@ struct MyPermissionsCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         guard
@@ -29,7 +30,7 @@ struct MyPermissionsCommand: DiscordCommand {
         // Get all roles of the user
         let roles: [RoleSnowflake] = member.roles
         
-        let userPermissions = Permissions.shared.permissionsLevel(of: userID, roles: roles)
+        let userPermissions = context.permissions.permissionsLevel(of: userID, roles: roles)
         try await client.respond(
             token: interaction.token,
             message: "Your current permission level is `\(userPermissions)`"

@@ -18,6 +18,7 @@ struct RestartWorldCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         // Send the restart command

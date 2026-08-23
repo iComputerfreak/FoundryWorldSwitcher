@@ -12,6 +12,7 @@ enum SchedulerEventType: Codable, Hashable {
     case consoleMessage(_ message: String)
     case lockWorldSwitching(worldID: String)
     case unlockWorldSwitching
+    case unlockManualWorldSwitching(acquiredAt: Date)
     case sendSessionReminder(bookingID: UUID)
     case sendSessionStartsReminder(bookingID: UUID)
     case removeBooking(id: UUID)

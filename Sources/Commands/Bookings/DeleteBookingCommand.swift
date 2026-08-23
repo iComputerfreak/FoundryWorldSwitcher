@@ -27,6 +27,7 @@ struct DeleteBookingCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         guard let dateString = try applicationCommand.option(named: "date")?.requireString() else {
@@ -35,7 +36,7 @@ struct DeleteBookingCommand: DiscordCommand {
         guard let date = Utils.inputDateFormatter.date(from: dateString) else {
             throw DiscordCommandError.wrongDateFormat(dateString, format: Utils.inputDateFormatter.dateFormat.uppercased())
         }
-        guard let booking = await bookingsService.booking(at: date) else {
+        guard let booking = await context.bookings.booking(at: date) else {
             throw DiscordCommandError.noBookingFoundAtDate(date)
         }
         
@@ -43,10 +44,10 @@ struct DeleteBookingCommand: DiscordCommand {
         
         // MARK: Delete the booking
         // If the booking already started, we have to unlock world switching as well.
-        if booking.bookingIntervalStartDate < .now && .now < booking.bookingIntervalEndDate {
-            try WorldLockService.shared.unlockWorldSwitching()
+        if booking.bookingIntervalStartDate(using: context.config) < .now && .now < booking.bookingIntervalEndDate(using: context.config) {
+            _ = try WorldLockService.shared.unlockWorldSwitching(guildID: context.guildID, bookingID: booking.id)
         }
-        await bookingsService.deleteBooking(booking)
+        await context.bookings.deleteBooking(booking)
         
         try await client.respond(
             token: interaction.token,

@@ -33,6 +33,7 @@ struct LockWorldCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         let world = try await parseOptionalWorld(from: applicationCommand, optionName: "world_id")
@@ -42,15 +43,21 @@ struct LockWorldCommand: DiscordCommand {
             .stringValue
             .map(DurationParser.duration(from:))
         
+        let lock = try WorldLockService.shared.lockWorldSwitching()
         if let worldID = world?.id {
-            try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
+            do {
+                try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
+            } catch {
+                _ = try? WorldLockService.shared.unlockManualWorldSwitching(acquiredAt: lock.acquiredAt)
+                throw error
+            }
         }
-        
-        try WorldLockService.shared.lockWorldSwitching()
         
         if let duration {
             let unlockTime = Date.now.addingTimeInterval(duration)
-            await Scheduler.shared.schedule(.init(dueDate: unlockTime, eventType: .unlockWorldSwitching))
+            await context.scheduler.schedule(
+                .init(dueDate: unlockTime, eventType: .unlockManualWorldSwitching(acquiredAt: lock.acquiredAt))
+            )
         }
         
         var message = "The world has been "

@@ -25,16 +25,14 @@ protocol Booking: Codable, Hashable, Identifiable {
 
 // MARK: - Booking Interval
 extension Booking {
-    /// The start date of the booking interval. The server will be locked to the world starting at this time.
-    var bookingIntervalStartDate: Date {
+    func bookingIntervalStartDate(using configuration: any BookingConfiguration) -> Date {
         // The interval starts at 6 AM in the morning
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
-        return startOfDay.addingTimeInterval(BotConfig.shared.bookingIntervalStartTime)
+        return startOfDay.addingTimeInterval(configuration.bookingIntervalStartTime)
     }
     
-    /// The end date of the booking interval. The server will be unlocked at this time.
-    var bookingIntervalEndDate: Date {
-        bookingIntervalStartDate.addingTimeInterval(BotConfig.shared.bookingIntervalEndTime)
+    func bookingIntervalEndDate(using configuration: any BookingConfiguration) -> Date {
+        bookingIntervalStartDate(using: configuration).addingTimeInterval(configuration.bookingIntervalEndTime)
     }
 }

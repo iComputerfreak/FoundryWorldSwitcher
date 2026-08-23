@@ -18,9 +18,10 @@ struct ShowPermissionsCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
-        let perms = Permissions.shared
+        let perms = context.permissions
         let admins = (
             perms.adminUsers.map(DiscordUtils.mention(id:)) +
             perms.adminRoles.map(DiscordUtils.mention(id:))

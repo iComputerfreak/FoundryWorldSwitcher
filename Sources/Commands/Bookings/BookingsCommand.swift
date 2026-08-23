@@ -18,9 +18,10 @@ struct BookingsCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
-        let bookingEmbeds = try await Utils.createBookingEmbeds(for: bookingsService.bookings)
+        let bookingEmbeds = try await Utils.createBookingEmbeds(for: context.bookings.allBookings)
         
         let payload: Payloads.EditWebhookMessage
         if bookingEmbeds.isEmpty {

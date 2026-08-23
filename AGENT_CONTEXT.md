@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Swift Discord bot for one Discord guild. Dungeon Masters book Foundry VTT worlds for D&D sessions or preparation. On a booking date, the bot selects the booked Foundry world in Pterodactyl, restarts Foundry, locks manual world switching for the booking interval, and sends configured session reminders.
+Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters book Foundry VTT worlds for D&D sessions or preparation. On a booking date, the bot selects the booked Foundry world in Pterodactyl, restarts Foundry, locks manual world switching for the booking interval, and sends configured session reminders.
 
 ## Architecture
 
@@ -17,12 +17,12 @@ Swift Discord bot for one Discord guild. Dungeon Masters book Foundry VTT worlds
 
 - Command registry: `DiscordCommands.commands`. Registration bulk-replaces application commands on bot startup.
 - Permission levels: `user`, `dungeonMaster`, `admin`. User and role mappings persist in `permissions.json`; highest assigned level wins.
-- Bot application owner receives admin on startup when Discord returns an owner.
+- Application owners receive runtime-only admin from `Permissions`; their IDs never enter guild `permissions.json` mappings.
 - Date-poll role snapshots require Guild Members intent enabled in code and Discord Developer Portal.
 - User commands: help, health check, permission lookup, world info, bookings, session log.
 - Dungeon Master commands: list/restart/switch worlds; create, cancel, or reschedule bookings; read lock state.
 - Admin commands: permission management, config, cache refresh, lock management, booking deletion, pin management, scheduler queue inspection. Forced world switch requires admin.
-- Bot is designed for at most one guild. Startup disconnects and fatally exits if it belongs to more than one guild.
+- Guild-scoped routing is still being integrated. Do not retain the single-guild startup guard when wiring `GuildRegistry`.
 
 ## Booking Lifecycle
 
@@ -37,23 +37,27 @@ Swift Discord bot for one Discord guild. Dungeon Masters book Foundry VTT worlds
 
 - `Scheduler` persists `events.json`. Due events execute ordered by due date; successful events are removed after execution.
 - Scheduler events perform world switching, lock/unlock, Discord reminders, and poll deadlines. A 30-second background task runs updates while gateway idle; gateway events also trigger updates.
-- Lock state is only `data/.worldlock`. It records no world, booking, owner, or expiry. Timed unlocks can therefore release a manually created or newer lock.
-- `lockWorldSwitching` first changes `WORLD_NAME` and restarts Foundry, then creates lock marker.
-- Manual `/switchworld` rejects locked state unless `force:true` is used by admin. Current implementation does not clear lock after forced switch despite README claim.
+- Global lock state is `data/world-lock.json`, containing optional guild and booking ownership plus acquisition time. Scheduled booking unlocks only release their own lock; manual locks have no booking owner.
+- Scheduled locks persist their booking ownership before changing `WORLD_NAME`; Pterodactyl failure releases that same lock.
+- Manual `/switchworld` rejects locked state unless `force:true` is used by the bot application owner. Current implementation does not clear lock after forced switch despite README claim.
 - Rescheduling changes booking date but currently retains its original `associatedEvents`; recreate or update queue when fixing this behavior.
 
 ## Persistent Runtime State
 
 Runtime data directory: executable sibling `data/`; Docker mounts it at `/home/container/data`.
 
-- `botConfig.json`: Pterodactyl connection, booking/reminder settings, pinned-message references.
-- `permissions.json`: user and role permission levels.
-- `bookings.json`: booking history and associated scheduler event IDs. Legacy `reservation_bookings.json` and `event_bookings.json` migrate when both exist.
-- `events.json`: scheduler queue.
-- `.worldlock`: manual-switch block marker.
+- Version 3.0 performs a one-time root-to-guild migration before `BotConfig.shared` can read or create `botConfig.json`. It runs only when `data/guilds/` does not exist, root `botConfig.json` already exists, and Discord reports exactly one bot guild. The migration moves root guild state to that guild, rebuilds conflicts, archives source state in `data/migration-backups/v3/`, and leaves root `botConfig.json` with global Pterodactyl configuration only. `data/guilds/` is the completion indicator; no marker exists.
+- Root `botConfig.json` and root secrets retain global Pterodactyl target configuration. Runtime services have no legacy root-state fallback.
+- Guild state belongs in `data/guilds/<guild-id>/`: `config.json`, `permissions.json`, `bookings.json`, `events.json`, and `date_polls.json`.
+- Root `booking_conflicts.json` indexes active booking intervals across guilds because the Foundry target and world lock are global.
+- `GuildContext` owns per-guild config, permissions, scheduler, bookings, and polls. Obtain contexts through `GuildRegistry`; do not add guild-local singletons.
+- `GuildRegistry` supplies the process-scoped application owner ID to each context's `Permissions`. `Permissions.isApplicationOwner(_:)` authorizes forced world switching and owner admin access is never persisted.
+- `world-lock.json`: global manual-switch block record. V3 migration converts legacy `.worldlock` to a manual record before archiving it.
 - `BOT_TOKEN` and `PTERODACTYL_API_KEY`: optional file-based secrets in runtime data dir.
 
 All state uses direct JSON writes. No atomic-write, corruption recovery, schema migration framework, or multi-process coordination exists. Do not commit runtime state or secrets.
+
+Guild state types live one-per-file under `Sources/Services/Guild State/`. Document state types and their persisted properties with `///`; retain source headers and meaningful comments during refactors.
 
 ## Configuration And Secrets
 

@@ -35,7 +35,11 @@ extension DiscordClient {
     }
     
     /// Creates a new server event for the given booking in the given guild
-    func createServerEvent(for booking: EventBooking, in guild: GuildSnowflake) async throws {
+    func createServerEvent(
+        for booking: EventBooking,
+        in guild: GuildSnowflake,
+        configuration: any BookingConfiguration
+    ) async throws {
         let eventTitle: String = try await {
             if let roleName = try await roleName(of: booking.campaignRoleSnowflake, in: guild) {
                 return "\(roleName) - \(booking.topic)"
@@ -51,7 +55,7 @@ extension DiscordClient {
                 name: eventTitle,
                 privacy_level: .guildOnly,
                 scheduled_start_time: .init(date: booking.date),
-                scheduled_end_time: .init(date: booking.date.addingTimeInterval(BotConfig.shared.sessionLength)),
+                scheduled_end_time: .init(date: booking.date.addingTimeInterval(configuration.sessionLength)),
                 entity_type: .voice
             )
         ).guardSuccess()

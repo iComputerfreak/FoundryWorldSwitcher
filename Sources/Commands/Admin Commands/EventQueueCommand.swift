@@ -18,9 +18,10 @@ struct EventQueueCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
-        let events = await Scheduler.shared.events
+        let events = await context.scheduler.events
         
         guard !events.isEmpty else {
             try await client.respond(

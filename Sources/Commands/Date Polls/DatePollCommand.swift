@@ -26,14 +26,16 @@ struct DatePollCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
-        try await createPoll(applicationCommand: applicationCommand, interaction: interaction, client: client)
+        try await createPoll(applicationCommand: applicationCommand, interaction: interaction, context: context, client: client)
     }
 
     private func createPoll(
         applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         guard
@@ -54,7 +56,7 @@ struct DatePollCommand: DiscordCommand {
             throw DatePollError.invalidCandidates
         }
 
-        let poll = await datePollsService.createPoll(
+        let poll = await context.datePolls.createPoll(
             ownerID: ownerID,
             ownerUsername: owner.username,
             guildID: guildID,
@@ -67,7 +69,7 @@ struct DatePollCommand: DiscordCommand {
         )
         try await client.respond(token: interaction.token, payload: DatePollRenderer.webhookPayload(for: poll))
         let message = try await client.getOriginalInteractionResponse(token: interaction.token).decode()
-        try await datePollsService.publishPoll(id: poll.id, messageID: message.id)
+        try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)
     }
 
     private func parseDates(_ value: String) throws -> [Date] {

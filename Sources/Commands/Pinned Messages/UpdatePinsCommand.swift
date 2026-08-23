@@ -18,9 +18,10 @@ class UpdatePinsCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
-        try await bookingsService.updatePinnedBookings()
+        try await context.bookings.updatePinnedBookings()
         try await client.respond(
             token: interaction.token,
             message: "Updated all pinned booking messages."

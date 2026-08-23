@@ -15,6 +15,7 @@ struct EventHandler: GatewayEventHandler {
     let client: any DiscordClient
     let logger = Logger(label: "EventHandler")
     let permissionsHandler: PermissionsHandler
+    let guildRegistry: GuildRegistry
 
     /// Handle Interactions.
     func onInteractionCreate(_ interaction: Interaction) async throws {
@@ -23,9 +24,9 @@ struct EventHandler: GatewayEventHandler {
         case let .applicationCommand(applicationCommand):
             try await handleApplicationCommand(applicationCommand, interaction: interaction)
         case let .messageComponent(component):
-            try await DatePollComponentHandler(client: client).handle(component, interaction: interaction)
+            try await DatePollComponentHandler(client: client, guildRegistry: guildRegistry).handle(component, interaction: interaction)
         case let .modalSubmit(modal):
-            try await DatePollModalHandler(client: client).handle(modal, interaction: interaction)
+            try await DatePollModalHandler(client: client, guildRegistry: guildRegistry).handle(modal, interaction: interaction)
         }
     }
 
@@ -47,6 +48,10 @@ struct EventHandler: GatewayEventHandler {
             guard let command = DiscordCommands.commands.first(where: { $0.name == applicationCommand.name }) else {
                 throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
             }
+            guard let guildID = interaction.guild_id else {
+                throw DiscordCommandError.noGuild
+            }
+            let context = await guildRegistry.context(for: guildID)
             guard let member = interaction.member else {
                 throw DiscordCommandError.noMember
             }
@@ -55,8 +60,8 @@ struct EventHandler: GatewayEventHandler {
             }
             do {
                 // Check user permissions
-                try permissionsHandler.checkAuthorization(of: member, for: command)
-                try await command.handle(applicationCommand, interaction: interaction, client: client)
+                try permissionsHandler.checkAuthorization(of: member, for: command, in: context)
+                try await command.handle(applicationCommand, interaction: interaction, context: context, client: client)
             } catch DiscordCommandError.unauthorized {
                 logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions.")
                 try await client.respond(

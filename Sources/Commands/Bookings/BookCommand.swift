@@ -101,7 +101,7 @@ struct BookCommand: DiscordCommand {
         )
     ]
     
-    func handle(_ applicationCommand: Interaction.ApplicationCommand, interaction: Interaction, client: any DiscordClient) async throws {
+    func handle(_ applicationCommand: Interaction.ApplicationCommand, interaction: Interaction, context: GuildContext, client: any DiscordClient) async throws {
         guard let userID = interaction.member?.user?.id else {
             throw DiscordBotError.noUser
         }
@@ -120,7 +120,7 @@ struct BookCommand: DiscordCommand {
             throw DiscordCommandError.dateIsInThePast(date)
         }
         
-        guard await bookingsService.booking(at: date) == nil else {
+        guard await context.bookings.booking(at: date) == nil else {
             throw DiscordCommandError.bookingAlreadyExists(atDate: date)
         }
         
@@ -143,20 +143,21 @@ struct BookCommand: DiscordCommand {
                 worldID: world.id,
                 campaignRoleSnowflake: RoleSnowflake(role),
                 location: ChannelSnowflake(location),
-                topic: topic
+                topic: topic,
+                configuration: context.config
             )
-            if booking.date > booking.bookingIntervalEndDate {
-                let start = DiscordUtils.timestamp(date: booking.bookingIntervalStartDate, style: .shortDateTime)
-                let end = DiscordUtils.timestamp(date: booking.bookingIntervalEndDate, style: .shortDateTime)
+            if booking.date > booking.bookingIntervalEndDate(using: context.config) {
+                let start = DiscordUtils.timestamp(date: booking.bookingIntervalStartDate(using: context.config), style: .shortDateTime)
+                let end = DiscordUtils.timestamp(date: booking.bookingIntervalEndDate(using: context.config), style: .shortDateTime)
                 warning = "\nThe world will be locked from \(start) to \(end).\n" +
                 "**Warning**: With the current configuration settings, the world will be unlocked before the event starts."
             }
         } else {
-            booking = ReservationBooking(date: date, author: userID, worldID: world.id)
+            booking = ReservationBooking(date: date, author: userID, worldID: world.id, configuration: context.config)
         }
         
         // MARK: Create the booking
-        await bookingsService.createBooking(booking)
+        try await context.bookings.createBookingIfAvailable(booking)
         
         // MARK: Respond to the user
         try await client.respond(

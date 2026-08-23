@@ -33,6 +33,7 @@ struct SwitchWorldCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         guard
@@ -44,19 +45,18 @@ struct SwitchWorldCommand: DiscordCommand {
         
         let world = try await parseWorld(from: applicationCommand, optionName: "world_id")
         
-        // Only admins can use `force:true` to switch while locked
+        // Only the application owner can use `force:true` to switch while locked.
         if WorldLockService.shared.isWorldSwitchingLocked() {
             guard applicationCommand.option(named: "force")?.value?.boolValue == true else {
                 throw DiscordCommandError.worldSwitchingIsLocked
             }
             
-            // Even if `force:true` is set, the user still needs admin permissions
-            let permissions = Permissions.shared.permissionsLevel(of: user.id, roles: member.roles)
-            guard permissions == .admin else {
+            // Application ownership is separate from guild-local administrator permission.
+            guard context.permissions.isApplicationOwner(user.id) else {
                 throw DiscordCommandError.forceSwitchWorldPermissionDenied(required: .admin)
             }
             
-            // If force is `true` and the user has admin permissions, we can continue
+            // The application owner may now force the switch.
         }
         
         try await client.respond(

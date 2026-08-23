@@ -59,6 +59,7 @@ struct SetPermissionLevel: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         // MARK: Parse the permission level
@@ -80,7 +81,7 @@ struct SetPermissionLevel: DiscordCommand {
             }
             let user = UserSnowflake(userID)
             let newLevel = try parseLevel(of: userSubcommand)
-            Permissions.shared.setPermissionLevel(of: user, to: newLevel)
+            context.permissions.setPermissionLevel(of: user, to: newLevel)
             try await sendSuccessMessage(
                 interaction: interaction,
                 client: client,
@@ -93,7 +94,7 @@ struct SetPermissionLevel: DiscordCommand {
             }
             let role = RoleSnowflake(roleID)
             let newLevel = try parseLevel(of: roleSubcommand)
-            Permissions.shared.setPermissionLevel(of: RoleSnowflake(roleID), to: newLevel)
+            context.permissions.setPermissionLevel(of: RoleSnowflake(roleID), to: newLevel)
             try await sendSuccessMessage(
                 interaction: interaction,
                 client: client,

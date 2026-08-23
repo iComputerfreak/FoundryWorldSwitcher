@@ -12,13 +12,16 @@ import Logging
 actor BookingsService {
     private enum Constants {
         static let notFoundStatusCode: UInt = 404
-        
-        static let bookingsDataPath: URL = Utils.dataURL.appendingPathComponent("bookings.json")
     }
 
     static let logger: Logger = .init(label: String(describing: BookingsService.self))
     
     let scheduler: Scheduler
+    let dataPath: URL
+    let configuration: any BookingConfiguration
+    let pinnedMessagesConfiguration: GuildConfig
+    let guildID: GuildSnowflake
+    let bookingConflicts: GlobalBookingConflictService
     private(set) var bookings: [any Booking] {
         didSet {
             saveBookings()
@@ -31,10 +34,14 @@ actor BookingsService {
             }
         }
     }
+
+    var allBookings: [any Booking] {
+        bookings
+    }
     
     var activeBookings: [any Booking] {
         bookings
-            .filter { $0.bookingIntervalEndDate > .now }
+            .filter { $0.bookingIntervalEndDate(using: configuration) > .now }
             .filter { !$0.wasCancelled }
     }
     
@@ -44,13 +51,25 @@ actor BookingsService {
     
     var completedBookings: [any Booking] {
         bookings
-            .filter { $0.bookingIntervalEndDate < .now }
+            .filter { $0.bookingIntervalEndDate(using: configuration) < .now }
             .filter { !$0.wasCancelled }
     }
     
-    init(scheduler: Scheduler) {
+    init(
+        scheduler: Scheduler,
+        dataPath: URL,
+        configuration: any BookingConfiguration,
+        pinnedMessagesConfiguration: GuildConfig,
+        guildID: GuildSnowflake,
+        bookingConflicts: GlobalBookingConflictService
+    ) {
         self.scheduler = scheduler
-        self.bookings = Self.loadBookings(from: Constants.bookingsDataPath)
+        self.dataPath = dataPath
+        self.configuration = configuration
+        self.pinnedMessagesConfiguration = pinnedMessagesConfiguration
+        self.guildID = guildID
+        self.bookingConflicts = bookingConflicts
+        self.bookings = Self.loadBookings(from: dataPath)
     }
     
     /// Returns the booking for the given date, or `nil` if no booking exists for that date
@@ -68,6 +87,12 @@ actor BookingsService {
     func booking(id: UUID, includeCancelled: Bool = false) -> (any Booking)? {
         bookings.first(where: { $0.id == id && (includeCancelled || !$0.wasCancelled) })
     }
+
+    func booking(associatedEventID eventID: SchedulerEvent.ID) -> (any Booking)? {
+        bookings.first { booking in
+            !booking.wasCancelled && booking.associatedEvents.contains(where: { $0.id == eventID })
+        }
+    }
     
     /// Adds the given booking to the store
     func createBooking(_ booking: any Booking) async {
@@ -75,11 +100,17 @@ actor BookingsService {
         saveBookings()
         await scheduler.schedule(booking.associatedEvents)
     }
+
+    func createBookingIfAvailable(_ booking: any Booking) async throws {
+        try await bookingConflicts.reserve(booking, for: guildID, configuration: configuration)
+        await createBooking(booking)
+    }
     
     /// Deletes the given booking from the store and unqueues any associated events
     func deleteBooking(_ booking: any Booking) async {
         removeBooking(id: booking.id)
         await scheduler.unqueue(booking.associatedEvents)
+        await bookingConflicts.remove(bookingID: booking.id, guildID: guildID)
     }
     
     /// Deletes the booking with the given ID from the store
@@ -98,6 +129,7 @@ actor BookingsService {
         }
         await scheduler.unqueue(bookings[bookingIndex].associatedEvents)
         bookings[bookingIndex].wasCancelled = true
+        await bookingConflicts.remove(bookingID: bookings[bookingIndex].id, guildID: guildID)
     }
 }
 
@@ -106,16 +138,15 @@ extension BookingsService {
     func saveBookings() {
         do {
             let list = BookingList(bookings: bookings)
-            try save(list, at: Constants.bookingsDataPath)
+            try save(list, at: dataPath)
         } catch {
             Self.logger.error("Failed to save bookings: \(error)")
         }
     }
     
     static func loadBookings(from url: URL) -> [any Booking] {
-        let bookingList: BookingList? = try? Self.load(from: Constants.bookingsDataPath, defaultValue: nil)
-        // Migrate old files if they exist
-        return bookingList?.allBookings ?? migrateOldData() ?? []
+        let bookingList: BookingList? = try? Self.load(from: url, defaultValue: nil)
+        return bookingList?.allBookings ?? []
     }
     
     private func save<T: Encodable>(_ object: T, at url: URL) throws {
@@ -136,36 +167,12 @@ extension BookingsService {
         }
     }
     
-    // TODO: Remove migration code after some time. This was added at 2024-11-16.
-    private static func migrateOldData() -> [any Booking]? {
-        let reservationBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("reservation_bookings.json")
-        let eventBookingsDataPath: URL = Utils.dataURL.appendingPathComponent("event_bookings.json")
-        
-        guard
-            FileManager.default.fileExists(atPath: reservationBookingsDataPath.path),
-            FileManager.default.fileExists(atPath: eventBookingsDataPath.path)
-        else { return nil }
-        
-        do {
-            let reservationBookings: [ReservationBooking] = try load(from: reservationBookingsDataPath, defaultValue: [])
-            let eventBookings: [EventBooking] = try load(from: eventBookingsDataPath, defaultValue: [])
-            
-            // Delete the old files after successfully reading them
-            try FileManager.default.removeItem(at: reservationBookingsDataPath)
-            try FileManager.default.removeItem(at: eventBookingsDataPath)
-            
-            return reservationBookings + eventBookings
-        } catch {
-            Self.logger.error("Failed to load old booking data: \(error)")
-            return nil
-        }
-    }
 }
 
 // MARK: - Pinned Bookings
 extension BookingsService {
     func updatePinnedBookings() async throws {
-        let messages = BotConfig.shared.pinnedBookingMessages
+        let messages = pinnedMessagesConfiguration.pinnedBookingMessages
         Self.logger.info("Updating \(messages.count) pinned booking messages.")
         func payload(for bookings: [any Booking]) async throws -> Payloads.EditMessage {
             if bookings.isEmpty {
@@ -217,7 +224,7 @@ extension BookingsService {
                         // swiftlint:disable:next line_length
                         "Received 404 error while updating pinned bookings for message id \(message.messageID.rawValue) in channel \(message.channelID.rawValue). Removing it from the list of pinned messages."
                     )
-                    BotConfig.shared.pinnedBookingMessages.removeAll(where: { $0.messageID == message.messageID && $0.channelID == message.channelID })
+                    pinnedMessagesConfiguration.pinnedBookingMessages.removeAll(where: { $0.messageID == message.messageID && $0.channelID == message.channelID })
                 } else {
                     // Rethrow non-404 errors
                     throw error

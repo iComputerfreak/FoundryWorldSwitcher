@@ -22,11 +22,12 @@ struct SessionLogCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         let role = applicationCommand.option(named: "role")?.value?.stringValue.flatMap(RoleSnowflake.init)
         
-        let pastEvents = await bookingsService.completedBookings
+        let pastEvents = await context.bookings.completedBookings
             .compactMap { $0 as? EventBooking }
             .filter { booking in
                 guard let role else { return true }

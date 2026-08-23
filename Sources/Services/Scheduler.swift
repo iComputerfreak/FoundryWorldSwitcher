@@ -11,18 +11,23 @@ import Logging
 
 actor Scheduler {
     static var logger: Logger = .init(label: String(describing: Scheduler.self))
-    static var dataPath: URL = Utils.dataURL.appendingPathComponent("events.json")
-    static let shared: Scheduler = .init()
     
+    let dataPath: URL
     private(set) var events: [SchedulerEvent]
     private var isUpdating = false
     
-    init() {
-        events = Self.loadEvents()
+    init(dataPath: URL) {
+        self.dataPath = dataPath
+        events = Self.loadEvents(from: dataPath)
     }
     
-    /// Checks for due events and executes them
-    func update() async throws {
+    func update(in context: GuildContext) async throws {
+        try await update(using: { event in
+            try await event.execute(in: context)
+        })
+    }
+
+    private func update(using executor: (SchedulerEvent) async throws -> Void) async throws {
         guard !isUpdating else { return }
         isUpdating = true
         defer { isUpdating = false }
@@ -31,7 +36,7 @@ actor Scheduler {
         for event in dueEvents() {
             Self.logger.info("Executing scheduled event: \(event)")
             do {
-                try await event.execute()
+                try await executor(event)
                 unqueue(event)
             } catch {
                 errors.append(error)
@@ -106,13 +111,13 @@ extension Scheduler {
     func saveEvents() {
         do {
             let data = try JSONEncoder().encode(events)
-            try data.write(to: Self.dataPath)
+            try data.write(to: dataPath)
         } catch {
             Self.logger.error("Failed to save events: \(error)")
         }
     }
     
-    static func loadEvents() -> [SchedulerEvent] {
+    static func loadEvents(from dataPath: URL) -> [SchedulerEvent] {
         do {
             guard FileManager.default.fileExists(atPath: dataPath.path) else {
                 return []

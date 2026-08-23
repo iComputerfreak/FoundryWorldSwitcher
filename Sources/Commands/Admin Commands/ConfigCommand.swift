@@ -14,6 +14,9 @@ struct ConfigCommand: DiscordCommand {
     let name = "config"
     let description = "Configures the bot"
     let permissionsLevel: BotPermissionLevel = .admin
+    private static let guildConfigKeys = ConfigKey.allCases.filter {
+        $0 != .pterodactylHost && $0 != .pterodactylServerID
+    }
     
     // /config show [key]
     // /config set <key> <value>
@@ -69,6 +72,7 @@ struct ConfigCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: any DiscordClient
     ) async throws {
         // We handle "/config show" separately, as it's the only command that does not need a `key` argument
@@ -76,7 +80,7 @@ struct ConfigCommand: DiscordCommand {
             let showCommand = applicationCommand.option(named: "show"),
             showCommand.option(named: "key")?.value == nil
         {
-            try await client.respond(token: interaction.token, payload: createFullConfigPayload())
+            try await client.respond(token: interaction.token, payload: createFullConfigPayload(config: context.config))
             return
         }
         
@@ -92,14 +96,17 @@ struct ConfigCommand: DiscordCommand {
             guard let configKey = ConfigKey(rawValue: stringKey) else {
                 throw DiscordCommandError.invalidConfigKey(stringKey)
             }
-            return BotConfig.shared.value(for: configKey)
+            guard Self.guildConfigKeys.contains(configKey) else {
+                throw DiscordCommandError.invalidConfigKey(stringKey)
+            }
+            return try context.config.value(for: configKey)
         }
         
         if let showCommand = applicationCommand.option(named: "show") {
             if let keyString = showCommand.option(named: "key")?.value?.stringValue {
                 try await respond("The value of `\(keyString)` is `\(value(for: keyString))`")
             } else {
-                try await respond(createFullConfigPayload())
+                try await respond(createFullConfigPayload(config: context.config))
             }
         } else if let setCommand = applicationCommand.option(named: "set") {
             let keyString = try setCommand.requireOption(named: "key").requireString()
@@ -107,28 +114,34 @@ struct ConfigCommand: DiscordCommand {
             guard let configKey = ConfigKey(rawValue: keyString) else {
                 throw DiscordCommandError.invalidConfigKey(keyString)
             }
-            try BotConfig.shared.setValue(valueString, for: configKey)
+            guard Self.guildConfigKeys.contains(configKey) else {
+                throw DiscordCommandError.invalidConfigKey(keyString)
+            }
+            try context.config.setValue(valueString, for: configKey)
             try await respond("The value `\(keyString)` was updated to `\(valueString)`.")
         } else if let resetCommand = applicationCommand.option(named: "reset") {
             let keyString = try resetCommand.requireOption(named: "key").requireString()
             guard let configKey = ConfigKey(rawValue: keyString) else {
                 throw DiscordCommandError.invalidConfigKey(keyString)
             }
-            let newValue = try BotConfig.shared.resetValue(for: configKey)
+            guard Self.guildConfigKeys.contains(configKey) else {
+                throw DiscordCommandError.invalidConfigKey(keyString)
+            }
+            let newValue = try context.config.resetValue(for: configKey)
             try await respond("The value `\(keyString)` was reset to its default value `\(newValue)`.")
         } else {
             throw DiscordCommandError.missingSubcommand
         }
     }
     
-    private func createFullConfigPayload() -> Payloads.EditWebhookMessage {
+    private func createFullConfigPayload(config: GuildConfig) -> Payloads.EditWebhookMessage {
         let embed = Embed(
             title: "Bot Configuration",
             description: "Here are the current configuration values",
-            fields: ConfigKey.allCases.map { key in
+            fields: Self.guildConfigKeys.compactMap { key in
                 Embed.Field(
                     name: key.rawValue,
-                    value: BotConfig.shared.value(for: key),
+                    value: (try? config.value(for: key)) ?? "Unavailable",
                     inline: true
                 )
             }
@@ -136,7 +149,4 @@ struct ConfigCommand: DiscordCommand {
         return .init(embeds: [embed])
     }
     
-    private func handleShowKey(_ key: String, interaction: Interaction, client: any DiscordClient) {
-//        let value = BotConfig.shared[key]
-    }
 }

@@ -11,23 +11,11 @@ import AsyncHTTPClient
 import Logging
 
 // The current version printed to the console on start
-let version: String = "2.9.2"
+let version: String = "3.0.0"
 
 private let logger = Logger(label: "Main")
 
 logger.info("Started bot v\(version) with data path \(Utils.dataURL.path)")
-
-if BotConfig.shared.pterodactylHost.isEmpty {
-    logger.error("The Pterodactyl host is not set. Please set it in the config file.")
-}
-if BotConfig.shared.pterodactylServerID.isEmpty {
-    logger.error("The Pterodactyl server ID is not set. Please set it in the config file.")
-}
-
-// MARK: -  Register services
-private let scheduler = Scheduler.shared
-let bookingsService = BookingsService(scheduler: scheduler)
-let datePollsService = DatePollsService(scheduler: scheduler)
 
 // MARK: - Set up the bot
 
@@ -48,33 +36,41 @@ let bot = await BotGatewayManager(
     intents: [.guildMembers]
 )
 
-/// Tell the manager to connect to Discord. Use a `Task { }` because it
-/// might take a few seconds, or even minutes under bad network connections
-/// Don't use `Task { }` if you care and want to wait
-Task {
-    await bot.connect()
-    
-    // Make sure the bot only runs in a single guild
-    guard try await bot.client.listOwnGuilds().decode().count <= 1 else {
-        await bot.disconnect()
-        logger.critical(
-            "The bot is in more than one guild. This bot is designed to only work in one guild. Please remove the bot from all guilds except the one you want it to work in."
-        )
-        fatalError(
-            "The bot is in more than one guild. This bot is designed to only work in one guild. Please remove the bot from all guilds except the one you want it to work in."
-        )
+await bot.connect()
+
+let applicationOwnerID: UserSnowflake?
+do {
+    applicationOwnerID = try await bot.client.getOwnApplication().decode().owner?.id
+    if applicationOwnerID == nil {
+        logger.warning("The bot application has no owner. Force world switching will be unavailable.")
     }
-    
-    // Give the bot owner admin permissions
-    do {
-        let botApplication = try await bot.client.getOwnApplication().decode()
-        guard let ownerID = botApplication.owner?.id else {
-            throw DiscordBotError.noUser
-        }
-        Permissions.shared.setUserPermissionLevel(of: ownerID, to: .admin)
-    } catch {
-        logger.warning("Error determining the bot owner. Will not give the bot owner admin permissions. \(error)")
-    }
+} catch {
+    applicationOwnerID = nil
+    logger.warning("Error determining the bot owner. Force world switching will be unavailable. \(error)")
+}
+
+let guilds: [PartialGuild]
+do {
+    guilds = try await bot.client.listOwnGuilds().decode()
+    try V3StateMigration.runIfNeeded(guildIDs: guilds.map(\.id))
+} catch {
+    await bot.disconnect()
+    logger.critical("Startup migration failed: \(error)")
+    fatalError("Startup migration failed: \(error)")
+}
+
+if BotConfig.shared.pterodactylHost.isEmpty {
+    logger.error("The Pterodactyl host is not set. Please set it in the config file.")
+}
+if BotConfig.shared.pterodactylServerID.isEmpty {
+    logger.error("The Pterodactyl server ID is not set. Please set it in the config file.")
+}
+
+// MARK: - Register services
+private let guildRegistry = GuildRegistry(applicationOwnerID: applicationOwnerID)
+
+for guild in guilds {
+    _ = await guildRegistry.context(for: guild.id)
 }
 
 let cache = await DiscordCache(
@@ -107,7 +103,7 @@ logger.info("Bot started successfully.")
 Task(priority: .background) {
     while !Task.isCancelled {
         do {
-            try await scheduler.update()
+            try await guildRegistry.updateSchedulers()
         } catch {
             logger.error("Error running scheduler: \(error.localizedDescription)\n\(error)")
         }
@@ -124,7 +120,12 @@ for await event in await bot.events {
         print("Heartbeat at \(Date().formatted(date: .omitted, time: .standard))")
     }
     #endif
-    EventHandler(event: event, client: bot.client, permissionsHandler: permissionsHandler).handle()
+    EventHandler(
+        event: event,
+        client: bot.client,
+        permissionsHandler: permissionsHandler,
+        guildRegistry: guildRegistry
+    ).handle()
     // We receive heartbeats every ~45 seconds, so this is a good time to call the scheduler and check for
     // events to trigger
     #if DEBUG
@@ -134,7 +135,7 @@ for await event in await bot.events {
     #endif
     Task(priority: schedulerPriority) {
         do {
-            try await scheduler.update()
+            try await guildRegistry.updateSchedulers()
         } catch {
             logger.error("Error running scheduler: \(error.localizedDescription)\n\(error)")
         }

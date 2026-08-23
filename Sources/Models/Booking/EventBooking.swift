@@ -22,14 +22,6 @@ struct EventBooking: Booking {
     var associatedEvents: [SchedulerEvent] = []
     var wasCancelled: Bool = false
     
-    var sessionReminderTime: Date {
-        date.addingTimeInterval(-BotConfig.shared.sessionReminderTime)
-    }
-    
-    var sessionStartReminderTime: Date {
-        date.addingTimeInterval(-BotConfig.shared.sessionStartReminderTime)
-    }
-    
     /// Creates a new booking with associated event information and a player role to notify before the event starts
     init(
         date: Date,
@@ -37,7 +29,8 @@ struct EventBooking: Booking {
         worldID: String,
         campaignRoleSnowflake: RoleSnowflake,
         location: ChannelSnowflake,
-        topic: String
+        topic: String,
+        configuration: any BookingConfiguration
     ) {
         self.id = UUID()
         self.date = date
@@ -48,15 +41,16 @@ struct EventBooking: Booking {
         self.topic = topic
         self.associatedEvents = [
             SchedulerEvent(
-                dueDate: bookingIntervalStartDate,
+                dueDate: bookingIntervalStartDate(using: configuration),
                 eventType: .lockWorldSwitching(worldID: worldID)
             ),
             SchedulerEvent(
-                dueDate: bookingIntervalEndDate,
+                dueDate: bookingIntervalEndDate(using: configuration),
                 eventType: .unlockWorldSwitching
             ),
         ]
         // Only add the initial reminder, if it lies in the future
+        let sessionReminderTime = date.addingTimeInterval(-configuration.sessionReminderTime)
         if sessionReminderTime > .now {
             associatedEvents.append(
                 SchedulerEvent(
@@ -65,7 +59,8 @@ struct EventBooking: Booking {
                 )
             )
         }
-        if BotConfig.shared.shouldNotifyAtSessionStart {
+        if configuration.shouldNotifyAtSessionStart {
+            let sessionStartReminderTime = date.addingTimeInterval(-configuration.sessionStartReminderTime)
             associatedEvents.append(
                 SchedulerEvent(
                     dueDate: sessionStartReminderTime,

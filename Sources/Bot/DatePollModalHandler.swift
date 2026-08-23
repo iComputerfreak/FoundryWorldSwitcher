@@ -7,6 +7,7 @@ import Logging
 
 struct DatePollModalHandler {
     let client: any DiscordClient
+    let guildRegistry: GuildRegistry
     private let logger = Logger(label: String(describing: Self.self))
 
     func handle(_ modal: Interaction.ModalSubmit, interaction: Interaction) async throws {
@@ -17,14 +18,16 @@ struct DatePollModalHandler {
         ).guardSuccess()
 
         do {
+            guard let guildID = interaction.guild_id else { throw DiscordCommandError.noGuild }
+            let context = await guildRegistry.context(for: guildID)
             guard let action = DatePollRenderer.interactionAction(from: modal.custom_id) else {
                 throw DatePollError.notFound(modal.custom_id)
             }
             switch action.action {
             case "vote":
-                try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction)
+                try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             case "finalize":
-                try await handleFinalization(pollID: action.pollID, modal: modal, interaction: interaction)
+                try await handleFinalization(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             default:
                 throw DatePollError.notFound(modal.custom_id)
             }
@@ -34,11 +37,11 @@ struct DatePollModalHandler {
         }
     }
 
-    private func handleVote(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction) async throws {
+    private func handleVote(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService) async throws {
         guard let member = interaction.member, let userID = member.user?.id, let guildID = interaction.guild_id else {
             throw DiscordCommandError.noUser
         }
-        let poll = try await datePollsService.pollForVoteModal(
+        let poll = try await datePolls.pollForVoteModal(
             pollID: pollID,
             roles: member.roles,
             guildID: guildID,
@@ -51,7 +54,7 @@ struct DatePollModalHandler {
             client: client
         )
         let candidateIDs = try DatePollRenderer.candidateIDs(from: modal, poll: poll)
-        let updatedPoll = try await datePollsService.vote(
+        let updatedPoll = try await datePolls.vote(
             pollID: pollID,
             voterID: userID,
             candidateIDs: candidateIDs,
@@ -64,11 +67,11 @@ struct DatePollModalHandler {
         await removeResponse(token: interaction.token, action: "vote")
     }
 
-    private func handleFinalization(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction) async throws {
+    private func handleFinalization(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
-        let poll = try await datePollsService.pollForManagementControl(
+        let poll = try await datePolls.pollForManagementControl(
             pollID: pollID,
             userID: userID,
             roles: member.roles,
@@ -80,7 +83,7 @@ struct DatePollModalHandler {
         guard let candidate = poll.candidate(id: candidateID) else {
             throw DatePollError.invalidFinalizationSelection
         }
-        let updatedPoll = try await datePollsService.finalizePoll(
+        let updatedPoll = try await datePolls.finalizePoll(
             id: pollID,
             date: candidate.date,
             userID: userID,

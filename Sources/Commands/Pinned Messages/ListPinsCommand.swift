@@ -13,10 +13,11 @@ struct ListPinsCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         guard let guild = interaction.guild_id else { throw DiscordCommandError.noGuild }
-        let pinnedMessages = BotConfig.shared.pinnedBookingMessages
+        let pinnedMessages = context.config.pinnedBookingMessages
         
         func formattedMessages() -> String {
             if pinnedMessages.isEmpty {

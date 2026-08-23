@@ -39,6 +39,7 @@ struct RescheduleEventCommand: DiscordCommand {
     func handle(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
+        context: GuildContext,
         client: DiscordClient
     ) async throws {
         guard
@@ -56,12 +57,12 @@ struct RescheduleEventCommand: DiscordCommand {
             )
         }
         
-        guard var booking = await bookingsService.booking(at: eventDate) else {
+        guard var booking = await context.bookings.booking(at: eventDate) else {
             throw DiscordCommandError.noBookingFoundAtDate(eventDate)
         }
         
         guard 
-            booking.author == userID || Permissions.shared.permissionsLevel(of: userID, roles: member.roles) == .admin
+            booking.author == userID || context.permissions.permissionsLevel(of: userID, roles: member.roles) == .admin
         else {
             throw DiscordCommandError.rescheduleBookingPermissionDenied(required: .admin)
         }
@@ -94,8 +95,8 @@ struct RescheduleEventCommand: DiscordCommand {
         // Save the new event date
         booking.date = newBookingDate
         // Delete and re-create to re-queue all new events
-        await bookingsService.deleteBooking(booking)
-        await bookingsService.createBooking(booking)
+        await context.bookings.deleteBooking(booking)
+        try await context.bookings.createBookingIfAvailable(booking)
         
         try await client.respond(
             token: interaction.token,
