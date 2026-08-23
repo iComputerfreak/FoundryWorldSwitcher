@@ -48,7 +48,7 @@ Message contains:
 - Do not show `Remind me` when its 24-hour delivery time would be after poll deadline.
 - Show green `Finalize` when at least one vote exists and poll is not finalized/cancelled. It opens a chronological checkbox modal with current availability fractions and currently requires exactly one selected date.
 - Show red `Cancel` until poll is finalized/cancelled.
-- Small footer line: creator username, poll ID, and relative voting deadline.
+- Small footer line: creator username, poll ID, and relative voting deadline while poll is not finalized/cancelled.
 - Final state: chosen date. Components become disabled. Cancelled polls hide leading and date availability containers.
 
 Votes are visible. The shared message uses Components V2 containers and text displays rather than embeds.

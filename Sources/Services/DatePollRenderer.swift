@@ -188,7 +188,11 @@ enum DatePollRenderer {
         }
 
         components.append(.actionRow(controls(for: poll)))
-        components.append(.textDisplay(.init(content: "-# Created by \(poll.ownerUsername ?? "unknown") · Poll ID `\(poll.id)` · Voting closes \(DiscordUtils.timestamp(date: poll.deadline, style: .relativeTime))")))
+        var footer = "-# Created by \(poll.ownerUsername ?? "unknown") · Poll ID `\(poll.id)`"
+        if poll.status != .cancelled && poll.status != .finalized {
+            footer += " · Voting closes \(DiscordUtils.timestamp(date: poll.deadline, style: .relativeTime))"
+        }
+        components.append(.textDisplay(.init(content: footer)))
         return components
     }
 
