@@ -88,6 +88,94 @@ actor DatePollsService {
         return poll
     }
 
+    func editPoll(
+        id: String,
+        campaignRoleID: RoleSnowflake,
+        requiredVoterIDs: Set<UserSnowflake>,
+        candidateDates: [Date],
+        description: String?,
+        deadline: Date,
+        repeatIntervalWeeks: Int?,
+        userID: UserSnowflake,
+        roles: [RoleSnowflake]
+    ) async throws -> [DatePoll] {
+        guard let sourceIndex = polls.firstIndex(where: { $0.id == id }) else {
+            throw DatePollError.notFound(id)
+        }
+        try authorizeManagement(of: polls[sourceIndex], userID: userID, roles: roles)
+        guard polls[sourceIndex].status == .open || polls[sourceIndex].status == .awaitingFinalization else {
+            throw DatePollError.unavailablePoll
+        }
+
+        let source = polls[sourceIndex]
+        let seriesID = source.repeatSeriesID
+        let indices = polls.indices.filter {
+            ($0 == sourceIndex || (seriesID != nil && polls[$0].repeatSeriesID == seriesID)) &&
+                (polls[$0].status == .open || polls[$0].status == .awaitingFinalization)
+        }
+        let calendar = Calendar.current
+        let deadlineDuration = deadline.timeIntervalSince(.now)
+        var removedReminderEventIDs: [UUID] = []
+        var events: [SchedulerEvent] = []
+
+        for index in indices {
+            let offsetDays = calendar.dateComponents(
+                [.day],
+                from: source.candidates[0].date,
+                to: polls[index].candidates[0].date
+            ).day ?? 0
+            let occurrenceDates = candidateDates.compactMap {
+                calendar.date(byAdding: .day, value: offsetDays, to: $0)
+            }
+            guard occurrenceDates.count == candidateDates.count else {
+                throw DatePollError.invalidCandidates
+            }
+
+            let existingCandidates = Dictionary(uniqueKeysWithValues: polls[index].candidates.map { ($0.date, $0) })
+            polls[index].campaignRoleID = campaignRoleID
+            polls[index].requiredVoterIDs = requiredVoterIDs
+            polls[index].candidates = occurrenceDates.map { existingCandidates[$0] ?? .init(date: $0) }
+            polls[index].description = description
+            polls[index].deadline = deadline
+            polls[index].deadlineDuration = deadlineDuration
+            polls[index].status = .open
+            polls[index].repeatIntervalWeeks = repeatIntervalWeeks
+            if repeatIntervalWeeks != nil {
+                polls[index].repeatSeriesID = source.repeatSeriesID ?? source.id
+            }
+            polls[index].repeatEventID = nil
+
+            let validCandidateIDs = Set(polls[index].candidates.map(\.id))
+            polls[index].votes = polls[index].votes
+                .filter { requiredVoterIDs.contains($0.key) }
+                .mapValues { .init(candidateIDs: $0.candidateIDs.intersection(validCandidateIDs)) }
+
+            let retainedReminders = polls[index].reminders.filter { voterID, reminder in
+                guard requiredVoterIDs.contains(voterID) else { return false }
+                guard let dueDate = reminder.scheduledDueDate else { return true }
+                return dueDate < deadline
+            }
+            removedReminderEventIDs += polls[index].reminders
+                .filter { retainedReminders[$0.key] == nil }
+                .compactMap { $0.value.scheduledEventID }
+            polls[index].reminders = retainedReminders
+
+            events.append(.init(dueDate: deadline, eventType: .closeDatePoll(pollID: polls[index].id)))
+            if let repeatIntervalWeeks,
+               let repeatDate = calendar.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: polls[index].createdAt) {
+                let repeatEvent = SchedulerEvent(dueDate: repeatDate, eventType: .repeatDatePoll(pollID: polls[index].id))
+                polls[index].repeatEventID = repeatEvent.id
+                events.append(repeatEvent)
+            }
+        }
+
+        savePolls()
+        await scheduler.unqueueDatePollSchedulingEvents(pollIDs: Set(indices.map { polls[$0].id }))
+        await scheduler.unqueue(ids: removedReminderEventIDs)
+        await scheduler.schedule(events)
+        return indices.map { polls[$0] }
+    }
+
     func vote(
         pollID: String,
         voterID: UserSnowflake,

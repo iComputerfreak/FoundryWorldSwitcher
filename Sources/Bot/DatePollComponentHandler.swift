@@ -29,6 +29,10 @@ struct DatePollComponentHandler {
             try await showFinalizationModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             return
         }
+        if action.action == "edit" {
+            try await showEditModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            return
+        }
         if action.action == "view" {
             try await showVotesModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             return
@@ -125,6 +129,33 @@ struct DatePollComponentHandler {
                 id: interaction.id,
                 token: interaction.token,
                 payload: DatePollRenderer.finalizationModal(for: poll)
+            ).guardSuccess()
+        } catch {
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+            ).guardSuccess()
+        }
+    }
+
+    private func showEditModal(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+        guard let member = interaction.member, let userID = member.user?.id else {
+            throw DiscordCommandError.noUser
+        }
+        do {
+            let poll = try await datePolls.pollForManagementControl(
+                pollID: pollID,
+                userID: userID,
+                roles: member.roles,
+                guildID: interaction.guild_id,
+                channelID: interaction.channel_id,
+                messageID: interaction.message?.id
+            )
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: DatePollRenderer.editModal(for: poll)
             ).guardSuccess()
         } catch {
             try await client.createInteractionResponse(

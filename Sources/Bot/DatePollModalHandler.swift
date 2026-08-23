@@ -11,6 +11,14 @@ struct DatePollModalHandler {
     private let logger = Logger(label: String(describing: Self.self))
 
     func handle(_ modal: Interaction.ModalSubmit, interaction: Interaction) async throws {
+        guard let action = DatePollRenderer.interactionAction(from: modal.custom_id) else {
+            throw DatePollError.notFound(modal.custom_id)
+        }
+        if action.action == "view" {
+            try await handleVotesModalSubmission(pollID: action.pollID, interaction: interaction)
+            return
+        }
+
         try await client.createInteractionResponse(
             id: interaction.id,
             token: interaction.token,
@@ -20,9 +28,6 @@ struct DatePollModalHandler {
         do {
             guard let guildID = interaction.guild_id else { throw DiscordCommandError.noGuild }
             let context = await guildRegistry.context(for: guildID)
-            guard let action = DatePollRenderer.interactionAction(from: modal.custom_id) else {
-                throw DatePollError.notFound(modal.custom_id)
-            }
             switch action.action {
             case "create":
                 try await handleCreation(modal: modal, interaction: interaction, context: context)
@@ -30,8 +35,8 @@ struct DatePollModalHandler {
                 try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             case "finalize":
                 try await handleFinalization(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
-            case "view":
-                await removeResponse(token: interaction.token, action: "vote viewing")
+            case "edit":
+                try await handleEdit(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             default:
                 throw DatePollError.notFound(modal.custom_id)
             }
@@ -39,6 +44,29 @@ struct DatePollModalHandler {
             logger.warning("Failed to handle date poll modal: \(error)")
             try await client.respond(token: interaction.token, message: error.localizedDescription)
         }
+    }
+
+    private func handleVotesModalSubmission(pollID: String, interaction: Interaction) async throws {
+        guard let guildID = interaction.guild_id else { throw DiscordCommandError.noGuild }
+        let context = await guildRegistry.context(for: guildID)
+        let poll = try await context.datePolls.pollForVotesModal(
+            pollID: pollID,
+            guildID: guildID,
+            channelID: interaction.channel_id,
+            messageID: interaction.message?.id
+        )
+        guard let messageID = poll.messageID else { throw DatePollError.missingMessageReference }
+
+        try await client.createInteractionResponse(
+            id: interaction.id,
+            token: interaction.token,
+            payload: .deferredUpdateMessage()
+        ).guardSuccess()
+        try await client.updateMessage(
+            channelId: poll.channelID,
+            messageId: messageID,
+            payload: DatePollRenderer.messagePayload(for: poll)
+        ).guardSuccess()
     }
 
     private func handleCreation(
@@ -145,6 +173,42 @@ struct DatePollModalHandler {
         )
         try await updatePollMessage(for: updatedPoll)
         await removeResponse(token: interaction.token, action: "finalization")
+    }
+
+    private func handleEdit(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService) async throws {
+        guard let member = interaction.member, let userID = member.user?.id, let guildID = interaction.guild_id else {
+            throw DiscordCommandError.noUser
+        }
+        _ = try await datePolls.pollForManagementControl(
+            pollID: pollID,
+            userID: userID,
+            roles: member.roles,
+            guildID: guildID,
+            channelID: interaction.channel_id,
+            messageID: interaction.message?.id
+        )
+        let form = try DatePollCreationForm(from: modal)
+        let voterIDs = try await DatePollMemberResolver.voterIDs(
+            for: form.campaignRoleID,
+            guildID: guildID,
+            client: client
+        )
+        guard !voterIDs.isEmpty else { throw DatePollError.invalidCandidates }
+        let polls = try await datePolls.editPoll(
+            id: pollID,
+            campaignRoleID: form.campaignRoleID,
+            requiredVoterIDs: voterIDs,
+            candidateDates: form.candidateDates,
+            description: form.description,
+            deadline: form.deadline,
+            repeatIntervalWeeks: form.repeatIntervalWeeks,
+            userID: userID,
+            roles: member.roles
+        )
+        for poll in polls {
+            try await updatePollMessage(for: poll)
+        }
+        await removeResponse(token: interaction.token, action: "edit")
     }
 
     private func updatePollMessage(for poll: DatePoll) async throws {

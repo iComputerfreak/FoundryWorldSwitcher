@@ -28,12 +28,33 @@ enum DatePollRenderer {
         .modal(.init(
             custom_id: DatePollCreationForm.modalID,
             title: "Create date poll",
-            componentsV2: [
+            componentsV2: pollFormComponents()
+        ))
+    }
+
+    static func editModal(for poll: DatePoll) -> Payloads.InteractionResponse {
+        .modal(.init(
+            custom_id: componentID(action: "edit", pollID: poll.id),
+            title: "Edit date poll",
+            componentsV2: pollFormComponents(for: poll)
+        ))
+    }
+
+    private static func pollFormComponents(for poll: DatePoll? = nil) -> [Interaction.ModalComponent] {
+        let selectedRepeatInterval = String(poll?.repeatIntervalWeeks ?? 0)
+        let candidateDates = poll.map {
+            $0.candidates.map { Utils.inputDateFormatter.string(from: $0.date) }.joined(separator: "\n")
+        }
+        let deadlineDays = poll.map {
+            String(max(1, min(60, Int(ceil($0.deadline.timeIntervalSinceNow / GlobalConstants.secondsPerDay)))))
+        } ?? "7"
+        return [
                 .label(.init(
                     label: "Campaign role",
                     component: .roleSelect(.init(
                         custom_id: DatePollCreationForm.roleID,
                         placeholder: "Select campaign role",
+                        default_values: poll.map { [.init(id: $0.campaignRoleID)] },
                         max_values: 1,
                         required: true
                     ))
@@ -46,6 +67,7 @@ enum DatePollRenderer {
                         style: .paragraph,
                         max_length: 500,
                         required: true,
+                        value: candidateDates,
                         placeholder: "12.09\n19.09\n26.09"
                     ))
                 )),
@@ -56,7 +78,8 @@ enum DatePollRenderer {
                         custom_id: DatePollCreationForm.descriptionID,
                         style: .paragraph,
                         max_length: 1_000,
-                        required: false
+                        required: false,
+                        value: poll?.description
                     ))
                 )),
                 .label(.init(
@@ -67,7 +90,7 @@ enum DatePollRenderer {
                         style: .short,
                         max_length: 2,
                         required: true,
-                        value: "7"
+                        value: deadlineDays
                     ))
                 )),
                 .label(.init(
@@ -76,11 +99,11 @@ enum DatePollRenderer {
                     component: .stringSelect(.init(
                         custom_id: DatePollCreationForm.repeatIntervalID,
                         options: [
-                            .init(label: "No repeat", value: "0", default: true),
-                            .init(label: "Every week", value: "1"),
-                            .init(label: "Every 2 weeks", value: "2"),
-                            .init(label: "Every 3 weeks", value: "3"),
-                            .init(label: "Every 4 weeks", value: "4"),
+                            .init(label: "No repeat", value: "0", default: selectedRepeatInterval == "0"),
+                            .init(label: "Every week", value: "1", default: selectedRepeatInterval == "1"),
+                            .init(label: "Every 2 weeks", value: "2", default: selectedRepeatInterval == "2"),
+                            .init(label: "Every 3 weeks", value: "3", default: selectedRepeatInterval == "3"),
+                            .init(label: "Every 4 weeks", value: "4", default: selectedRepeatInterval == "4"),
                         ],
                         placeholder: "No repeat",
                         min_values: 1,
@@ -89,7 +112,6 @@ enum DatePollRenderer {
                     ))
                 )),
             ]
-        ))
     }
 
     static func interactionAction(from customID: String) -> (action: String, pollID: String)? {
@@ -249,6 +271,14 @@ enum DatePollRenderer {
         ))]]
     }
 
+    static func automaticReminderComponents(for poll: DatePoll) -> [Interaction.ActionRow] {
+        [[.button(.init(
+            style: .danger,
+            label: "Stop automatic reminders",
+            custom_id: componentID(action: "optout", pollID: poll.id)
+        ))]]
+    }
+
     private static func pollComponents(for poll: DatePoll) -> [Interaction.MessageLayoutComponent] {
         var components: [Interaction.MessageLayoutComponent] = [
             .textDisplay(.init(content: "# Session date poll · \(DiscordUtils.mention(id: poll.campaignRoleID))"))
@@ -276,7 +306,7 @@ enum DatePollRenderer {
             components.append(.container(.init(componentsV2: dateCards)))
         }
 
-        components.append(.actionRow(controls(for: poll)))
+        components.append(contentsOf: controls(for: poll).map { .actionRow($0) })
         if let repeatIntervalWeeks = poll.repeatIntervalWeeks {
             let repeatUnit = repeatIntervalWeeks == 1 ? "week" : "weeks"
             components.append(.textDisplay(.init(content: "-# Repeats every \(repeatIntervalWeeks) \(repeatUnit)")))
@@ -289,7 +319,7 @@ enum DatePollRenderer {
         return components
     }
 
-    private static func controls(for poll: DatePoll) -> Interaction.ActionRow {
+    private static func controls(for poll: DatePoll) -> [Interaction.ActionRow] {
         var buttons: [Interaction.ActionRow.Component] = []
 
         if poll.isOpen {
@@ -318,6 +348,11 @@ enum DatePollRenderer {
 
         if poll.status == .open || poll.status == .awaitingFinalization {
             buttons.append(.button(.init(
+                style: .secondary,
+                label: "Edit",
+                custom_id: componentID(action: "edit", pollID: poll.id)
+            )))
+            buttons.append(.button(.init(
                 style: .danger,
                 label: "Cancel",
                 custom_id: componentID(action: "cancel", pollID: poll.id)
@@ -341,20 +376,22 @@ enum DatePollRenderer {
         }
 
         if buttons.isEmpty {
-            return [.button(.init(
+            return [[.button(.init(
                 style: .secondary,
                 label: "Poll is closed",
                 custom_id: componentID(action: "vote", pollID: poll.id),
                 disabled: true
-            ))]
+            ))]]
         }
-        return .init(components: buttons)
+        return stride(from: 0, to: buttons.count, by: 5).map {
+            .init(components: Array(buttons[$0..<min($0 + 5, buttons.count)]))
+        }
     }
 
     private static func participationSummary(for poll: DatePoll) -> String {
         switch poll.status {
         case .open:
-            var summary = "## 🗳️ Current availability\n**\(poll.votes.count)/\(poll.requiredVoterIDs.count)** members have voted."
+            var summary = "## 🗳️ In Progress\n**\(poll.votes.count)/\(poll.requiredVoterIDs.count)** members have voted."
             if !poll.votes.isEmpty {
                 summary += "\nVoted: \(mentions(for: Array(poll.votes.keys)))"
             }

@@ -12,12 +12,13 @@ struct DatePoll: Codable, Identifiable {
     let guildID: GuildSnowflake
     let channelID: ChannelSnowflake
     var messageID: MessageSnowflake?
-    let campaignRoleID: RoleSnowflake
+    var campaignRoleID: RoleSnowflake
     var requiredVoterIDs: Set<UserSnowflake>
     let createdAt: Date
-    let deadline: Date
-    let description: String?
-    let candidates: [DatePollCandidate]
+    var deadline: Date
+    var deadlineDuration: TimeInterval?
+    var description: String?
+    var candidates: [DatePollCandidate]
     var status: DatePollStatus
     var finalizedCandidateID: UUID?
     var finalizedCandidateIDs: Set<UUID>?
