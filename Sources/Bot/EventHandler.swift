@@ -26,7 +26,11 @@ struct EventHandler: GatewayEventHandler {
         case let .messageComponent(component):
             try await DatePollComponentHandler(client: client, guildRegistry: guildRegistry).handle(component, interaction: interaction)
         case let .modalSubmit(modal):
-            try await DatePollModalHandler(client: client, guildRegistry: guildRegistry).handle(modal, interaction: interaction)
+            if BookingCreationForm.kind(from: modal.custom_id) != nil {
+                try await BookingModalHandler(client: client, guildRegistry: guildRegistry).handle(modal, interaction: interaction)
+            } else {
+                try await DatePollModalHandler(client: client, guildRegistry: guildRegistry).handle(modal, interaction: interaction)
+            }
         }
     }
 

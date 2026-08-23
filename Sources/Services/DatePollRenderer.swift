@@ -55,8 +55,9 @@ enum DatePollRenderer {
                         custom_id: DatePollCreationForm.roleID,
                         placeholder: "Select campaign role",
                         default_values: poll.map { [.init(id: $0.campaignRoleID)] },
+                        min_values: poll == nil ? 0 : 1,
                         max_values: 1,
-                        required: true
+                        required: poll != nil
                     ))
                 )),
                 .label(.init(

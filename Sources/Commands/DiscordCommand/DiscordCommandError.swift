@@ -33,6 +33,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case noChannel
     case rescheduleBookingPermissionDenied(required: BotPermissionLevel)
     case foundryFeaturesDisabled
+    case invalidBookingForm
     
     var errorDescription: String? {
         switch self {
@@ -107,6 +108,9 @@ enum DiscordCommandError: Error, LocalizedError {
 
         case .foundryFeaturesDisabled:
             return "Foundry features are disabled for this server."
+
+        case .invalidBookingForm:
+            return "The booking form is invalid. Please reopen it and try again."
         }
     }
 }

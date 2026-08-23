@@ -9,6 +9,7 @@ Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters bo
 - Swift Package executable target: `FoundryWorldSwitcher`.
 - Discord integration: DiscordBM gateway, slash-command registration, `DiscordCache` for guild/member data.
 - DiscordBM currently uses `nreilly/DiscordBM` branch `components-v2-payloads` for date-poll checkbox modals. Keep this fork until upstream PR #111 merges; use DiscordBM APIs only.
+- DiscordBM validates entity-select modal `default_values` against `min_values` even when no defaults exist. Discord rejects required entity selects with `min_values: 0`; unprefilled role/channel selects must use `min_values: 0` and `required: false`, then submission parsing enforces one selection.
 - Foundry integration: Pterodactyl Client API. Worlds come from `/data/Data/worlds/<id>/world.json`; current world comes from the `WORLD_NAME` startup variable.
 - External dependencies: DiscordBM and HTML2Markdown. No database or web server.
 - `main.swift` initializes persistent services, Discord gateway/cache, command registration, Pterodactyl world cache, then dispatches gateway events. Scheduler updates run after each gateway event; Discord heartbeats normally provide the polling cadence.
@@ -29,6 +30,7 @@ Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters bo
 
 - `Booking` has `EventBooking` and `ReservationBooking` variants. Only one booking may exist per local calendar date, including cancelled bookings.
 - `/book event` parses dates as `dd.MM.yyyy` and times as `HH:mm`; it stores campaign role, voice channel, topic, and world ID. `/book reservation` stores a date and world ID for preparation.
+- `/book event` and `/book reservation` open Components V2 modals. Worlds use a single-select dropdown (maximum 25 cached worlds); event forms use date/time text, voice-channel select, topic text, and role select. Submission rechecks guild DM permission and `foundryFeaturesEnabled` before booking creation.
 - Each booking creates persisted scheduler events: switch and lock at booking interval start, then unlock at interval end. Event bookings also queue configured reminders.
 - Booking interval start is seconds from local midnight. Interval end is a duration from interval start, not seconds from midnight. Defaults: 06:00 start, 23 hours duration, therefore 05:00 next day.
 - `sessionLength` controls displayed session metadata; it does not control world-lock interval.
