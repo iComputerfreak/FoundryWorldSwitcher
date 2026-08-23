@@ -79,15 +79,9 @@ Shows a list of all past bookings. Optionally, you can supply a specific campaig
 ### Dungeon Master Commands
 These commands require the permission level `Dungeon Master`.
 
-`/datepoll create role:<server_role> dates:<DD.MM,...> description:[text] deadline:[DD.MM]`
+`/datepoll role:<server_role> dates:<DD.MM,...> description:[text] deadline:[DD.MM]`
 Creates a session date poll for the role. Members select every date they can attend, may update their vote until the deadline, and can request a reminder. The deadline defaults to the end of the local day one week after creation.
 Dates may include a year (`DD.MM.YYYY`) or omit it (`DD.MM` or `DD.MM.`). Yearless dates resolve to this year when still upcoming, otherwise next year.
-
-`/datepoll finalize poll_id:<poll_id> date:<DD.MM>`
-Finalizes one candidate date and notifies the campaign role.
-
-`/datepoll cancel poll_id:<poll_id>`
-Cancels a date poll.
 
 `/listworlds`  
 Shows a list of all Foundry worlds together with their world IDs

@@ -13,38 +13,14 @@ struct DatePollCommand: DiscordCommand {
 
     let logger = Logger(label: String(describing: Self.self))
     let name = "datepoll"
-    let description = "Creates and manages campaign date polls"
+    let description = "Creates campaign date polls"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
 
     let options: [ApplicationCommand.Option]? = [
-        .init(
-            type: .subCommand,
-            name: "create",
-            description: "Creates a date poll for a campaign role",
-            options: [
-                .init(type: .role, name: "role", description: "Campaign role that must vote", required: true),
-                .init(type: .string, name: "dates", description: "Comma-separated dates in DD.MM or DD.MM.YYYY format", required: true),
-                .init(type: .string, name: "description", description: "Optional poll description", required: false),
-                .init(type: .string, name: "deadline", description: "Optional voting deadline in DD.MM or DD.MM.YYYY format", required: false),
-            ]
-        ),
-        .init(
-            type: .subCommand,
-            name: "finalize",
-            description: "Finalizes a date poll",
-            options: [
-                .init(type: .string, name: "poll_id", description: "Poll ID", required: true),
-                .init(type: .string, name: "date", description: "Chosen date in DD.MM or DD.MM.YYYY format", required: true),
-            ]
-        ),
-        .init(
-            type: .subCommand,
-            name: "cancel",
-            description: "Cancels a date poll",
-            options: [
-                .init(type: .string, name: "poll_id", description: "Poll ID", required: true),
-            ]
-        ),
+        .init(type: .role, name: "role", description: "Campaign role that must vote", required: true),
+        .init(type: .string, name: "dates", description: "Comma-separated dates in DD.MM or DD.MM.YYYY format", required: true),
+        .init(type: .string, name: "description", description: "Optional poll description", required: false),
+        .init(type: .string, name: "deadline", description: "Optional voting deadline in DD.MM or DD.MM.YYYY format", required: false),
     ]
 
     func handle(
@@ -52,23 +28,11 @@ struct DatePollCommand: DiscordCommand {
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
-        guard let subcommand = applicationCommand.options?.first else {
-            throw DiscordCommandError.missingSubcommand
-        }
-        switch subcommand.name {
-        case "create":
-            try await createPoll(subcommand: subcommand, interaction: interaction, client: client)
-        case "finalize":
-            try await finalizePoll(subcommand: subcommand, interaction: interaction, client: client)
-        case "cancel":
-            try await cancelPoll(subcommand: subcommand, interaction: interaction, client: client)
-        default:
-            throw DiscordCommandError.missingSubcommand
-        }
+        try await createPoll(applicationCommand: applicationCommand, interaction: interaction, client: client)
     }
 
     private func createPoll(
-        subcommand: Interaction.ApplicationCommand.Option,
+        applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction,
         client: any DiscordClient
     ) async throws {
@@ -81,10 +45,10 @@ struct DatePollCommand: DiscordCommand {
         }
         let ownerID = owner.id
 
-        let roleID = RoleSnowflake(try subcommand.requireOption(named: "role").requireString())
-        let dates = try parseDates(try subcommand.requireOption(named: "dates").requireString())
-        let description = subcommand.option(named: "description")?.value?.stringValue
-        let deadline = try parseDeadline(subcommand.option(named: "deadline")?.value?.stringValue)
+        let roleID = RoleSnowflake(try applicationCommand.requireOption(named: "role").requireString())
+        let dates = try parseDates(try applicationCommand.requireOption(named: "dates").requireString())
+        let description = applicationCommand.option(named: "description")?.value?.stringValue
+        let deadline = try parseDeadline(applicationCommand.option(named: "deadline")?.value?.stringValue)
         let voters = try await DatePollMemberResolver.voterIDs(for: roleID, guildID: guildID, client: client)
         guard !voters.isEmpty else {
             throw DatePollError.invalidCandidates
@@ -104,39 +68,6 @@ struct DatePollCommand: DiscordCommand {
         try await client.respond(token: interaction.token, payload: DatePollRenderer.webhookPayload(for: poll))
         let message = try await client.getOriginalInteractionResponse(token: interaction.token).decode()
         try await datePollsService.publishPoll(id: poll.id, messageID: message.id)
-    }
-
-    private func finalizePoll(
-        subcommand: Interaction.ApplicationCommand.Option,
-        interaction: Interaction,
-        client: any DiscordClient
-    ) async throws {
-        guard let member = interaction.member, let userID = member.user?.id else {
-            throw DiscordCommandError.noUser
-        }
-        let pollID = try subcommand.requireOption(named: "poll_id").requireString().uppercased()
-        let date = try parseDate(try subcommand.requireOption(named: "date").requireString())
-        let poll = try await datePollsService.finalizePoll(id: pollID, date: date, userID: userID, roles: member.roles)
-        try await updatePollMessage(for: poll, client: client)
-        try await client.createMessage(
-            channelId: poll.channelID,
-            payload: .init(content: "\(DiscordUtils.mention(id: poll.campaignRoleID)) The session date has been finalized: **\(Utils.outputDateFormatter.string(from: date))**.")
-        ).guardSuccess()
-        try await client.respond(token: interaction.token, message: "Date poll `\(poll.id)` finalized.")
-    }
-
-    private func cancelPoll(
-        subcommand: Interaction.ApplicationCommand.Option,
-        interaction: Interaction,
-        client: any DiscordClient
-    ) async throws {
-        guard let member = interaction.member, let userID = member.user?.id else {
-            throw DiscordCommandError.noUser
-        }
-        let pollID = try subcommand.requireOption(named: "poll_id").requireString().uppercased()
-        let poll = try await datePollsService.cancelPoll(id: pollID, userID: userID, roles: member.roles)
-        try await updatePollMessage(for: poll, client: client)
-        try await client.respond(token: interaction.token, message: "Date poll `\(poll.id)` cancelled.")
     }
 
     private func parseDates(_ value: String) throws -> [Date] {
@@ -206,12 +137,4 @@ struct DatePollCommand: DiscordCommand {
         return deadline
     }
 
-    private func updatePollMessage(for poll: DatePoll, client: any DiscordClient) async throws {
-        guard let messageID = poll.messageID else { throw DatePollError.missingMessageReference }
-        try await client.updateMessage(
-            channelId: poll.channelID,
-            messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll)
-        ).guardSuccess()
-    }
 }

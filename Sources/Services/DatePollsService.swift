@@ -118,6 +118,27 @@ actor DatePollsService {
         return polls[index]
     }
 
+    func pollForManagementControl(
+        pollID: String,
+        userID: UserSnowflake,
+        roles: [RoleSnowflake],
+        guildID: GuildSnowflake?,
+        channelID: ChannelSnowflake?,
+        messageID: MessageSnowflake?
+    ) throws -> DatePoll {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }) else {
+            throw DatePollError.notFound(pollID)
+        }
+        guard polls[index].status == .open || polls[index].status == .awaitingFinalization else {
+            throw DatePollError.unavailablePoll
+        }
+        guard polls[index].guildID == guildID, polls[index].channelID == channelID, polls[index].messageID == messageID else {
+            throw DatePollError.notFound(pollID)
+        }
+        try authorizeManagement(of: polls[index], userID: userID, roles: roles)
+        return polls[index]
+    }
+
     func requestReminder(pollID: String, voterID: UserSnowflake) async throws -> DatePoll {
         guard let index = polls.firstIndex(where: { $0.id == pollID }) else {
             throw DatePollError.notFound(pollID)
@@ -205,9 +226,7 @@ actor DatePollsService {
         guard let index = polls.firstIndex(where: { $0.id == id }) else {
             throw DatePollError.notFound(id)
         }
-        guard polls[index].ownerID == userID || Permissions.shared.permissionsLevel(of: userID, roles: roles) == .admin else {
-            throw DatePollError.unauthorizedFinalization
-        }
+        try authorizeManagement(of: polls[index], userID: userID, roles: roles)
         guard let candidate = polls[index].candidate(on: date) else {
             throw DatePollError.invalidFinalizedDate
         }
@@ -229,9 +248,7 @@ actor DatePollsService {
         guard let index = polls.firstIndex(where: { $0.id == id }) else {
             throw DatePollError.notFound(id)
         }
-        guard polls[index].ownerID == userID || Permissions.shared.permissionsLevel(of: userID, roles: roles) == .admin else {
-            throw DatePollError.unauthorizedFinalization
-        }
+        try authorizeManagement(of: polls[index], userID: userID, roles: roles)
         guard polls[index].status == .open || polls[index].status == .awaitingFinalization else {
             throw DatePollError.unavailablePoll
         }
@@ -266,6 +283,17 @@ actor DatePollsService {
             throw DatePollError.notFound(pollID)
         }
         return index
+    }
+
+    private func authorizeManagement(of poll: DatePoll, userID: UserSnowflake, roles: [RoleSnowflake]) throws {
+        let permissions = Permissions.shared.permissionsLevel(of: userID, roles: roles)
+        guard
+            poll.ownerID == userID
+                || permissions == .admin
+                || (permissions >= .dungeonMaster && roles.contains(poll.campaignRoleID))
+        else {
+            throw DatePollError.unauthorizedFinalization
+        }
     }
 
     private func savePolls() {

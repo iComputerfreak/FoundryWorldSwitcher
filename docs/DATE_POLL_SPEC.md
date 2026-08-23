@@ -23,12 +23,12 @@ Proposed command: `/datepoll create`.
 - Required: campaign role and one or more comma-separated candidate dates.
 - Optional: description and voting deadline.
 - Command creator becomes poll owner.
-- Candidate and finalized dates accept `dd.MM.yyyy`, `dd.MM`, or `dd.MM.`. Yearless dates resolve to this year when still upcoming, otherwise next year. Future-only dates.
+- Candidate and finalized dates accept `dd.MM.yyyy`, `dd.MM`, or `dd.MM.`. Yearless dates resolve to this year when still upcoming, otherwise next year. Future-only dates. Poll cards, modal options, and finalization display localized weekday with date.
 - Deadline accepts same date formats and expires at 23:59:59 local time. Default deadline is end of local day seven calendar days after creation.
 - Preserve command date order in persistence; render dates chronologically in poll and availability modal.
 - Reject duplicate dates.
 - Initial version limit: 20 dates. Checkbox groups allow 10 options each, so 20 dates use two groups plus one no-availability checkbox within Discord's five-modal-component limit.
-- Each poll receives a unique, eight-character ID for `/datepoll finalize` and `/datepoll cancel`.
+- Each poll receives a unique, eight-character ID shown in its footer.
 - Poll posts in command channel. Creator receives success/error through normal interaction flow.
 - Capture campaign-role member IDs at creation for initial status. Refresh the role roster when a vote is submitted; added members can vote, departed members stop counting, and their pending reminders are removed.
 
@@ -46,8 +46,10 @@ Message contains:
 - Visible voting status: voted member count, outstanding member count, and members who selected no date.
 - `Set availability` and `Remind me` buttons while open.
 - Do not show `Remind me` when its 24-hour delivery time would be after poll deadline.
+- Show green `Finalize` when at least one vote exists and poll is not finalized/cancelled. It opens a chronological checkbox modal with current availability fractions and currently requires exactly one selected date.
+- Show red `Cancel` until poll is finalized/cancelled.
 - Small footer line: creator username, poll ID, and relative voting deadline.
-- Final state: chosen date. Components become disabled.
+- Final state: chosen date. Components become disabled. Cancelled polls hide leading and date availability containers.
 
 Votes are visible. The shared message uses Components V2 containers and text displays rather than embeds.
 
@@ -76,7 +78,7 @@ Votes are visible. The shared message uses Components V2 containers and text dis
 
 ## Finalization
 
-- Poll owner or `admin` may finalize any candidate date after or before deadline.
+- Poll owner, `admin`, or Dungeon Master currently in campaign role may finalize any candidate date after or before deadline.
 - Finalization closes voting, cancels pending reminders, updates poll message to show chosen date, and disables controls.
 - Bot posts a channel message that mentions the campaign role and states the finalized date.
 - Finalization does not create an event or world booking. Booking integration is a later feature.
@@ -139,7 +141,7 @@ Extend scheduler event types for poll deadline and reminders. Events reference p
 
 - Create poll: `dungeonMaster`, matching session-booking authority.
 - Vote and request reminder: required campaign-role members only.
-- Finalize/cancel: poll owner or `admin`.
+- Finalize/cancel: poll owner, `admin`, or Dungeon Master currently in campaign role.
 - Restrict all interactions to poll guild/channel. Reject cross-guild and stale component IDs.
 
 ## First-Version Scope
