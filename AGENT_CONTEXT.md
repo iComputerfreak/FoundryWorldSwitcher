@@ -17,6 +17,7 @@ Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters bo
 ## Commands And Authorization
 
 - Command registry: `DiscordCommands.commands`. Registration bulk-replaces application commands on bot startup.
+- Command/subcommand/option descriptions are user-facing runtime contracts. Keep them accurate for current form flow, date formats, permission restrictions, and Foundry-disabled behavior; Discord caps each description at 100 characters.
 - Permission levels: `user`, `dungeonMaster`, `admin`. User and role mappings persist in `permissions.json`; highest assigned level wins.
 - Application owners receive runtime-only admin from `Permissions`; their IDs never enter guild `permissions.json` mappings.
 - Date-poll role snapshots require Guild Members intent enabled in code and Discord Developer Portal.

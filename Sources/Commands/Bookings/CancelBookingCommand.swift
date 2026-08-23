@@ -12,14 +12,14 @@ import Logging
 struct CancelBookingCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: CancelBookingCommand.self))
     let name = "cancelbooking"
-    let description = "Cancels a booking for a specific date"
+    let description = "Cancels a booking on a specified date"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     
     let options: [ApplicationCommand.Option]? = [
         ApplicationCommand.Option(
             type: .string,
             name: "date",
-            description: "The date of the booking to cancel",
+            description: "Booking date in DD.MM.YYYY format",
             required: true
         )
     ]

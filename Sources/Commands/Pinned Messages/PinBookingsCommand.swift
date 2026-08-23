@@ -12,20 +12,20 @@ import Logging
 struct PinBookingsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: PinBookingsCommand.self))
     let name = "pinbookings"
-    let description = "Sends the current booking schedule in the channel and updates it when further changes are made"
+    let description = "Posts an auto-updating schedule of active bookings"
     let permissionsLevel: BotPermissionLevel = .admin
     
     let options: [ApplicationCommand.Option]? = [
         .init(
             type: .role,
             name: "role",
-            description: "The role by which to filter the bookings",
+            description: "Filter event bookings by campaign role; excludes reservations",
             required: false
         ),
         .init(
             type: .string,
             name: "world_id",
-            description: "The world by which to filter the bookings",
+            description: "Filter by Foundry world ID; unavailable when Foundry is disabled",
             required: false
         ),
     ]

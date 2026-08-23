@@ -12,26 +12,26 @@ import Logging
 struct RescheduleEventCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "rescheduleevent"
-    let description = "Reschedules an event booking"
+    let description = "Reschedules a booking date and, for events, its time"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     
     let options: [ApplicationCommand.Option]? = [
         .init(
             type: .string,
             name: "original_date",
-            description: "The ID of the event to reschedule",
+            description: "Current booking date in DD.MM.YYYY format",
             required: true
         ),
         .init(
             type: .string,
             name: "new_date",
-            description: "The new due date of the event",
+            description: "Optional replacement date in DD.MM.YYYY format",
             required: false
         ),
         .init(
             type: .string,
             name: "new_time",
-            description: "The new time of the event",
+            description: "Optional replacement event time in HH:mm format",
             required: false
         )
     ]

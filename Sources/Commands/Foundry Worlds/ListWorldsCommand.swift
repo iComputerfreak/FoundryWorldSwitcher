@@ -12,7 +12,7 @@ import Logging
 struct ListWorldsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "listworlds"
-    let description = "Lists all available worlds in Foundry VTT"
+    let description = "Lists Foundry worlds; unavailable when Foundry features are disabled"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     let requiresFoundryFeatures = true
     

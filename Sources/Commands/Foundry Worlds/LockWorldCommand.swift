@@ -12,7 +12,7 @@ import Logging
 struct LockWorldCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: LockWorldCommand.self))
     let name = "lockworld"
-    let description = "Locks a world, preventing others from switching to another world"
+    let description = "Locks global world switching; unavailable when Foundry features are disabled"
     let permissionsLevel: BotPermissionLevel = .admin
     let requiresFoundryFeatures = true
     
@@ -20,13 +20,13 @@ struct LockWorldCommand: DiscordCommand {
         .init(
             type: .string,
             name: "world_id",
-            description: "The ID of the world to switch to before locking",
+            description: "Foundry world ID to activate before locking switching",
             required: false
         ),
         .init(
             type: .string,
             name: "duration",
-            description: "The duration for which the world should be locked",
+            description: "Lock duration, for example 1h 30m; omit for an indefinite lock",
             required: false
         )
     ]

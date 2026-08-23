@@ -11,7 +11,7 @@ import Logging
 struct BookCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "book"
-    let description = "Books a reservation or event"
+    let description = "Opens a Foundry reservation or Foundry/external event booking form"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     let requiresImmediateResponse = true
 
@@ -19,12 +19,12 @@ struct BookCommand: DiscordCommand {
         .init(
             type: .subCommand,
             name: "reservation",
-            description: "Opens a reservation booking form"
+            description: "Opens a Foundry-world reservation form; unavailable when Foundry is disabled"
         ),
         .init(
             type: .subCommand,
             name: "event",
-            description: "Opens an event booking form"
+            description: "Opens an event form; choose No Foundry world for external or in-person sessions"
         )
     ]
 

@@ -12,7 +12,7 @@ import Logging
 struct EventQueueCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: EventQueueCommand.self))
     let name = "eventqueue"
-    let description = "Returns a list of all events in the event scheduler queue"
+    let description = "Lists queued scheduler events for this server"
     let permissionsLevel: BotPermissionLevel = .admin
     let requiresFoundryFeatures = true
     

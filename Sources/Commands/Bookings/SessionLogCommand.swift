@@ -7,14 +7,14 @@ import Logging
 struct SessionLogCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "sessionlog"
-    let description = "Shows a list of all past events"
+    let description = "Shows up to 10 completed, non-cancelled event sessions"
     let permissionsLevel: BotPermissionLevel = .user
     
     let options: [ApplicationCommand.Option]? = [
         .init(
             type: .role,
             name: "role",
-            description: "The role by which to filter the bookings",
+            description: "Campaign role used to filter listed event sessions",
             required: false
         ),
     ]

@@ -7,7 +7,7 @@ import Logging
 struct UpdateCacheCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "updatecache"
-    let description = "Invalidates and re-fetches the cache"
+    let description = "Refreshes cached Foundry world metadata from Pterodactyl"
     let permissionsLevel: BotPermissionLevel = .admin
     let requiresFoundryFeatures = true
     

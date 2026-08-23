@@ -12,7 +12,7 @@ import Logging
 struct LockStateCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: LockStateCommand.self))
     let name = "lockstate"
-    let description = "Returns the current state of the world switching lock"
+    let description = "Shows global world-switching lock state; unavailable when Foundry is disabled"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     let requiresFoundryFeatures = true
     

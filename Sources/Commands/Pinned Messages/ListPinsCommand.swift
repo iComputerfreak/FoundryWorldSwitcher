@@ -7,7 +7,7 @@ import Logging
 struct ListPinsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "listpins"
-    let description = "Lists all pinned schedule messages"
+    let description = "Lists saved booking-schedule messages available in this server"
     let permissionsLevel: BotPermissionLevel = .admin
     
     func handle(

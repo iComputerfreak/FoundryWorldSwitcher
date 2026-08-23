@@ -12,7 +12,7 @@ import Logging
 class UpdatePinsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: UpdatePinsCommand.self))
     let name = "updatepins"
-    let description = "Updates all pinned booking messages"
+    let description = "Refreshes all saved booking-schedule messages in this server"
     let permissionsLevel: BotPermissionLevel = .admin
     
     func handle(

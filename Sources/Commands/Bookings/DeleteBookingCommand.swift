@@ -12,14 +12,14 @@ import Logging
 struct DeleteBookingCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: DeleteBookingCommand.self))
     let name = "deletebooking"
-    let description = "Deletes a booking for a specific date, removing it from the session log as well."
+    let description = "Deletes a dated booking, including its session-log record"
     let permissionsLevel: BotPermissionLevel = .admin
     
     let options: [ApplicationCommand.Option]? = [
         ApplicationCommand.Option(
             type: .string,
             name: "date",
-            description: "The date of the booking to delete",
+            description: "Booking date in DD.MM.YYYY format",
             required: true
         )
     ]

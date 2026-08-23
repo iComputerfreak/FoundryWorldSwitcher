@@ -12,7 +12,7 @@ import Logging
 struct SwitchWorldCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "switchworld"
-    let description = "Switches the currently active Foundry VTT world"
+    let description = "Switches the active Foundry world; unavailable when Foundry features are disabled"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     let requiresFoundryFeatures = true
     
@@ -20,13 +20,13 @@ struct SwitchWorldCommand: DiscordCommand {
         .init(
             type: .string,
             name: "world_id",
-            description: "The ID of the world to switch to",
+            description: "Foundry world ID to activate",
             required: true
         ),
         .init(
             type: .boolean,
             name: "force",
-            description: "Forces the switch even if world switching is locked",
+            description: "Overrides the world-switching lock; application owner only",
             required: false
         )
     ]

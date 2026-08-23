@@ -13,7 +13,7 @@ import HTML2Markdown
 struct WorldInfoCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "worldinfo"
-    let description = "Displays information about the current world or a given world ID"
+    let description = "Shows current or selected Foundry world info; unavailable when Foundry is disabled"
     let permissionsLevel: BotPermissionLevel = .user
     let requiresFoundryFeatures = true
     let options: [ApplicationCommand.Option]? = [

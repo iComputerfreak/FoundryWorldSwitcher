@@ -8,7 +8,7 @@ import Logging
 struct DatePollCommand: DiscordCommand {
     let logger = Logger(label: String(describing: Self.self))
     let name = "datepoll"
-    let description = "Creates a campaign date poll"
+    let description = "Opens a campaign date-poll form with dates, deadline, and optional repeat"
     let permissionsLevel: BotPermissionLevel = .dungeonMaster
     let requiresImmediateResponse = true
 

@@ -12,7 +12,7 @@ import Logging
 struct ConfigCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "config"
-    let description = "Configures the bot"
+    let description = "Views or changes this server's booking, reminder, and Foundry-feature settings"
     let permissionsLevel: BotPermissionLevel = .admin
     private static let guildConfigKeys = ConfigKey.allCases.filter {
         $0 != .pterodactylHost && $0 != .pterodactylServerID
@@ -25,12 +25,12 @@ struct ConfigCommand: DiscordCommand {
         .init(
             type: .subCommand,
             name: "show",
-            description: "Shows the current configuration",
+            description: "Shows this server's configuration values",
             options: [
                 .init(
                     type: .string,
                     name: "key",
-                    description: "The key of the configuration to show",
+                    description: "Guild configuration key",
                     required: false
                 )
             ]
@@ -38,18 +38,18 @@ struct ConfigCommand: DiscordCommand {
         .init(
             type: .subCommand,
             name: "set",
-            description: "Sets a configuration value",
+            description: "Sets a guild configuration value",
             options: [
                 .init(
                     type: .string,
                     name: "key",
-                    description: "The key of the configuration to set",
+                    description: "Guild configuration key",
                     required: true
                 ),
                 .init(
                     type: .string,
                     name: "value",
-                    description: "The value to set",
+                    description: "New value; format depends on the selected key",
                     required: true
                 )
             ]
@@ -57,12 +57,12 @@ struct ConfigCommand: DiscordCommand {
         .init(
             type: .subCommand,
             name: "reset",
-            description: "Resets a configuration value to its default value",
+            description: "Resets a guild configuration value to its default",
             options: [
                 .init(
                     type: .string,
                     name: "key",
-                    description: "The key of the configuration to reset",
+                    description: "Guild configuration key",
                     required: true
                 )
             ]

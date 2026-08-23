@@ -12,7 +12,7 @@ import Logging
 struct UnlockWorldCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: UnlockWorldCommand.self))
     let name = "unlockworld"
-    let description = "Unlocks world switching, allowing others to switch worlds again"
+    let description = "Application owner only: removes the global world-switching lock"
     let permissionsLevel: BotPermissionLevel = .admin
     let requiresFoundryFeatures = true
     

@@ -12,7 +12,7 @@ import Logging
 struct BookingsCommand: DiscordCommand {
     let logger: Logger = .init(label: String(describing: Self.self))
     let name = "bookings"
-    let description = "Shows a list of all future reservations"
+    let description = "Shows booking records; only external bookings appear when Foundry is disabled"
     let permissionsLevel: BotPermissionLevel = .user
     
     func handle(
