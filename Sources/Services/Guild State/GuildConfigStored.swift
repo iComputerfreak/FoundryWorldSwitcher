@@ -12,6 +12,9 @@ struct GuildConfigStored: Codable {
     /// Duration from interval start until the booking interval ends.
     var bookingIntervalEndTime: TimeInterval
 
+    /// Default event time in seconds from midnight. Missing legacy values default to 19:00.
+    var defaultEventBookingTime: TimeInterval?
+
     /// Lead time before a session for the regular reminder.
     var sessionReminderTime: TimeInterval
 

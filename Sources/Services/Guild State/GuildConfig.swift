@@ -19,6 +19,9 @@ final class GuildConfig: BookingConfiguration {
     /// The time at which the booking ends in seconds from `bookingIntervalStartTime`.
     var bookingIntervalEndTime: TimeInterval { didSet { save() } }
 
+    /// The default event time used when a booking form date omits a time.
+    var defaultEventBookingTime: TimeInterval { didSet { save() } }
+
     /// The time how much in advance the bot will remind players about a session.
     var sessionReminderTime: TimeInterval { didSet { save() } }
 
@@ -42,6 +45,7 @@ final class GuildConfig: BookingConfiguration {
         sessionLength: 4 * GlobalConstants.secondsPerHour,
         bookingIntervalStartTime: 6 * GlobalConstants.secondsPerHour,
         bookingIntervalEndTime: 23 * GlobalConstants.secondsPerHour,
+        defaultEventBookingTime: 19 * GlobalConstants.secondsPerHour,
         sessionReminderTime: 3 * GlobalConstants.secondsPerDay,
         shouldNotifyAtSessionStart: true,
         sessionStartReminderTime: 5 * GlobalConstants.secondsPerMinute,
@@ -57,6 +61,7 @@ final class GuildConfig: BookingConfiguration {
         sessionLength = stored.sessionLength
         bookingIntervalStartTime = stored.bookingIntervalStartTime
         bookingIntervalEndTime = stored.bookingIntervalEndTime
+        defaultEventBookingTime = stored.defaultEventBookingTime ?? 19 * GlobalConstants.secondsPerHour
         sessionReminderTime = stored.sessionReminderTime
         shouldNotifyAtSessionStart = stored.shouldNotifyAtSessionStart
         sessionStartReminderTime = stored.sessionStartReminderTime
@@ -78,6 +83,8 @@ final class GuildConfig: BookingConfiguration {
             return Utils.timeString(for: bookingIntervalStartTime)
         case .bookingIntervalEndTime:
             return Utils.durationString(for: bookingIntervalEndTime)
+        case .defaultEventBookingTime:
+            return Utils.timeString(for: defaultEventBookingTime)
         case .sessionReminderTime:
             return Utils.durationString(for: sessionReminderTime)
         case .shouldNotifyAtSessionStart:
@@ -109,6 +116,12 @@ final class GuildConfig: BookingConfiguration {
                 throw DiscordCommandError.wrongDurationFormat(value)
             }
             bookingIntervalEndTime = seconds
+        case .defaultEventBookingTime:
+            let startOfDay = Calendar.current.startOfDay(for: .now)
+            guard let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(startOfDay) else {
+                throw DiscordCommandError.wrongTimeFormat(value, format: Utils.timeFormatter.dateFormat.uppercased())
+            }
+            defaultEventBookingTime = time
         case .sessionReminderTime:
             sessionReminderTime = try DurationParser.duration(from: value)
         case .shouldNotifyAtSessionStart:
@@ -136,6 +149,8 @@ final class GuildConfig: BookingConfiguration {
             bookingIntervalStartTime = Self.defaultStored.bookingIntervalStartTime
         case .bookingIntervalEndTime:
             bookingIntervalEndTime = Self.defaultStored.bookingIntervalEndTime
+        case .defaultEventBookingTime:
+            defaultEventBookingTime = Self.defaultStored.defaultEventBookingTime ?? 19 * GlobalConstants.secondsPerHour
         case .sessionReminderTime:
             sessionReminderTime = Self.defaultStored.sessionReminderTime
         case .shouldNotifyAtSessionStart:
@@ -159,6 +174,7 @@ final class GuildConfig: BookingConfiguration {
                 sessionLength: sessionLength,
                 bookingIntervalStartTime: bookingIntervalStartTime,
                 bookingIntervalEndTime: bookingIntervalEndTime,
+                defaultEventBookingTime: defaultEventBookingTime,
                 sessionReminderTime: sessionReminderTime,
                 shouldNotifyAtSessionStart: shouldNotifyAtSessionStart,
                 sessionStartReminderTime: sessionStartReminderTime,

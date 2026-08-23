@@ -45,7 +45,11 @@ struct BookCommand: DiscordCommand {
         try await client.createInteractionResponse(
             id: interaction.id,
             token: interaction.token,
-            payload: BookingRenderer.creationModal(kind: kind, worlds: worlds)
+            payload: BookingRenderer.creationModal(
+                kind: kind,
+                worlds: worlds,
+                defaultEventBookingTime: context.config.defaultEventBookingTime
+            )
         ).guardSuccess()
     }
 }

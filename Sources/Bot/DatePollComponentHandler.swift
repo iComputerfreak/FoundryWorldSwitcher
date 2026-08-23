@@ -231,9 +231,8 @@ struct DatePollComponentHandler {
                 channelID: interaction.channel_id,
                 messageID: interaction.message?.id
             )
-            guard let dateTime = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: result.candidate.date) else {
-                throw DatePollError.unavailablePoll
-            }
+            let dateTime = Calendar.current.startOfDay(for: result.candidate.date)
+                .addingTimeInterval(context.config.defaultEventBookingTime)
             let worlds = context.config.foundryFeaturesEnabled ? try await PterodactylAPI.shared.worlds() : []
             try await client.createInteractionResponse(
                 id: interaction.id,
@@ -241,6 +240,7 @@ struct DatePollComponentHandler {
                 payload: BookingRenderer.creationModal(
                     kind: .event,
                     worlds: worlds,
+                    defaultEventBookingTime: context.config.defaultEventBookingTime,
                     dateTime: dateTime,
                     campaignRoleID: result.poll.campaignRoleID,
                     sourcePollID: pollID,

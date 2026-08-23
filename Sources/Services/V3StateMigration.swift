@@ -297,6 +297,7 @@ enum V3StateMigration {
                 sessionLength: sessionLength,
                 bookingIntervalStartTime: bookingIntervalStartTime,
                 bookingIntervalEndTime: bookingIntervalEndTime,
+                defaultEventBookingTime: 19 * GlobalConstants.secondsPerHour,
                 sessionReminderTime: sessionReminderTime,
                 shouldNotifyAtSessionStart: shouldNotifyAtSessionStart,
                 sessionStartReminderTime: sessionStartReminderTime,

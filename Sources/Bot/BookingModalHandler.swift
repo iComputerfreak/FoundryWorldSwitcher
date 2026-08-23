@@ -22,7 +22,7 @@ struct BookingModalHandler {
                 throw DiscordCommandError.unauthorized(requiredLevel: .dungeonMaster)
             }
 
-            let form = try BookingCreationForm(from: modal)
+            let form = try BookingCreationForm(from: modal, defaultEventBookingTime: context.config.defaultEventBookingTime)
             if form.kind == .reservation || form.worldID != nil {
                 guard context.config.foundryFeaturesEnabled else {
                     throw DiscordCommandError.foundryFeaturesDisabled

@@ -16,6 +16,7 @@ enum ConfigKey: String, CaseIterable {
     case sessionLength
     case bookingIntervalStartTime
     case bookingIntervalEndTime
+    case defaultEventBookingTime
     case sessionReminderTime
     case shouldNotifyAtSessionStart
     case sessionStartReminderTime

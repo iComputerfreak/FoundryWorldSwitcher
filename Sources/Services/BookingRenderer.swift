@@ -5,6 +5,7 @@ enum BookingRenderer {
     static func creationModal(
         kind: BookingCreationForm.Kind,
         worlds: [FoundryWorld],
+        defaultEventBookingTime: TimeInterval,
         dateTime: Date? = nil,
         campaignRoleID: RoleSnowflake? = nil,
         sourcePollID: String? = nil,
@@ -54,6 +55,7 @@ enum BookingRenderer {
             ))
 
         case .event:
+            let defaultTime = Utils.timeString(for: defaultEventBookingTime)
             return .modal(.init(
                 custom_id: modalID(kind: kind, sourcePollID: sourcePollID, sourceCandidateID: sourceCandidateID),
                 title: "Create event booking",
@@ -61,14 +63,14 @@ enum BookingRenderer {
                     worldSelect,
                     .label(.init(
                         label: "Event date and time",
-                        description: "Format: DD.MM.YYYY HH:MM",
+                        description: "Format: DD.MM.YYYY [HH:MM]; missing time defaults to \(defaultTime)",
                         component: .textInput(.init(
                             custom_id: BookingCreationForm.dateTimeID,
                             style: .short,
                             max_length: 16,
                             required: true,
                             value: dateTime.map { dateTimeFormatter.string(from: $0) },
-                            placeholder: "31.12.2026 19:00"
+                            placeholder: "31.12.2026 \(defaultTime)"
                         ))
                     )),
                     .label(.init(

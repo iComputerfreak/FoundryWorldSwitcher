@@ -25,7 +25,7 @@ struct BookingCreationForm {
     let sourcePollID: String?
     let sourceCandidateID: UUID?
 
-    init(from modal: Interaction.ModalSubmit) throws {
+    init(from modal: Interaction.ModalSubmit, defaultEventBookingTime: TimeInterval) throws {
         guard let context = Self.modalContext(from: modal.custom_id), let components = modal.componentsV2 else {
             throw DiscordCommandError.invalidBookingForm
         }
@@ -67,7 +67,7 @@ struct BookingCreationForm {
             }
             let locationValues = locationSelect.values ?? []
             guard locationValues.count <= 1 else { throw DiscordCommandError.invalidBookingForm }
-            date = try Self.parseDateTime(dateTimeValue)
+            date = try Self.parseDateTime(dateTimeValue, defaultEventBookingTime: defaultEventBookingTime)
             campaignRoleID = .init(roleValues[0])
             locationID = locationValues.first.map(ChannelSnowflake.init)
             let trimmedTopic = topicValue.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -102,9 +102,15 @@ struct BookingCreationForm {
         return date
     }
 
-    private static func parseDateTime(_ value: String) throws -> Date {
-        guard let date = dateTimeFormatter.date(from: value) else {
-            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM.YYYY HH:MM")
+    private static func parseDateTime(_ value: String, defaultEventBookingTime: TimeInterval) throws -> Date {
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let date: Date
+        if let explicitDateTime = dateTimeFormatter.date(from: trimmedValue) {
+            date = explicitDateTime
+        } else if let dateOnly = dateFormatter.date(from: trimmedValue) {
+            date = Calendar.current.startOfDay(for: dateOnly).addingTimeInterval(defaultEventBookingTime)
+        } else {
+            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM.YYYY [HH:MM]")
         }
         guard Calendar.current.startOfDay(for: date).addingTimeInterval(GlobalConstants.secondsPerDay) > .now else {
             throw DiscordCommandError.dateIsInThePast(date)
