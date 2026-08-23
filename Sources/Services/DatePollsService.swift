@@ -66,6 +66,12 @@ actor DatePollsService {
         await scheduler.schedule(.init(dueDate: polls[index].deadline, eventType: .closeDatePoll(pollID: id)))
     }
 
+    func discardUnpublishedPoll(id: String) {
+        guard let index = polls.firstIndex(where: { $0.id == id }), polls[index].messageID == nil else { return }
+        polls.remove(at: index)
+        savePolls()
+    }
+
     func poll(id: String) throws -> DatePoll {
         guard let poll = polls.first(where: { $0.id == id }) else {
             throw DatePollError.notFound(id)

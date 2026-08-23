@@ -75,7 +75,7 @@ Guild state types live one-per-file under `Sources/Services/Guild State/`. Docum
 
 ## Deployment And Development
 
-- Build locally: `swift build`; run with `swift run` after supplying runtime secrets/config.
+- After code changes, build with Xcode MCP. Manual runtime checks require configured runtime secrets/config.
 - Dockerfile uses Swift 6 Jammy multi-stage build, runs non-root `container`, and expects `/home/container/data` to persist.
 - GitHub workflow builds and pushes Docker Hub image for every tag. It does not run tests, linting, or security scans.
 - Pterodactyl bot egg installs/releases bot separately. Validate egg install commands after changing package/build behavior.
@@ -83,7 +83,7 @@ Guild state types live one-per-file under `Sources/Services/Guild State/`. Docum
 
 ## Documentation Drift And Open Work
 
-- Date polls use checkbox modals for voting/finalization, a Components V2 shared message, JSON-backed role voter rosters refreshed on vote, scheduler-backed per-user reminders, and short IDs. Components V2 is permanent per Discord message and forbids embeds/content. Poll owners/admins can manage any owned/all polls; other Dungeon Masters must hold campaign role. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
+- Date polls use modals for creation/voting/finalization, a Components V2 shared message, JSON-backed role voter rosters refreshed on vote, scheduler-backed per-user reminders, and short IDs. Bare `/datepoll` opens a guild-local creation modal: role, newline-separated dates, optional description, and 1...60 deadline days. Components V2 is permanent per Discord message and forbids embeds/content. Poll owners/admins can manage any owned/all polls; other Dungeon Masters must hold campaign role. See `docs/DATE_POLL_SPEC.md` for runtime behavior and command contract.
 - README names `/reschedulebooking`; registered command is `/rescheduleevent`.
 - README says Discord scheduled event creation is planned; `createServerEvent` exists but no command uses it.
 - Pterodactyl egg token variables may be user-viewable. Treat panel configuration and generated secret files as sensitive.

@@ -20,6 +20,60 @@ enum DatePollRenderer {
         .init(componentsV2: pollComponents(for: poll))
     }
 
+    static func createMessagePayload(for poll: DatePoll) -> Payloads.CreateMessage {
+        .init(componentsV2: pollComponents(for: poll))
+    }
+
+    static func creationModal() -> Payloads.InteractionResponse {
+        .modal(.init(
+            custom_id: DatePollCreationForm.modalID,
+            title: "Create date poll",
+            componentsV2: [
+                .label(.init(
+                    label: "Campaign role",
+                    component: .roleSelect(.init(
+                        custom_id: DatePollCreationForm.roleID,
+                        placeholder: "Select campaign role",
+                        max_values: 1,
+                        required: true
+                    ))
+                )),
+                .label(.init(
+                    label: "Candidate dates",
+                    description: "One DD.MM or DD.MM.YYYY date per line.",
+                    component: .textInput(.init(
+                        custom_id: DatePollCreationForm.datesID,
+                        style: .paragraph,
+                        max_length: 500,
+                        required: true,
+                        placeholder: "12.09\n19.09\n26.09"
+                    ))
+                )),
+                .label(.init(
+                    label: "Description",
+                    description: "Optional details for the campaign.",
+                    component: .textInput(.init(
+                        custom_id: DatePollCreationForm.descriptionID,
+                        style: .paragraph,
+                        max_length: 1_000,
+                        required: false
+                    ))
+                )),
+                .label(.init(
+                    label: "Deadline days",
+                    description: "Whole days from now, from 1 to 60.",
+                    component: .textInput(.init(
+                        custom_id: DatePollCreationForm.deadlineDaysID,
+                        style: .short,
+                        max_length: 2,
+                        required: true,
+                        value: "7"
+                    ))
+                )),
+            ]
+        ))
+    }
+
     static func interactionAction(from customID: String) -> (action: String, pollID: String)? {
         let parts = customID.split(separator: ":")
         guard parts.count == 3, parts[0] == Constants.componentPrefix else { return nil }

@@ -24,6 +24,8 @@ struct DatePollModalHandler {
                 throw DatePollError.notFound(modal.custom_id)
             }
             switch action.action {
+            case "create":
+                try await handleCreation(modal: modal, interaction: interaction, context: context)
             case "vote":
                 try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             case "finalize":
@@ -35,6 +37,58 @@ struct DatePollModalHandler {
             logger.warning("Failed to handle date poll modal: \(error)")
             try await client.respond(token: interaction.token, message: error.localizedDescription)
         }
+    }
+
+    private func handleCreation(
+        modal: Interaction.ModalSubmit,
+        interaction: Interaction,
+        context: GuildContext
+    ) async throws {
+        guard
+            let member = interaction.member,
+            let owner = member.user,
+            let guildID = interaction.guild_id,
+            let channelID = interaction.channel_id
+        else {
+            throw DiscordCommandError.noGuild
+        }
+        guard context.permissions.permissionsLevel(of: owner.id, roles: member.roles) >= .dungeonMaster else {
+            throw DiscordCommandError.unauthorized(requiredLevel: .dungeonMaster)
+        }
+
+        let form = try DatePollCreationForm(from: modal)
+        let voters = try await DatePollMemberResolver.voterIDs(for: form.campaignRoleID, guildID: guildID, client: client)
+        guard !voters.isEmpty else { throw DatePollError.invalidCandidates }
+
+        let poll = await context.datePolls.createPoll(
+            ownerID: owner.id,
+            ownerUsername: owner.username,
+            guildID: guildID,
+            channelID: channelID,
+            campaignRoleID: form.campaignRoleID,
+            requiredVoterIDs: voters,
+            deadline: form.deadline,
+            description: form.description,
+            candidateDates: form.candidateDates
+        )
+
+        do {
+            let message = try await client.createMessage(
+                channelId: channelID,
+                payload: DatePollRenderer.createMessagePayload(for: poll)
+            ).decode()
+            do {
+                try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)
+            } catch {
+                try? await client.deleteMessage(channelId: channelID, messageId: message.id).guardSuccess()
+                throw error
+            }
+        } catch {
+            await context.datePolls.discardUnpublishedPoll(id: poll.id)
+            throw error
+        }
+
+        try await client.respond(token: interaction.token, message: "Date poll created.")
     }
 
     private func handleVote(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService) async throws {

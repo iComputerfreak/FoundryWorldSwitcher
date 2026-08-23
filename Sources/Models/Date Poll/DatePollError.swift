@@ -14,6 +14,8 @@ enum DatePollError: LocalizedError {
     case reminderCannotBeDelayed
     case invalidFinalizedDate
     case invalidFinalizationSelection
+    case invalidCreationForm
+    case invalidDeadlineDays
     case unauthorizedFinalization
     case missingMessageReference
 
@@ -28,6 +30,8 @@ enum DatePollError: LocalizedError {
         case .reminderCannotBeDelayed: return "This reminder cannot be delayed."
         case .invalidFinalizedDate: return "The selected date is not part of this poll."
         case .invalidFinalizationSelection: return "Select exactly one date to finalize."
+        case .invalidCreationForm: return "The date poll form is incomplete or invalid."
+        case .invalidDeadlineDays: return "Deadline days must be a whole number from 1 to 60."
         case .unauthorizedFinalization: return "Only the poll owner, an admin, or a Dungeon Master in this campaign can manage this poll."
         case .missingMessageReference: return "This date poll has no Discord message reference."
         }

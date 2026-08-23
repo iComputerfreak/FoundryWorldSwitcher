@@ -18,18 +18,21 @@ Components give the bot one authoritative, editable vote per user. The modal sho
 
 ## Create Poll
 
-Proposed command: `/datepoll create`.
+Command: `/datepoll`.
 
-- Required: campaign role and one or more comma-separated candidate dates.
-- Optional: description and voting deadline.
+- `/datepoll` opens a creation modal.
+- Required: one campaign role, one or more candidate dates, and deadline days.
+- Dates use a paragraph input with one date per non-empty line.
+- Description uses an optional paragraph input.
+- Deadline days uses a required numeric text input, prefilled with `7`.
 - Command creator becomes poll owner.
 - Candidate and finalized dates accept `dd.MM.yyyy`, `dd.MM`, or `dd.MM.`. Yearless dates resolve to this year when still upcoming, otherwise next year. Future-only dates. Poll cards, modal options, and finalization display localized weekday with date.
-- Deadline accepts same date formats and expires at 23:59:59 local time. Default deadline is end of local day seven calendar days after creation.
+- Deadline days must be a whole number from 1 to 60. Poll expires exactly that many 24-hour days after modal submission.
 - Preserve command date order in persistence; render dates chronologically in poll and availability modal.
 - Reject duplicate dates.
 - Initial version limit: 20 dates. Checkbox groups allow 10 options each, so 20 dates use two groups plus one no-availability checkbox within Discord's five-modal-component limit.
 - Each poll receives a unique, eight-character ID shown in its footer.
-- Poll posts in command channel. Creator receives success/error through normal interaction flow.
+- Poll posts in command channel. Creator receives ephemeral success/error through normal interaction flow.
 - Capture campaign-role member IDs at creation for initial status. Refresh the role roster when a vote is submitted; added members can vote, departed members stop counting, and their pending reminders are removed.
 
 No selected world, target channel, or automatic booking integration in first version.
@@ -126,7 +129,7 @@ Extend scheduler event types for poll deadline and reminders. Events reference p
 
 ## Discord Integration
 
-- Existing interaction handler supports application commands only. Add message-component routing to present modals and modal-submit routing to persist votes.
+- `/datepoll` sends its creation modal as the initial command response; other commands retain deferred responses. Modal-submit routing creates polls and persists votes.
 - Use DiscordBM APIs for every Discord request. Do not add manual REST requests.
 - Component custom IDs include action, poll ID, and checkbox-group index where needed. Validate IDs, poll state, guild/channel, and voter authorization server-side.
 - Shared poll uses Components V2 containers, text displays, separators, and action rows. Components V2 forbids embeds/content and cannot be removed once set on a message.
@@ -135,7 +138,7 @@ Extend scheduler event types for poll deadline and reminders. Events reference p
 - A component interaction must receive acknowledgement within Discord's short response deadline.
 - Discord checkbox groups allow 10 options and modals allow five top-level components. Initial 20-date limit remains valid.
 - Disable controls when poll reaches deadline, finalizes, or cancels.
-- Bot needs access to campaign-role membership at poll creation and vote submission. Cache/intents must support reliable role-member lookup.
+- Bot needs Send Messages in poll creation channels and access to campaign-role membership at poll creation and vote submission. Cache/intents must support reliable role-member lookup.
 
 ## Permissions
 

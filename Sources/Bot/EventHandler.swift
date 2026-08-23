@@ -34,19 +34,20 @@ struct EventHandler: GatewayEventHandler {
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction
     ) async throws {
-        /// You only have 3 second to respond, so it's better to send
-        /// the response right away, and edit the response later.
-        /// This will show a loading indicator to users.
-        try await client.createInteractionResponse(
-            id: interaction.id,
-            token: interaction.token,
-            payload: .deferredChannelMessageWithSource()
-        ).guardSuccess()
-
-        // Use the commands defined in main.swift
+        var deferredResponse = false
         do {
             guard let command = DiscordCommands.commands.first(where: { $0.name == applicationCommand.name }) else {
                 throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
+            }
+            let requiresImmediateResponse = command.requiresImmediateResponse
+            if !requiresImmediateResponse {
+                // Most commands may take longer than Discord's response window.
+                try await client.createInteractionResponse(
+                    id: interaction.id,
+                    token: interaction.token,
+                    payload: .deferredChannelMessageWithSource()
+                ).guardSuccess()
+                deferredResponse = true
             }
             guard let guildID = interaction.guild_id else {
                 throw DiscordCommandError.noGuild
@@ -64,22 +65,37 @@ struct EventHandler: GatewayEventHandler {
                 try await command.handle(applicationCommand, interaction: interaction, context: context, client: client)
             } catch DiscordCommandError.unauthorized {
                 logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions.")
-                try await client.respond(
-                    token: interaction.token,
-                    message: "You need at least permission level `\(command.permissionsLevel)` to execute this command."
+                try await respond(
+                    to: interaction,
+                    message: "You need at least permission level `\(command.permissionsLevel)` to execute this command.",
+                    immediately: requiresImmediateResponse
                 )
             } catch DiscordCommandError.missingArgument(argumentName: let argName) {
-                try await client.respond(
-                    token: interaction.token,
-                    message: "Error: You need to specify the argument `\(argName)`."
+                try await respond(
+                    to: interaction,
+                    message: "Error: You need to specify the argument `\(argName)`.",
+                    immediately: requiresImmediateResponse
                 )
             }
         } catch {
             logger.error("Error handling command /\(applicationCommand.name): \(error)")
-            try await client.respond(
-                token: interaction.token,
-                message: "There was an error running your command:\n\(error.localizedDescription)"
+            try await respond(
+                to: interaction,
+                message: "There was an error running your command:\n\(error.localizedDescription)",
+                immediately: !deferredResponse
             )
+        }
+    }
+
+    private func respond(to interaction: Interaction, message: String, immediately: Bool) async throws {
+        if immediately {
+            try await client.createInteractionResponse(
+                id: interaction.id,
+                token: interaction.token,
+                payload: .channelMessageWithSource(.init(content: message, flags: [.ephemeral]))
+            ).guardSuccess()
+        } else {
+            try await client.respond(token: interaction.token, message: message)
         }
     }
 }

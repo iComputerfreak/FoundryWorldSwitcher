@@ -13,6 +13,7 @@ protocol DiscordCommand {
     var description: String { get }
     var options: [ApplicationCommand.Option]? { get }
     var permissionsLevel: BotPermissionLevel { get }
+    var requiresImmediateResponse: Bool { get }
     var logger: Logger { get }
     
     func createApplicationCommand() -> Payloads.ApplicationCommandCreate
@@ -25,6 +26,10 @@ protocol DiscordCommand {
 }
 
 extension DiscordCommand {
+    var requiresImmediateResponse: Bool {
+        false
+    }
+
     var options: [ApplicationCommand.Option]? {
         nil
     }
