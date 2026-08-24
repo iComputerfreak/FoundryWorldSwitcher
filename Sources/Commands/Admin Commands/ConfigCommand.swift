@@ -189,5 +189,5 @@ struct ConfigCommand: DiscordCommand {
             }
         }
     }
-    
+
 }
