@@ -198,6 +198,13 @@ extension SchedulerEvent {
     private func handleLockWorldSwitching(worldID: String, context: GuildContext) async throws {
         Self.logger.debug("Locking world '\(worldID)'")
         try await context.bookings.startWorldSwitching(eventID: id, worldID: worldID)
+        let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
+        await DatePollMessageSynchronizer.synchronize(
+            updatedPolls,
+            datePolls: context.datePolls,
+            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+            client: bot.client
+        )
     }
 }
 

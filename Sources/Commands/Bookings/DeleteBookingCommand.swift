@@ -46,6 +46,13 @@ struct DeleteBookingCommand: DiscordCommand {
         let bookingEmbed = try await Utils.createBookingEmbed(for: booking)
         
         await context.bookings.deleteBooking(booking)
+        let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
+        await DatePollMessageSynchronizer.synchronize(
+            updatedPolls,
+            datePolls: context.datePolls,
+            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+            client: client
+        )
         
         try await client.respond(
             token: interaction.token,

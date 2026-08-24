@@ -60,6 +60,7 @@ final class GuildContext {
             bookings: await bookings.allBookings,
             configuration: config
         )
+        _ = await datePolls.reconcileBookingLinks(bookings: await bookings.allBookings)
         await datePolls.restoreScheduling()
     }
 }

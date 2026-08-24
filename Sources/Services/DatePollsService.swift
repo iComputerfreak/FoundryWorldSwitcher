@@ -316,15 +316,80 @@ actor DatePollsService {
         return (poll, candidate)
     }
 
-    func markFinalizedCandidateBooked(pollID: String, candidateID: UUID) -> DatePoll? {
+    func claimFinalizedCandidateBooking(
+        pollID: String,
+        candidateID: UUID,
+        bookingID: UUID,
+        bookingDate: Date
+    ) async throws -> DatePoll {
         guard let index = polls.firstIndex(where: { $0.id == pollID }),
-              polls[index].status == .finalized,
-              polls[index].finalizedCandidates.contains(where: { $0.id == candidateID }) else {
-            return nil
+               polls[index].status == .finalized,
+              let candidate = polls[index].finalizedCandidates.first(where: { $0.id == candidateID }),
+              Calendar.current.isDate(candidate.date, inSameDayAs: bookingDate),
+              !(polls[index].bookedFinalizedCandidateIDs ?? []).contains(candidateID) else {
+            throw DatePollError.unavailablePoll
         }
         polls[index].bookedFinalizedCandidateIDs = (polls[index].bookedFinalizedCandidateIDs ?? []).union([candidateID])
+        polls[index].finalizedCandidateBookingIDs = (polls[index].finalizedCandidateBookingIDs ?? [:]).merging(
+            [candidateID: bookingID],
+            uniquingKeysWith: { _, new in new }
+        )
+        let messageSyncEvent = markMessageSyncPending(for: index)
         savePolls()
+        if let messageSyncEvent {
+            await scheduler.schedule(messageSyncEvent)
+        }
         return polls[index]
+    }
+
+    func releaseFinalizedCandidateBooking(pollID: String, candidateID: UUID, bookingID: UUID) async {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }),
+              polls[index].finalizedCandidateBookingIDs?[candidateID] == bookingID else {
+            return
+        }
+        polls[index].finalizedCandidateBookingIDs?.removeValue(forKey: candidateID)
+        polls[index].bookedFinalizedCandidateIDs?.remove(candidateID)
+        let messageSyncEvent = markMessageSyncPending(for: index)
+        savePolls()
+        if let messageSyncEvent {
+            await scheduler.schedule(messageSyncEvent)
+        }
+    }
+
+    /// Releases finalized candidates whose linked booking no longer occupies that candidate date.
+    func reconcileBookingLinks(bookings: [any Booking]) async -> [DatePoll] {
+        let calendar = Calendar.current
+        var updatedPolls: [DatePoll] = []
+        var messageSyncEvents: [SchedulerEvent] = []
+
+        for index in polls.indices {
+            var links = polls[index].finalizedCandidateBookingIDs ?? [:]
+            let staleCandidateIDs = links.compactMap { candidateID, bookingID -> UUID? in
+                guard let candidate = polls[index].candidate(id: candidateID),
+                      let booking = bookings.first(where: { $0.id == bookingID }),
+                      !booking.wasCancelled,
+                      calendar.isDate(candidate.date, inSameDayAs: booking.date) else {
+                    return candidateID
+                }
+                return nil
+            }
+            guard !staleCandidateIDs.isEmpty else { continue }
+
+            for candidateID in staleCandidateIDs {
+                links.removeValue(forKey: candidateID)
+                polls[index].bookedFinalizedCandidateIDs?.remove(candidateID)
+            }
+            polls[index].finalizedCandidateBookingIDs = links
+            if let messageSyncEvent = markMessageSyncPending(for: index) {
+                messageSyncEvents.append(messageSyncEvent)
+            }
+            updatedPolls.append(polls[index])
+        }
+
+        guard !updatedPolls.isEmpty else { return [] }
+        savePolls()
+        await scheduler.schedule(messageSyncEvents)
+        return updatedPolls
     }
 
     func repeatPollSource(pollID: String, eventID: UUID) -> DatePoll? {

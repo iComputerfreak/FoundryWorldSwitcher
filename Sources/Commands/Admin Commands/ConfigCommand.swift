@@ -126,6 +126,13 @@ struct ConfigCommand: DiscordCommand {
             try context.config.setValue(valueString, for: configKey)
             if configKey == .foundryFeaturesEnabled, !context.config.foundryFeaturesEnabled {
                 await context.bookings.cancelAllBookings()
+                let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
+                await DatePollMessageSynchronizer.synchronize(
+                    updatedPolls,
+                    datePolls: context.datePolls,
+                    foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+                    client: client
+                )
             }
             if configKey == .foundryFeaturesEnabled {
                 await refreshDatePollMessages(context: context, client: client)

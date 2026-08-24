@@ -64,23 +64,36 @@ struct BookingModalHandler {
                 }
             }
 
-            try await context.bookings.createBookingIfAvailable(booking)
+            let sourcePoll: DatePoll?
             if let sourcePollID = form.sourcePollID,
-               let sourceCandidateID = form.sourceCandidateID,
-               let poll = await context.datePolls.markFinalizedCandidateBooked(
-                   pollID: sourcePollID,
-                   candidateID: sourceCandidateID
-               ),
-               let messageID = poll.messageID {
+               let sourceCandidateID = form.sourceCandidateID {
+                sourcePoll = try await context.datePolls.claimFinalizedCandidateBooking(
+                    pollID: sourcePollID,
+                    candidateID: sourceCandidateID,
+                    bookingID: booking.id,
+                    bookingDate: booking.date
+                )
                 do {
-                    try await client.updateMessage(
-                        channelId: poll.channelID,
-                        messageId: messageID,
-                        payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
-                    ).guardSuccess()
+                    try await context.bookings.createBookingIfAvailable(booking)
                 } catch {
-                    logger.warning("Failed to remove booked date-poll candidate control: \(error)")
+                    await context.datePolls.releaseFinalizedCandidateBooking(
+                        pollID: sourcePollID,
+                        candidateID: sourceCandidateID,
+                        bookingID: booking.id
+                    )
+                    throw error
                 }
+            } else {
+                sourcePoll = nil
+                try await context.bookings.createBookingIfAvailable(booking)
+            }
+            if let sourcePoll {
+                await DatePollMessageSynchronizer.synchronize(
+                    [sourcePoll],
+                    datePolls: context.datePolls,
+                    foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+                    client: client
+                )
             }
             try await client.respond(
                 token: interaction.token,

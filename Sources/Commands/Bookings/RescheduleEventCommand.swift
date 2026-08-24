@@ -98,6 +98,13 @@ struct RescheduleEventCommand: DiscordCommand {
         guard let booking = try await context.bookings.rescheduleBooking(id: booking.id, to: newBookingDate) else {
             throw DiscordCommandError.noBookingFoundAtDate(eventDate)
         }
+        let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
+        await DatePollMessageSynchronizer.synchronize(
+            updatedPolls,
+            datePolls: context.datePolls,
+            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+            client: client
+        )
         
         try await client.respond(
             token: interaction.token,
