@@ -106,22 +106,20 @@ final class GuildConfig: BookingConfiguration {
         case .sessionLength:
             sessionLength = try DurationParser.duration(from: value)
         case .bookingIntervalStartTime:
-            let startOfDay = Calendar.current.startOfDay(for: .now)
-            guard let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(startOfDay) else {
+            guard let time = Utils.timeFormatter.date(from: value) else {
                 throw DiscordCommandError.wrongTimeFormat(value, format: Utils.timeFormatter.dateFormat.uppercased())
             }
-            bookingIntervalStartTime = time
+            bookingIntervalStartTime = Utils.timeIntervalSinceStartOfDay(for: time)
         case .bookingIntervalEndTime:
             guard let seconds = TimeInterval(value), seconds > 0 else {
                 throw DiscordCommandError.wrongDurationFormat(value)
             }
             bookingIntervalEndTime = seconds
         case .defaultEventBookingTime:
-            let startOfDay = Calendar.current.startOfDay(for: .now)
-            guard let time = Utils.timeFormatter.date(from: value)?.timeIntervalSince(startOfDay) else {
+            guard let time = Utils.timeFormatter.date(from: value) else {
                 throw DiscordCommandError.wrongTimeFormat(value, format: Utils.timeFormatter.dateFormat.uppercased())
             }
-            defaultEventBookingTime = time
+            defaultEventBookingTime = Utils.timeIntervalSinceStartOfDay(for: time)
         case .sessionReminderTime:
             sessionReminderTime = try DurationParser.duration(from: value)
         case .shouldNotifyAtSessionStart:

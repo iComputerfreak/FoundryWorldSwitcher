@@ -35,6 +35,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case foundryFeaturesDisabled
     case invalidBookingForm
     case missingBookingWorld
+    case noFoundryWorlds
     case missingBookingRole
     case missingBookingTopic
     
@@ -117,6 +118,9 @@ enum DiscordCommandError: Error, LocalizedError {
 
         case .missingBookingWorld:
             return "Select a Foundry world for this reservation."
+
+        case .noFoundryWorlds:
+            return "No Foundry worlds are available for a reservation."
 
         case .missingBookingRole:
             return "Select a campaign role for this event."

@@ -42,6 +42,9 @@ struct BookCommand: DiscordCommand {
             throw DiscordCommandError.foundryFeaturesDisabled
         }
         let worlds = context.config.foundryFeaturesEnabled ? try await PterodactylAPI.shared.worlds() : []
+        guard kind == .event || !worlds.isEmpty else {
+            throw DiscordCommandError.noFoundryWorlds
+        }
         try await client.createInteractionResponse(
             id: interaction.id,
             token: interaction.token,

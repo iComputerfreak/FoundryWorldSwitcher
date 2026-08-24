@@ -111,18 +111,16 @@ struct RescheduleEventCommand: DiscordCommand {
     /// Updates the day, month and year of the given date to the new date
     private func updateDate(of date: Date, to newDate: Date) -> Date {
         let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let timeDuration = date.timeIntervalSince(startOfDay)
-        
-        return calendar.startOfDay(for: newDate).addingTimeInterval(timeDuration)
+        let time = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: date)
+        let timeFromMidnight = TimeInterval((time.hour ?? 0) * 3_600 + (time.minute ?? 0) * 60 + (time.second ?? 0))
+        return Utils.date(on: newDate, at: timeFromMidnight, calendar: calendar)
     }
     
     /// Updates the time of the given date to the time of the new date
     private func updateTime(of date: Date, to newDate: Date) -> Date {
         let calendar = Calendar.current
-        let startOfNewDay = calendar.startOfDay(for: newDate)
-        let timeDuration = newDate.timeIntervalSince(startOfNewDay)
-        
-        return calendar.startOfDay(for: date).addingTimeInterval(timeDuration)
+        let time = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: newDate)
+        let timeFromMidnight = TimeInterval((time.hour ?? 0) * 3_600 + (time.minute ?? 0) * 60 + (time.second ?? 0))
+        return Utils.date(on: date, at: timeFromMidnight, calendar: calendar)
     }
 }

@@ -132,11 +132,11 @@ struct BookingCreationForm {
         if let explicitDateTime = dateTimeFormatter.date(from: trimmedValue) {
             date = explicitDateTime
         } else if let dateOnly = dateFormatter.date(from: trimmedValue) {
-            date = Calendar.current.startOfDay(for: dateOnly).addingTimeInterval(defaultEventBookingTime)
+            date = Utils.date(on: dateOnly, at: defaultEventBookingTime)
         } else {
             throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM.YYYY [HH:MM]")
         }
-        guard Calendar.current.startOfDay(for: date).addingTimeInterval(GlobalConstants.secondsPerDay) > .now else {
+        guard date > .now else {
             throw DiscordCommandError.dateIsInThePast(date)
         }
         return date

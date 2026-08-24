@@ -11,6 +11,7 @@ enum BookingRenderer {
         sourcePollID: String? = nil,
         sourceCandidateID: UUID? = nil
     ) -> Payloads.InteractionResponse {
+        let maximumWorldOptions = kind == .event ? 24 : 25
         let worldOptions = (kind == .event ? [
             Interaction.ActionRow.StringSelectMenu.Option(
                 label: "No Foundry world",
@@ -18,7 +19,7 @@ enum BookingRenderer {
                 description: "External or in-person session",
                 default: true
             )
-        ] : []) + worlds.map {
+        ] : []) + worlds.prefix(maximumWorldOptions).map {
             .init(label: String($0.title.prefix(100)), value: $0.id, description: String($0.id.prefix(100)))
         }
         let worldSelect = Interaction.ModalComponent.label(.init(

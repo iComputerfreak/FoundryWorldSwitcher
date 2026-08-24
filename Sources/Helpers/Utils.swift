@@ -92,9 +92,32 @@ extension Utils {
     
     /// Returns a time string for a given time in seconds from midnight
     static func timeString(for timeFromMidnight: TimeInterval) -> String {
-        let startOfDay = Calendar.current.startOfDay(for: .now)
-        let time = startOfDay.addingTimeInterval(timeFromMidnight)
+        let time = date(on: .now, at: timeFromMidnight)
         return Utils.timeFormatter.string(from: time)
+    }
+
+    /// Returns seconds since midnight for a time parsed by `timeFormatter`.
+    static func timeIntervalSinceStartOfDay(for time: Date, calendar: Calendar = .current) -> TimeInterval {
+        let components = calendar.dateComponents([.hour, .minute, .second], from: time)
+        return TimeInterval((components.hour ?? 0) * 3_600 + (components.minute ?? 0) * 60 + (components.second ?? 0))
+    }
+
+    /// Returns a local wall-clock time on `day`, adjusting invalid DST times forward.
+    static func date(on day: Date, at timeFromMidnight: TimeInterval, calendar: Calendar = .current) -> Date {
+        let secondsPerDay = Int(GlobalConstants.secondsPerDay)
+        let totalSeconds = ((Int(timeFromMidnight.rounded()) % secondsPerDay) + secondsPerDay) % secondsPerDay
+        let hour = totalSeconds / 3_600
+        let minute = (totalSeconds % 3_600) / 60
+        let second = totalSeconds % 60
+        return calendar.date(
+            bySettingHour: hour,
+            minute: minute,
+            second: second,
+            of: day,
+            matchingPolicy: .nextTime,
+            repeatedTimePolicy: .first,
+            direction: .forward
+        ) ?? calendar.startOfDay(for: day)
     }
     
     static func createBookingEmbeds(for bookings: [any Booking]) async throws -> [Embed] {

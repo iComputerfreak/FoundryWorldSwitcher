@@ -30,8 +30,7 @@ protocol Booking: Codable, Hashable, Identifiable {
 // MARK: - Booking Interval
 extension Booking {
     func bookingIntervalStartDate(using configuration: any BookingConfiguration) -> Date {
-        bookingIntervalStartDate ?? Calendar.current.startOfDay(for: date)
-            .addingTimeInterval(configuration.bookingIntervalStartTime)
+        bookingIntervalStartDate ?? Utils.date(on: date, at: configuration.bookingIntervalStartTime)
     }
 
     func bookingIntervalEndDate(using configuration: any BookingConfiguration) -> Date {
@@ -64,8 +63,7 @@ extension Booking {
             bookingIntervalEndDate = unlockEvent.dueDate
         } else {
             // Legacy records without interval events use the config once, then persist it.
-            let startDate = Calendar.current.startOfDay(for: date)
-                .addingTimeInterval(configuration.bookingIntervalStartTime)
+            let startDate = Utils.date(on: date, at: configuration.bookingIntervalStartTime)
             bookingIntervalStartDate = startDate
             bookingIntervalEndDate = startDate.addingTimeInterval(configuration.bookingIntervalEndTime)
         }
@@ -73,8 +71,6 @@ extension Booking {
     }
 
     func defaultBookingIntervalStartDate(using configuration: any BookingConfiguration) -> Date {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        return startOfDay.addingTimeInterval(configuration.bookingIntervalStartTime)
+        Utils.date(on: date, at: configuration.bookingIntervalStartTime)
     }
 }

@@ -231,8 +231,7 @@ struct DatePollComponentHandler {
                 channelID: interaction.channel_id,
                 messageID: interaction.message?.id
             )
-            let dateTime = Calendar.current.startOfDay(for: result.candidate.date)
-                .addingTimeInterval(context.config.defaultEventBookingTime)
+            let dateTime = Utils.date(on: result.candidate.date, at: context.config.defaultEventBookingTime)
             let worlds = context.config.foundryFeaturesEnabled ? try await PterodactylAPI.shared.worlds() : []
             try await client.createInteractionResponse(
                 id: interaction.id,
