@@ -41,8 +41,7 @@ enum V3StateMigration {
         let config = rootConfig.guildConfig
         let permissions = try (data(at: legacy.permissions, decoding: LegacyPermissions.self)
             ?? encoded(LegacyPermissions(userMap: [:], roleMap: [:])))
-        let bookings = try (data(at: legacy.bookings, decoding: BookingList.self)
-            ?? encoded(BookingList(bookings: [])))
+        let bookings = try bookingData(from: legacy)
         let events = try (data(at: legacy.events, decoding: [SchedulerEvent].self)
             ?? encoded([SchedulerEvent]()))
         let datePolls = try (data(at: legacy.datePolls, decoding: [DatePoll].self)
@@ -89,7 +88,14 @@ enum V3StateMigration {
             }
             try? FileManager.default.removeItem(at: staging.directory)
         } catch {
-            try? restoreGlobalOutputs(from: backupDirectory)
+            if FileManager.default.fileExists(atPath: staging.globalWriteMarker.path) {
+                do {
+                    try restoreGlobalOutputs(from: backupDirectory)
+                } catch {
+                    // Retain staging and verified backups for manual recovery or a retry.
+                    throw MigrationError.restorationFailed(error.localizedDescription)
+                }
+            }
             try? FileManager.default.removeItem(at: backupDirectory)
             try? FileManager.default.removeItem(at: staging.directory)
             throw error
@@ -111,6 +117,20 @@ enum V3StateMigration {
             )
         }
         return try encoded(records)
+    }
+
+    private static func bookingData(from legacy: LegacyPaths) throws -> Data {
+        if let bookings = try data(at: legacy.bookings, decoding: BookingList.self) {
+            return bookings
+        }
+
+        let events = try data(at: legacy.eventBookings, decoding: [EventBooking].self)
+            .map { try JSONDecoder().decode([EventBooking].self, from: $0) }
+            ?? []
+        let reservations = try data(at: legacy.reservationBookings, decoding: [ReservationBooking].self)
+            .map { try JSONDecoder().decode([ReservationBooking].self, from: $0) }
+            ?? []
+        return try encoded(BookingList(events: events, reservations: reservations))
     }
 
     private static func recoverIncompleteMigration() throws {
@@ -207,12 +227,14 @@ enum V3StateMigration {
     private struct LegacyPaths {
         let permissions = Utils.dataURL.appendingPathComponent("permissions.json")
         let bookings = Utils.dataURL.appendingPathComponent("bookings.json")
+        let eventBookings = Utils.dataURL.appendingPathComponent("event_bookings.json")
+        let reservationBookings = Utils.dataURL.appendingPathComponent("reservation_bookings.json")
         let events = Utils.dataURL.appendingPathComponent("events.json")
         let datePolls = Utils.dataURL.appendingPathComponent("date_polls.json")
         let worldLock = Utils.dataURL.appendingPathComponent(".worldlock")
 
         var guildStateFiles: [URL] {
-            [permissions, bookings, events, datePolls, worldLock]
+            [permissions, bookings, eventBookings, reservationBookings, events, datePolls, worldLock]
         }
     }
 
@@ -393,6 +415,7 @@ enum V3StateMigration {
         case backupExists(String)
         case backupVerificationFailed(String)
         case backupMissing(String)
+        case restorationFailed(String)
 
         var errorDescription: String? {
             switch self {
@@ -406,6 +429,8 @@ enum V3StateMigration {
                 return "V3 migration could not verify backup for \(name)."
             case let .backupMissing(path):
                 return "V3 migration backup is missing at \(path)."
+            case let .restorationFailed(message):
+                return "V3 migration could not restore global state: \(message). Recovery artifacts were retained."
             }
         }
     }

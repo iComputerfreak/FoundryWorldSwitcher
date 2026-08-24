@@ -20,4 +20,9 @@ struct BookingList: Codable {
         self.events = bookings.compactMap { $0 as? EventBooking }
         self.reservations = bookings.compactMap { $0 as? ReservationBooking }
     }
+
+    init(events: [EventBooking], reservations: [ReservationBooking]) {
+        self.events = events
+        self.reservations = reservations
+    }
 }
