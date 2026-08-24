@@ -108,7 +108,7 @@ enum V3StateMigration {
         configuration: LegacyRootConfig
     ) throws -> Data {
         let bookings = try JSONDecoder().decode(BookingList.self, from: bookingData).allBookings
-        let records = bookings.filter { !$0.wasCancelled }.map {
+        let records = bookings.filter { !$0.wasCancelled && $0.worldID != nil }.map {
             GlobalBookingRecord(
                 bookingID: $0.id,
                 guildID: guildID,

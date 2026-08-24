@@ -21,4 +21,5 @@ enum SchedulerEventType: Codable, Hashable {
     case sendOutstandingDatePollReminders(pollID: String)
     case repeatDatePoll(pollID: String)
     case syncDatePollMessage(pollID: String)
+    case publishDatePoll(pollID: String)
 }

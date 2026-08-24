@@ -92,7 +92,7 @@ actor GlobalBookingConflictService {
     /// Persists the global booking conflict index.
     private func save() {
         do {
-            try JSONEncoder().encode(records).write(to: dataPath)
+            try JSONEncoder().encode(records).write(to: dataPath, options: .atomic)
         } catch {
             Self.logger.error("Failed to save booking conflict index: \(error)")
         }

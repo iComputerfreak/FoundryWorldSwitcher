@@ -40,8 +40,8 @@ actor DatePollsService {
         description: String?,
         candidateDates: [Date],
         repeatIntervalWeeks: Int?
-    ) -> DatePoll {
-        let poll = DatePoll(
+    ) async -> DatePoll {
+        var poll = DatePoll(
             id: nextIdentifier(),
             ownerID: ownerID,
             ownerUsername: ownerUsername,
@@ -54,8 +54,11 @@ actor DatePollsService {
             candidateDates: candidateDates,
             repeatIntervalWeeks: repeatIntervalWeeks
         )
+        let publicationEvent = SchedulerEvent(dueDate: .now, eventType: .publishDatePoll(pollID: poll.id))
+        poll.publicationEventID = publicationEvent.id
         polls.append(poll)
         savePolls()
+        await scheduler.schedule(publicationEvent)
         return poll
     }
 
@@ -64,6 +67,7 @@ actor DatePollsService {
             throw DatePollError.notFound(id)
         }
         polls[index].messageID = messageID
+        polls[index].publicationEventID = nil
         if let sourceEventID = polls[index].repeatSourceEventID,
            let sourceIndex = polls.firstIndex(where: { $0.repeatEventID == sourceEventID }) {
             polls[sourceIndex].repeatEventCompleted = true
@@ -84,6 +88,10 @@ actor DatePollsService {
             throw DatePollError.notFound(id)
         }
         return poll
+    }
+
+    func pollForPublication(pollID: String, eventID: UUID) -> DatePoll? {
+        polls.first { $0.id == pollID && $0.messageID == nil && $0.publicationEventID == eventID }
     }
 
     func publishedPolls() -> [DatePoll] {
@@ -167,8 +175,10 @@ actor DatePollsService {
 
             let closeEvent = SchedulerEvent(dueDate: deadline, eventType: .closeDatePoll(pollID: polls[index].id))
             polls[index].closeEventID = closeEvent.id
+            polls[index].closeMessageSynced = false
             events.append(closeEvent)
-            if let repeatIntervalWeeks,
+            if polls[index].repeatEventCompleted != true,
+               let repeatIntervalWeeks,
                let repeatDate = calendar.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: polls[index].createdAt) {
                 let repeatEvent = SchedulerEvent(dueDate: repeatDate, eventType: .repeatDatePoll(pollID: polls[index].id))
                 polls[index].repeatEventID = repeatEvent.id
@@ -366,6 +376,17 @@ actor DatePollsService {
 
         for index in polls.indices {
             var links = polls[index].finalizedCandidateBookingIDs ?? [:]
+            let legacyBookedCandidateIDs = (polls[index].bookedFinalizedCandidateIDs ?? []).subtracting(links.keys)
+            for candidateID in legacyBookedCandidateIDs {
+                guard let candidate = polls[index].candidate(id: candidateID),
+                      let booking = bookings.first(where: {
+                          !$0.wasCancelled && calendar.isDate($0.date, inSameDayAs: candidate.date)
+                      }) else {
+                    polls[index].bookedFinalizedCandidateIDs?.remove(candidateID)
+                    continue
+                }
+                links[candidateID] = booking.id
+            }
             let staleCandidateIDs = links.compactMap { candidateID, bookingID -> UUID? in
                 guard let candidate = polls[index].candidate(id: candidateID),
                       let booking = bookings.first(where: { $0.id == bookingID }),
@@ -375,7 +396,7 @@ actor DatePollsService {
                 }
                 return nil
             }
-            guard !staleCandidateIDs.isEmpty else { continue }
+            guard !staleCandidateIDs.isEmpty || !legacyBookedCandidateIDs.isEmpty else { continue }
 
             for candidateID in staleCandidateIDs {
                 links.removeValue(forKey: candidateID)
@@ -426,7 +447,7 @@ actor DatePollsService {
 
         while occurrenceDate.addingTimeInterval(deadlineDuration) <= .now
             || candidateDates.contains(where: {
-                calendar.startOfDay(for: $0).addingTimeInterval(GlobalConstants.secondsPerDay) <= .now
+                (calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: $0)) ?? .distantPast) <= .now
             })
             || (nextOccurrenceDate ?? .distantPast) <= .now {
             guard let nextDate = nextOccurrenceDate else {
@@ -582,6 +603,7 @@ actor DatePollsService {
         guard polls[index].closeEventID == eventID else { return nil }
         if polls[index].status == .open {
             polls[index].status = .awaitingFinalization
+            polls[index].closeMessageSynced = false
             let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID) + [polls[index].automaticReminderEventID].compactMap { $0 }
             polls[index].reminders.removeAll()
             polls[index].automaticReminderEventID = nil
@@ -590,6 +612,13 @@ actor DatePollsService {
         }
         guard polls[index].status == .awaitingFinalization else { return nil }
         return polls[index]
+    }
+
+    func markCloseMessageSynced(pollID: String, eventID: UUID) {
+        guard let index = polls.firstIndex(where: { $0.id == pollID && $0.closeEventID == eventID }) else { return }
+        polls[index].closeMessageSynced = true
+        polls[index].closeEventID = nil
+        savePolls()
     }
 
     func pollForMessageSync(pollID: String, eventID: UUID) -> DatePoll? {
@@ -611,7 +640,7 @@ actor DatePollsService {
     /// Restores missing persisted deadline, repeat, and reminder events after a restart.
     func restoreScheduling() async {
         var events: [SchedulerEvent] = []
-        for index in polls.indices where polls[index].messageID != nil {
+        for index in polls.indices {
             events.append(contentsOf: schedulingEvents(for: index))
         }
         guard !events.isEmpty else { return }
@@ -708,7 +737,7 @@ actor DatePollsService {
         let pollID = polls[index].id
         var events: [SchedulerEvent] = []
 
-        if polls[index].status == .open || polls[index].status == .awaitingFinalization {
+        if polls[index].status == .open || (polls[index].status == .awaitingFinalization && polls[index].closeMessageSynced != true) {
             let closeEventID = polls[index].closeEventID ?? UUID()
             polls[index].closeEventID = closeEventID
             events.append(.init(id: closeEventID, dueDate: polls[index].deadline, eventType: .closeDatePoll(pollID: pollID)))
@@ -718,8 +747,12 @@ actor DatePollsService {
             events.append(.init(id: messageSyncEventID, dueDate: .now, eventType: .syncDatePollMessage(pollID: pollID)))
         }
 
+        if polls[index].messageID == nil, let publicationEventID = polls[index].publicationEventID {
+            events.append(.init(id: publicationEventID, dueDate: .now, eventType: .publishDatePoll(pollID: pollID)))
+        }
+
         if let repeatIntervalWeeks = polls[index].repeatIntervalWeeks,
-           polls[index].repeatEventCompleted != true,
+           polls[index].repeatEventCompleted == false,
            let repeatDate = Calendar.current.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: polls[index].createdAt) {
             let repeatEventID = polls[index].repeatEventID ?? UUID()
             polls[index].repeatEventID = repeatEventID
@@ -782,7 +815,7 @@ actor DatePollsService {
     private func savePolls() {
         do {
             let data = try JSONEncoder().encode(polls)
-            try data.write(to: dataPath)
+            try data.write(to: dataPath, options: .atomic)
         } catch {
             Self.logger.error("Failed to save date polls: \(error)")
         }

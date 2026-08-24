@@ -59,12 +59,25 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
 
         case let .syncDatePollMessage(pollID: pollID):
             try await handleSyncDatePollMessage(pollID: pollID, context: context)
+
+        case let .publishDatePoll(pollID: pollID):
+            try await handlePublishDatePoll(pollID: pollID, context: context)
         }
     }
 }
 
 // MARK: - Date Polls
 extension SchedulerEvent {
+    private func handlePublishDatePoll(pollID: String, context: GuildContext) async throws {
+        guard let poll = await context.datePolls.pollForPublication(pollID: pollID, eventID: id) else { return }
+        try await DatePollPublisher.publish(
+            poll: poll,
+            datePolls: context.datePolls,
+            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+            client: bot.client
+        )
+    }
+
     private func handleCloseDatePoll(pollID: String, context: GuildContext) async throws {
         guard let poll = try await context.datePolls.closePoll(id: pollID, eventID: id) else { return }
         guard let messageID = poll.messageID else { return }
@@ -73,6 +86,7 @@ extension SchedulerEvent {
             messageId: messageID,
             payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
         ).guardSuccess()
+        await context.datePolls.markCloseMessageSynced(pollID: pollID, eventID: id)
     }
 
     private func handleSyncDatePollMessage(pollID: String, context: GuildContext) async throws {
@@ -179,11 +193,12 @@ extension SchedulerEvent {
             return
         }
 
-        let message = try await bot.client.createMessage(
-            channelId: poll.channelID,
-            payload: DatePollRenderer.createMessagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
-        ).decode()
-        try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)
+        try await DatePollPublisher.publish(
+            poll: poll,
+            datePolls: context.datePolls,
+            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+            client: bot.client
+        )
     }
 }
 

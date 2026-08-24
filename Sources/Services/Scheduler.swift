@@ -134,7 +134,7 @@ extension Scheduler {
     func saveEvents() {
         do {
             let data = try JSONEncoder().encode(events)
-            try data.write(to: dataPath)
+            try data.write(to: dataPath, options: .atomic)
         } catch {
             Self.logger.error("Failed to save events: \(error)")
         }

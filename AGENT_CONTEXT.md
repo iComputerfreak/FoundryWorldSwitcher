@@ -62,7 +62,7 @@ Runtime data directory: executable sibling `data/`; Docker mounts it at `/home/c
 - `BookingsService` atomically reserves booking dates for creation/rescheduling and rejects duplicate dates or reschedules to a past timestamp.
 - Booking wall-clock values are derived with Calendar components. Avoid `startOfDay + TimeInterval` for configured local times; Discord select menus permit at most 25 options.
 - Foundry-disabled guilds remain fully operational for date polls and worldless event reminders. Pterodactyl cache initialization is conditional on an enabled guild.
-- Date polls persist close/repeat/reminder scheduler identities. Guild load restores missing events idempotently; a close event only operates when its persisted ID matches the poll's current deadline.
+- Date polls persist publication, close, repeat, and reminder scheduler identities. Guild load restores missing events idempotently; nonce reconciliation attaches a message created before its ID was persisted, and a close event only operates when its persisted ID matches the poll's current deadline.
 - Finalization, cancellation, and series edits persist retryable message-sync events before Discord updates. Direct successes clear the matching event; scheduler retries failed updates.
 - Finalized candidates link to their created booking ID. Booking lifecycle changes reconcile stale links and restore affected booking controls.
 - Recurring poll generation uses the due-event cadence anchor and skips cycles whose deadline, candidates, or next recurrence are already past. Votes cancel pending user reminders and reminders revalidate voter status.

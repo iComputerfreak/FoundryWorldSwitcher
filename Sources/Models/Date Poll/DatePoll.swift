@@ -12,6 +12,8 @@ struct DatePoll: Codable, Identifiable {
     let guildID: GuildSnowflake
     let channelID: ChannelSnowflake
     var messageID: MessageSnowflake?
+    var publicationNonce: String?
+    var publicationEventID: UUID?
     var campaignRoleID: RoleSnowflake
     var requiredVoterIDs: Set<UserSnowflake>
     let createdAt: Date
@@ -30,6 +32,7 @@ struct DatePoll: Codable, Identifiable {
     var reminders: [UserSnowflake: DatePollReminderState]
     var messageSyncEventID: UUID?
     var closeEventID: UUID?
+    var closeMessageSynced: Bool?
     var automaticReminderEventID: UUID?
     var automaticReminderDueDate: Date?
     var automaticReminderDeliveredUserIDs: Set<UserSnowflake>?
@@ -59,6 +62,8 @@ struct DatePoll: Codable, Identifiable {
         self.guildID = guildID
         self.channelID = channelID
         self.messageID = nil
+        self.publicationNonce = "datepoll-\(id)"
+        self.publicationEventID = nil
         self.campaignRoleID = campaignRoleID
         self.requiredVoterIDs = requiredVoterIDs
         self.createdAt = createdAt
@@ -77,6 +82,7 @@ struct DatePoll: Codable, Identifiable {
         self.reminders = [:]
         self.messageSyncEventID = nil
         self.closeEventID = nil
+        self.closeMessageSynced = false
         self.automaticReminderEventID = nil
         self.automaticReminderDueDate = nil
         self.automaticReminderDeliveredUserIDs = []

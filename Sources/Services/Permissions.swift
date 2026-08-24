@@ -118,7 +118,7 @@ final class Permissions {
     private func save() {
         do {
             let stored = Stored(userMap: userMap, roleMap: roleMap)
-            try JSONEncoder().encode(stored).write(to: dataPath)
+            try JSONEncoder().encode(stored).write(to: dataPath, options: .atomic)
         } catch {
             Self.logger.error("Error saving permissions: \(error)")
         }

@@ -124,7 +124,7 @@ final class WorldLockService {
         guard !isWorldSwitchingLocked() else { throw WorldLockError.alreadyLocked }
 
         let record = WorldLockRecord(guildID: guildID, bookingID: bookingID, acquiredAt: .now)
-        try JSONEncoder().encode(record).write(to: Self.lockFilePath)
+        try JSONEncoder().encode(record).write(to: Self.lockFilePath, options: .atomic)
         return record
     }
 

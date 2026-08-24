@@ -21,7 +21,11 @@ enum DatePollRenderer {
     }
 
     static func createMessagePayload(for poll: DatePoll, foundryFeaturesEnabled: Bool) -> Payloads.CreateMessage {
-        .init(componentsV2: pollComponents(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled))
+        .init(
+            nonce: poll.publicationNonce.map(StringOrInt.string),
+            componentsV2: pollComponents(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled),
+            enforce_nonce: poll.publicationNonce == nil ? nil : true
+        )
     }
 
     static func creationModal() -> Payloads.InteractionResponse {

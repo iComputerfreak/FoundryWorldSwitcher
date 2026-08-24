@@ -33,7 +33,7 @@ actor DatePollReminderPreferences {
 
     private func save() {
         do {
-            try JSONEncoder().encode(optedOutUserIDs).write(to: dataPath)
+            try JSONEncoder().encode(optedOutUserIDs).write(to: dataPath, options: .atomic)
         } catch {
             logger.error("Failed to save date-poll reminder preferences: \(error)")
         }

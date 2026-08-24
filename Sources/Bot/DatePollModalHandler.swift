@@ -103,21 +103,12 @@ struct DatePollModalHandler {
             repeatIntervalWeeks: form.repeatIntervalWeeks
         )
 
-        do {
-            let message = try await client.createMessage(
-                channelId: channelID,
-                payload: DatePollRenderer.createMessagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
-            ).decode()
-            do {
-                try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)
-            } catch {
-                try? await client.deleteMessage(channelId: channelID, messageId: message.id).guardSuccess()
-                throw error
-            }
-        } catch {
-            await context.datePolls.discardUnpublishedPoll(id: poll.id)
-            throw error
-        }
+        try await DatePollPublisher.publish(
+            poll: poll,
+            datePolls: context.datePolls,
+            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
+            client: client
+        )
 
         try await client.respond(token: interaction.token, message: "Date poll created.")
     }

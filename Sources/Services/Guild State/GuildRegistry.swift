@@ -13,6 +13,8 @@ actor GuildRegistry {
 
     /// Loaded contexts keyed by guild ID.
     private var contexts: [GuildSnowflake: GuildContext] = [:]
+    /// Callers waiting for a single in-flight context initialization.
+    private var contextWaiters: [GuildSnowflake: [CheckedContinuation<GuildContext, Error>]] = [:]
 
     /// Creates a registry using the supplied application owner for every context.
     init(applicationOwnerID: UserSnowflake?) throws {
@@ -30,15 +32,29 @@ actor GuildRegistry {
         if let context = contexts[guildID] {
             return context
         }
+        if contextWaiters[guildID] != nil {
+            return try await withCheckedThrowingContinuation { continuation in
+                contextWaiters[guildID, default: []].append(continuation)
+            }
+        }
+        contextWaiters[guildID] = []
 
-        let context = try GuildContext(
-            guildID: guildID,
-            applicationOwnerID: applicationOwnerID,
-            bookingConflicts: bookingConflicts
-        )
-        await context.synchronizeBookingConflicts()
-        contexts[guildID] = context
-        return context
+        do {
+            let context = try GuildContext(
+                guildID: guildID,
+                applicationOwnerID: applicationOwnerID,
+                bookingConflicts: bookingConflicts
+            )
+            await context.synchronizeBookingConflicts()
+            contexts[guildID] = context
+            let waiters = contextWaiters.removeValue(forKey: guildID) ?? []
+            for waiter in waiters { waiter.resume(returning: context) }
+            return context
+        } catch {
+            let waiters = contextWaiters.removeValue(forKey: guildID) ?? []
+            for waiter in waiters { waiter.resume(throwing: error) }
+            throw error
+        }
     }
 
     /// Prunes conflict records for guilds no longer served by this bot.
@@ -78,9 +94,9 @@ actor GuildRegistry {
 
     /// Runs due scheduler events for every loaded guild context.
     func updateSchedulers() async throws {
-        let contexts = Array(contexts.values)
+        let contexts = self.contexts
         var errors: [Error] = []
-        for context in contexts {
+        for (guildID, context) in contexts where self.contexts[guildID] === context {
             do {
                 try await context.scheduler.update(in: context)
             } catch {

@@ -19,7 +19,7 @@ enum BookingRenderer {
                 description: "External or in-person session",
                 default: true
             )
-        ] : []) + worlds.prefix(maximumWorldOptions).map {
+        ] : []) + worlds.filter { $0.id.count <= 100 }.prefix(maximumWorldOptions).map {
             .init(label: String($0.title.prefix(100)), value: $0.id, description: String($0.id.prefix(100)))
         }
         let worldSelect = Interaction.ModalComponent.label(.init(

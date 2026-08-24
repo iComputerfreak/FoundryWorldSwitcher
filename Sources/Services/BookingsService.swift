@@ -331,7 +331,7 @@ extension BookingsService {
     
     private static func save<T: Encodable>(_ object: T, at url: URL) throws {
         let data = try JSONEncoder().encode(object)
-        try data.write(to: url)
+        try data.write(to: url, options: .atomic)
     }
     
     private static func load<T: Decodable>(from url: URL, defaultValue: T) throws -> T {

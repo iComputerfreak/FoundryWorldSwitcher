@@ -198,7 +198,7 @@ final class GuildConfig: BookingConfiguration {
 
     private static func save(_ stored: GuildConfigStored, to dataPath: URL) throws {
         do {
-            try JSONEncoder().encode(stored).write(to: dataPath)
+            try JSONEncoder().encode(stored).write(to: dataPath, options: .atomic)
         } catch {
             throw PersistentStateError.write(dataPath, error)
         }
