@@ -1,7 +1,10 @@
 import DiscordBM
+import Logging
 
 /// Lazily creates and owns guild service contexts for this process.
 actor GuildRegistry {
+    private static let logger = Logger(label: "GuildRegistry")
+
     /// Process-scoped owner granted administrator access in every context.
     private let applicationOwnerID: UserSnowflake?
 
@@ -33,14 +36,25 @@ actor GuildRegistry {
             applicationOwnerID: applicationOwnerID,
             bookingConflicts: bookingConflicts
         )
-        contexts[guildID] = context
         await context.synchronizeBookingConflicts()
+        contexts[guildID] = context
         return context
     }
 
     /// Prunes conflict records for guilds no longer served by this bot.
     func pruneBookingConflicts(guildIDs: Set<GuildSnowflake>) async {
         await bookingConflicts.prune(guildIDs: guildIDs)
+    }
+
+    /// Stops serving a guild after the bot is removed and releases its global resources.
+    func removeContext(for guildID: GuildSnowflake) async {
+        contexts.removeValue(forKey: guildID)
+        await bookingConflicts.removeAll(for: guildID)
+        do {
+            try WorldLockService.shared.unlockWorldSwitching(for: guildID)
+        } catch {
+            Self.logger.error("Failed to release world lock for removed guild \(guildID): \(error)")
+        }
     }
 
     /// Returns the sole loaded context containing a date poll with `pollID`.

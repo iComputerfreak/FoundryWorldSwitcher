@@ -85,6 +85,18 @@ final class WorldLockService {
         return true
     }
 
+    /// Releases a world lock when its owning guild is no longer served by this process.
+    @discardableResult
+    func unlockWorldSwitching(for guildID: GuildSnowflake) throws -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let record = try record(), record.guildID == guildID else {
+            return false
+        }
+        try fileManager.removeItem(at: Self.lockFilePath)
+        return true
+    }
+
     @discardableResult
     func unlockManualWorldSwitching(acquiredAt: Date) throws -> Bool {
         lock.lock()

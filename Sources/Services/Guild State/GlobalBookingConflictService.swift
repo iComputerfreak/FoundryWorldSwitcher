@@ -34,7 +34,9 @@ actor GlobalBookingConflictService {
         configuration: any BookingConfiguration
     ) {
         records.removeAll { $0.guildID == guildID }
-        records.append(contentsOf: bookings.filter { !$0.wasCancelled }.map {
+        records.append(contentsOf: bookings.filter {
+            !$0.wasCancelled && $0.worldID != nil && $0.bookingIntervalEndDate(using: configuration) > .now
+        }.map {
             .init(
                 bookingID: $0.id,
                 guildID: guildID,
@@ -49,6 +51,15 @@ actor GlobalBookingConflictService {
     func prune(guildIDs: Set<GuildSnowflake>) {
         let originalCount = records.count
         records.removeAll { !guildIDs.contains($0.guildID) }
+        if records.count != originalCount {
+            save()
+        }
+    }
+
+    /// Removes all conflict records owned by a guild the bot no longer serves.
+    func removeAll(for guildID: GuildSnowflake) {
+        let originalCount = records.count
+        records.removeAll { $0.guildID == guildID }
         if records.count != originalCount {
             save()
         }

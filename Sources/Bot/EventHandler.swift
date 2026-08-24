@@ -34,6 +34,11 @@ struct EventHandler: GatewayEventHandler {
         }
     }
 
+    func onGuildDelete(_ guild: UnavailableGuild) async throws {
+        guard guild.unavailable != true else { return }
+        await guildRegistry.removeContext(for: guild.id)
+    }
+
     private func handleApplicationCommand(
         _ applicationCommand: Interaction.ApplicationCommand,
         interaction: Interaction
