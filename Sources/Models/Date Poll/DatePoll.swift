@@ -50,7 +50,8 @@ struct DatePoll: Codable, Identifiable {
         deadline: Date,
         description: String?,
         candidateDates: [Date],
-        repeatIntervalWeeks: Int?
+        repeatIntervalWeeks: Int?,
+        createdAt: Date = .now
     ) {
         self.id = id
         self.ownerID = ownerID
@@ -60,7 +61,7 @@ struct DatePoll: Codable, Identifiable {
         self.messageID = nil
         self.campaignRoleID = campaignRoleID
         self.requiredVoterIDs = requiredVoterIDs
-        self.createdAt = .now
+        self.createdAt = createdAt
         self.deadline = deadline
         self.deadlineDuration = deadline.timeIntervalSince(createdAt)
         self.description = description

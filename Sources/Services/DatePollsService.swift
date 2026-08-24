@@ -206,9 +206,11 @@ actor DatePollsService {
 
         let removedVoterIDs = polls[index].requiredVoterIDs.subtracting(currentVoterIDs)
         let removedReminderEvents = removedVoterIDs.compactMap { polls[index].reminders[$0]?.scheduledEventID }
+            + [polls[index].reminders[voterID]?.scheduledEventID].compactMap { $0 }
         polls[index].requiredVoterIDs = currentVoterIDs
         polls[index].votes = polls[index].votes.filter { currentVoterIDs.contains($0.key) }
         polls[index].reminders = polls[index].reminders.filter { currentVoterIDs.contains($0.key) }
+        polls[index].reminders.removeValue(forKey: voterID)
 
         let validCandidateIDs = Set(polls[index].candidates.map(\.id))
         guard candidateIDs.isSubset(of: validCandidateIDs) else {
@@ -402,20 +404,42 @@ actor DatePollsService {
     func createRepeatingPoll(
         sourceID: String,
         eventID: UUID,
+        scheduledDate: Date,
         requiredVoterIDs: Set<UserSnowflake>
     ) -> DatePoll? {
         guard let source = repeatPollSource(pollID: sourceID, eventID: eventID),
-              let repeatIntervalWeeks = source.repeatIntervalWeeks else {
+              let repeatIntervalWeeks = source.repeatIntervalWeeks,
+              repeatIntervalWeeks > 0 else {
             return nil
         }
         if let existingPoll = polls.first(where: { $0.repeatSourceEventID == eventID }) {
             return existingPoll.messageID == nil ? existingPoll : nil
         }
         let calendar = Calendar.current
-        let candidateDates = source.candidates.compactMap {
+        let deadlineDuration = source.deadlineDuration ?? source.deadline.timeIntervalSince(source.createdAt)
+        var occurrenceDate = scheduledDate
+        var candidateDates = source.candidates.compactMap {
             calendar.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: $0.date)
         }
         guard candidateDates.count == source.candidates.count else { return nil }
+        var nextOccurrenceDate = calendar.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: occurrenceDate)
+
+        while occurrenceDate.addingTimeInterval(deadlineDuration) <= .now
+            || candidateDates.contains(where: {
+                calendar.startOfDay(for: $0).addingTimeInterval(GlobalConstants.secondsPerDay) <= .now
+            })
+            || (nextOccurrenceDate ?? .distantPast) <= .now {
+            guard let nextDate = nextOccurrenceDate else {
+                return nil
+            }
+            let nextCandidateDates = candidateDates.compactMap {
+                calendar.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: $0)
+            }
+            guard nextCandidateDates.count == candidateDates.count else { return nil }
+            occurrenceDate = nextDate
+            candidateDates = nextCandidateDates
+            nextOccurrenceDate = calendar.date(byAdding: .weekOfYear, value: repeatIntervalWeeks, to: occurrenceDate)
+        }
 
         var poll = DatePoll(
             id: nextIdentifier(),
@@ -425,10 +449,11 @@ actor DatePollsService {
             channelID: source.channelID,
             campaignRoleID: source.campaignRoleID,
             requiredVoterIDs: requiredVoterIDs,
-            deadline: .now.addingTimeInterval(source.deadlineDuration ?? source.deadline.timeIntervalSince(source.createdAt)),
+            deadline: occurrenceDate.addingTimeInterval(deadlineDuration),
             description: source.description,
             candidateDates: candidateDates,
-            repeatIntervalWeeks: repeatIntervalWeeks
+            repeatIntervalWeeks: repeatIntervalWeeks,
+            createdAt: occurrenceDate
         )
         poll.repeatSeriesID = source.repeatSeriesID ?? source.id
         poll.repeatSourceEventID = eventID
@@ -445,6 +470,7 @@ actor DatePollsService {
         guard polls[index].requiredVoterIDs.contains(voterID) else {
             throw DatePollError.unauthorizedVoter
         }
+        guard polls[index].votes[voterID] == nil else { throw DatePollError.reminderUnavailable }
         guard polls[index].deadline > .now.addingTimeInterval(GlobalConstants.secondsPerDay) else {
             throw DatePollError.reminderUnavailable
         }
@@ -463,7 +489,7 @@ actor DatePollsService {
     }
 
     func reminderPoll(pollID: String, userID: UserSnowflake) throws -> DatePoll? {
-        guard let poll = polls.first(where: { $0.id == pollID }), poll.isOpen else { return nil }
+        guard let poll = polls.first(where: { $0.id == pollID }), poll.isOpen, poll.votes[userID] == nil else { return nil }
         switch poll.reminders[userID] {
         case .pending(_, _), .delayed(_, _):
             return poll

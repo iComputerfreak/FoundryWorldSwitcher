@@ -65,6 +65,7 @@ Runtime data directory: executable sibling `data/`; Docker mounts it at `/home/c
 - Date polls persist close/repeat/reminder scheduler identities. Guild load restores missing events idempotently; a close event only operates when its persisted ID matches the poll's current deadline.
 - Finalization, cancellation, and series edits persist retryable message-sync events before Discord updates. Direct successes clear the matching event; scheduler retries failed updates.
 - Finalized candidates link to their created booking ID. Booking lifecycle changes reconcile stale links and restore affected booking controls.
+- Recurring poll generation uses the due-event cadence anchor and skips cycles whose deadline, candidates, or next recurrence are already past. Votes cancel pending user reminders and reminders revalidate voter status.
 - `GuildContext` owns per-guild config, permissions, scheduler, bookings, and polls. Obtain contexts through `GuildRegistry`; do not add guild-local singletons.
 - `GuildRegistry` supplies the process-scoped application owner ID to each context's `Permissions`. `Permissions.isApplicationOwner(_:)` authorizes forced world switching and owner admin access is never persisted.
 - `world-lock.json`: global manual-switch block record. V3 migration converts legacy `.worldlock` to a manual record before archiving it.

@@ -173,6 +173,7 @@ extension SchedulerEvent {
         guard let poll = await context.datePolls.createRepeatingPoll(
             sourceID: pollID,
             eventID: id,
+            scheduledDate: dueDate,
             requiredVoterIDs: voterIDs
         ) else {
             return
