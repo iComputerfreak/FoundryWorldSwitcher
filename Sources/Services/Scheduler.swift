@@ -60,6 +60,13 @@ actor Scheduler {
         self.events.append(contentsOf: events)
         saveEvents()
     }
+
+    /// Adds only events absent from the persisted queue, preserving idempotent recovery.
+    func scheduleIfMissing(_ events: [SchedulerEvent]) {
+        let missingEvents = events.filter { event in !self.events.contains(where: { $0.id == event.id }) }
+        guard !missingEvents.isEmpty else { return }
+        schedule(missingEvents)
+    }
     
     /// Schedules a new event to be executed
     func schedule(_ event: SchedulerEvent) {

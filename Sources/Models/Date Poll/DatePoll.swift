@@ -27,12 +27,15 @@ struct DatePoll: Codable, Identifiable {
     var finalizedAt: Date?
     var votes: [UserSnowflake: DatePollVote]
     var reminders: [UserSnowflake: DatePollReminderState]
+    var closeEventID: UUID?
     var automaticReminderEventID: UUID?
     var automaticReminderDueDate: Date?
     var automaticReminderDeliveredUserIDs: Set<UserSnowflake>?
     var repeatIntervalWeeks: Int?
     var repeatSeriesID: String?
     var repeatEventID: UUID?
+    var repeatEventCompleted: Bool?
+    var repeatSourceEventID: UUID?
 
     init(
         id: String,
@@ -68,12 +71,15 @@ struct DatePoll: Codable, Identifiable {
         self.finalizedAt = nil
         self.votes = [:]
         self.reminders = [:]
+        self.closeEventID = nil
         self.automaticReminderEventID = nil
         self.automaticReminderDueDate = nil
         self.automaticReminderDeliveredUserIDs = []
         self.repeatIntervalWeeks = repeatIntervalWeeks
         self.repeatSeriesID = repeatIntervalWeeks == nil ? nil : id
         self.repeatEventID = nil
+        self.repeatEventCompleted = false
+        self.repeatSourceEventID = nil
     }
 
     var isOpen: Bool {

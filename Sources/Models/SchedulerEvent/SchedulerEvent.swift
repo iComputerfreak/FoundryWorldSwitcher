@@ -15,8 +15,8 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
     var dueDate: Date
     var eventType: SchedulerEventType
     
-    init(dueDate: Date, eventType: SchedulerEventType) {
-        self.id = UUID()
+    init(id: UUID = UUID(), dueDate: Date, eventType: SchedulerEventType) {
+        self.id = id
         self.dueDate = dueDate
         self.eventType = eventType
     }
@@ -63,7 +63,7 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
 // MARK: - Date Polls
 extension SchedulerEvent {
     private func handleCloseDatePoll(pollID: String, context: GuildContext) async throws {
-        guard let poll = try await context.datePolls.closePoll(id: pollID) else { return }
+        guard let poll = try await context.datePolls.closePoll(id: pollID, eventID: id) else { return }
         guard let messageID = poll.messageID else { return }
         try await bot.client.updateMessage(
             channelId: poll.channelID,
@@ -162,21 +162,11 @@ extension SchedulerEvent {
             return
         }
 
-        do {
-            let message = try await bot.client.createMessage(
-                channelId: poll.channelID,
-                payload: DatePollRenderer.createMessagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
-            ).decode()
-            do {
-                try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)
-            } catch {
-                try? await bot.client.deleteMessage(channelId: poll.channelID, messageId: message.id).guardSuccess()
-                throw error
-            }
-        } catch {
-            await context.datePolls.discardUnpublishedPoll(id: poll.id)
-            throw error
-        }
+        let message = try await bot.client.createMessage(
+            channelId: poll.channelID,
+            payload: DatePollRenderer.createMessagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
+        ).decode()
+        try await context.datePolls.publishPoll(id: poll.id, messageID: message.id)
     }
 }
 

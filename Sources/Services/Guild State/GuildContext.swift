@@ -60,5 +60,6 @@ final class GuildContext {
             bookings: await bookings.allBookings,
             configuration: config
         )
+        await datePolls.restoreScheduling()
     }
 }
