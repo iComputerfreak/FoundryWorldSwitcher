@@ -118,6 +118,7 @@ actor DatePollsService {
         let calendar = Calendar.current
         let deadlineDuration = deadline.timeIntervalSince(.now)
         var removedReminderEventIDs: [UUID] = []
+        var removedMessageSyncEventIDs: [UUID] = []
         var events: [SchedulerEvent] = []
 
         for index in indices {
@@ -146,6 +147,8 @@ actor DatePollsService {
                 polls[index].repeatSeriesID = source.repeatSeriesID ?? source.id
             }
             polls[index].repeatEventID = nil
+            polls[index].repeatEventCompleted = false
+            removedMessageSyncEventIDs += [polls[index].messageSyncEventID].compactMap { $0 }
 
             let validCandidateIDs = Set(polls[index].candidates.map(\.id))
             polls[index].votes = polls[index].votes
@@ -171,11 +174,15 @@ actor DatePollsService {
                 polls[index].repeatEventID = repeatEvent.id
                 events.append(repeatEvent)
             }
+            if let messageSyncEvent = markMessageSyncPending(for: index) {
+                events.append(messageSyncEvent)
+            }
         }
 
         savePolls()
         await scheduler.unqueueDatePollSchedulingEvents(pollIDs: Set(indices.map { polls[$0].id }))
         await scheduler.unqueue(ids: removedReminderEventIDs)
+        await scheduler.unqueue(ids: removedMessageSyncEventIDs)
         await scheduler.schedule(events)
         return indices.map { polls[$0] }
     }
@@ -494,6 +501,22 @@ actor DatePollsService {
         return polls[index]
     }
 
+    func pollForMessageSync(pollID: String, eventID: UUID) -> DatePoll? {
+        guard let poll = polls.first(where: { $0.id == pollID && $0.messageSyncEventID == eventID }) else {
+            return nil
+        }
+        return poll
+    }
+
+    func markMessageSynced(pollID: String, eventID: UUID?) {
+        guard let eventID,
+              let index = polls.firstIndex(where: { $0.id == pollID && $0.messageSyncEventID == eventID }) else {
+            return
+        }
+        polls[index].messageSyncEventID = nil
+        savePolls()
+    }
+
     /// Restores missing persisted deadline, repeat, and reminder events after a restart.
     func restoreScheduling() async {
         var events: [SchedulerEvent] = []
@@ -523,8 +546,12 @@ actor DatePollsService {
         let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID) + [polls[index].automaticReminderEventID].compactMap { $0 }
         polls[index].reminders.removeAll()
         polls[index].automaticReminderEventID = nil
+        let messageSyncEvent = markMessageSyncPending(for: index)
         savePolls()
         await scheduler.unqueue(ids: reminderEvents)
+        if let messageSyncEvent {
+            await scheduler.schedule(messageSyncEvent)
+        }
         return polls[index]
     }
 
@@ -540,8 +567,12 @@ actor DatePollsService {
         let reminderEvents = polls[index].reminders.values.compactMap(\.scheduledEventID) + [polls[index].automaticReminderEventID].compactMap { $0 }
         polls[index].reminders.removeAll()
         polls[index].automaticReminderEventID = nil
+        let messageSyncEvent = markMessageSyncPending(for: index)
         savePolls()
         await scheduler.unqueue(ids: reminderEvents)
+        if let messageSyncEvent {
+            await scheduler.schedule(messageSyncEvent)
+        }
         return polls[index]
     }
 
@@ -557,14 +588,19 @@ actor DatePollsService {
         let seriesID = polls[index].repeatSeriesID ?? polls[index].id
         let indices = polls.indices.filter { polls[$0].repeatSeriesID == seriesID }
         let eventIDs = indices.compactMap { polls[$0].repeatEventID }
+        var messageSyncEvents: [SchedulerEvent] = []
         for index in indices {
             polls[index].repeatIntervalWeeks = nil
             polls[index].repeatEventID = nil
+            if let messageSyncEvent = markMessageSyncPending(for: index) {
+                messageSyncEvents.append(messageSyncEvent)
+            }
         }
         savePolls()
         if !eventIDs.isEmpty {
             await scheduler.unqueue(ids: eventIDs)
         }
+        await scheduler.schedule(messageSyncEvents)
         return indices.map { polls[$0] }
     }
 
@@ -585,6 +621,10 @@ actor DatePollsService {
             let closeEventID = polls[index].closeEventID ?? UUID()
             polls[index].closeEventID = closeEventID
             events.append(.init(id: closeEventID, dueDate: polls[index].deadline, eventType: .closeDatePoll(pollID: pollID)))
+        }
+
+        if let messageSyncEventID = polls[index].messageSyncEventID {
+            events.append(.init(id: messageSyncEventID, dueDate: .now, eventType: .syncDatePollMessage(pollID: pollID)))
         }
 
         if let repeatIntervalWeeks = polls[index].repeatIntervalWeeks,
@@ -612,6 +652,13 @@ actor DatePollsService {
         }
 
         return events
+    }
+
+    private func markMessageSyncPending(for index: Int) -> SchedulerEvent? {
+        guard polls[index].messageID != nil else { return nil }
+        let event = SchedulerEvent(dueDate: .now, eventType: .syncDatePollMessage(pollID: polls[index].id))
+        polls[index].messageSyncEventID = event.id
+        return event
     }
 
     private func votePollIndex(

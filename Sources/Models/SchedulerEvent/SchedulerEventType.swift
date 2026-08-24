@@ -20,4 +20,5 @@ enum SchedulerEventType: Codable, Hashable {
     case sendDatePollReminder(pollID: String, userID: UserSnowflake)
     case sendOutstandingDatePollReminders(pollID: String)
     case repeatDatePoll(pollID: String)
+    case syncDatePollMessage(pollID: String)
 }

@@ -274,6 +274,7 @@ struct DatePollComponentHandler {
             messageId: messageID,
             payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
         ).guardSuccess()
+        await datePolls.markMessageSynced(pollID: poll.id, eventID: poll.messageSyncEventID)
         do {
             try await client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
         } catch {
@@ -302,6 +303,7 @@ struct DatePollComponentHandler {
                     messageId: messageID,
                     payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
                 ).guardSuccess()
+                await datePolls.markMessageSynced(pollID: poll.id, eventID: poll.messageSyncEventID)
             } catch {
                 logger.warning("Failed to update date poll after repeat cancellation: \(error)")
             }

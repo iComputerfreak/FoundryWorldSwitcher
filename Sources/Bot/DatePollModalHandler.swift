@@ -148,7 +148,7 @@ struct DatePollModalHandler {
             channelID: interaction.channel_id,
             messageID: interaction.message?.id
         )
-        try await updatePollMessage(for: updatedPoll, foundryFeaturesEnabled: foundryFeaturesEnabled)
+        try await updatePollMessage(for: updatedPoll, datePolls: datePolls, foundryFeaturesEnabled: foundryFeaturesEnabled)
         await removeResponse(token: interaction.token, action: "vote")
     }
 
@@ -171,7 +171,7 @@ struct DatePollModalHandler {
             userID: userID,
             roles: member.roles
         )
-        try await updatePollMessage(for: updatedPoll, foundryFeaturesEnabled: foundryFeaturesEnabled)
+        try await updatePollMessage(for: updatedPoll, datePolls: datePolls, foundryFeaturesEnabled: foundryFeaturesEnabled)
         await removeResponse(token: interaction.token, action: "finalization")
     }
 
@@ -206,18 +206,23 @@ struct DatePollModalHandler {
             roles: member.roles
         )
         for poll in polls {
-            try await updatePollMessage(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
+            do {
+                try await updatePollMessage(for: poll, datePolls: datePolls, foundryFeaturesEnabled: foundryFeaturesEnabled)
+            } catch {
+                logger.warning("Failed to update edited date poll \(poll.id): \(error)")
+            }
         }
         await removeResponse(token: interaction.token, action: "edit")
     }
 
-    private func updatePollMessage(for poll: DatePoll, foundryFeaturesEnabled: Bool) async throws {
+    private func updatePollMessage(for poll: DatePoll, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
         guard let messageID = poll.messageID else { throw DatePollError.missingMessageReference }
         try await client.updateMessage(
             channelId: poll.channelID,
             messageId: messageID,
             payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
         ).guardSuccess()
+        await datePolls.markMessageSynced(pollID: poll.id, eventID: poll.messageSyncEventID)
     }
 
     private func removeResponse(token: String, action: String) async {

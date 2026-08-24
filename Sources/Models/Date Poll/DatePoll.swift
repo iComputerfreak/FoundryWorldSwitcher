@@ -27,6 +27,7 @@ struct DatePoll: Codable, Identifiable {
     var finalizedAt: Date?
     var votes: [UserSnowflake: DatePollVote]
     var reminders: [UserSnowflake: DatePollReminderState]
+    var messageSyncEventID: UUID?
     var closeEventID: UUID?
     var automaticReminderEventID: UUID?
     var automaticReminderDueDate: Date?
@@ -71,6 +72,7 @@ struct DatePoll: Codable, Identifiable {
         self.finalizedAt = nil
         self.votes = [:]
         self.reminders = [:]
+        self.messageSyncEventID = nil
         self.closeEventID = nil
         self.automaticReminderEventID = nil
         self.automaticReminderDueDate = nil

@@ -56,6 +56,9 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
 
         case let .repeatDatePoll(pollID: pollID):
             try await handleRepeatDatePoll(pollID: pollID, context: context)
+
+        case let .syncDatePollMessage(pollID: pollID):
+            try await handleSyncDatePollMessage(pollID: pollID, context: context)
         }
     }
 }
@@ -70,6 +73,19 @@ extension SchedulerEvent {
             messageId: messageID,
             payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
         ).guardSuccess()
+    }
+
+    private func handleSyncDatePollMessage(pollID: String, context: GuildContext) async throws {
+        guard let poll = await context.datePolls.pollForMessageSync(pollID: pollID, eventID: id),
+              let messageID = poll.messageID else {
+            return
+        }
+        try await bot.client.updateMessage(
+            channelId: poll.channelID,
+            messageId: messageID,
+            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
+        ).guardSuccess()
+        await context.datePolls.markMessageSynced(pollID: pollID, eventID: id)
     }
 
     private func handleDatePollReminder(
