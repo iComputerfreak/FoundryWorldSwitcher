@@ -37,11 +37,9 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             try handleUnlockManualWorld(acquiredAt: acquiredAt)
 
         case let .sendSessionReminder(bookingID: bookingID):
-            guard context.config.foundryFeaturesEnabled else { return }
             try await handleSendSessionReminder(bookingID: bookingID, bookings: context.bookings, config: context.config)
 
         case let .sendSessionStartsReminder(bookingID: bookingID):
-            guard context.config.foundryFeaturesEnabled else { return }
             try await handleSendSessionStartsReminder(bookingID: bookingID, bookings: context.bookings, config: context.config)
 
         case .removeBooking:

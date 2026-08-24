@@ -59,13 +59,6 @@ do {
     fatalError("Startup migration failed: \(error)")
 }
 
-if BotConfig.shared.pterodactylHost.isEmpty {
-    logger.error("The Pterodactyl host is not set. Please set it in the config file.")
-}
-if BotConfig.shared.pterodactylServerID.isEmpty {
-    logger.error("The Pterodactyl server ID is not set. Please set it in the config file.")
-}
-
 // MARK: - Register services
 private let guildRegistry: GuildRegistry
 do {
@@ -102,7 +95,15 @@ let permissionsHandler = PermissionsHandler(cache: cache)
 try await DiscordCommands.register(bot: bot)
 
 // MARK: - Initialize PterodactylAPI Cache
-try await PterodactylAPI.shared.updateCache()
+if await guildRegistry.hasFoundryFeaturesEnabled() {
+    if BotConfig.shared.pterodactylHost.isEmpty {
+        logger.error("The Pterodactyl host is not set. Please set it in the config file.")
+    }
+    if BotConfig.shared.pterodactylServerID.isEmpty {
+        logger.error("The Pterodactyl server ID is not set. Please set it in the config file.")
+    }
+    try await PterodactylAPI.shared.updateCache()
+}
 
 logger.info("Bot started successfully.")
 

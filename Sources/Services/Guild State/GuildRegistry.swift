@@ -46,6 +46,11 @@ actor GuildRegistry {
         await bookingConflicts.prune(guildIDs: guildIDs)
     }
 
+    /// Returns whether any loaded guild uses Foundry features.
+    func hasFoundryFeaturesEnabled() -> Bool {
+        contexts.values.contains { $0.config.foundryFeaturesEnabled }
+    }
+
     /// Stops serving a guild after the bot is removed and releases its global resources.
     func removeContext(for guildID: GuildSnowflake) async {
         contexts.removeValue(forKey: guildID)
