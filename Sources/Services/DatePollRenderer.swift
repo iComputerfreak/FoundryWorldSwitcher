@@ -171,6 +171,7 @@ enum DatePollRenderer {
         var receivedGroupIDs: Set<String> = []
         var candidateIDs: Set<UUID> = []
         var isUnavailable = false
+        var receivedUnavailable = false
 
         for component in components {
             guard case let .label(label) = component else {
@@ -186,18 +187,20 @@ enum DatePollRenderer {
                 guard selectedCandidateIDs.count == values.count else { throw DatePollError.invalidCandidates }
                 candidateIDs.formUnion(selectedCandidateIDs)
             case let .checkbox(checkbox):
-                guard checkbox.custom_id == unavailableCheckboxID(pollID: poll.id) else {
+                guard checkbox.custom_id == unavailableCheckboxID(pollID: poll.id), !receivedUnavailable else {
                     throw DatePollError.invalidCandidates
                 }
+                receivedUnavailable = true
                 isUnavailable = checkbox.value ?? false
             default:
                 throw DatePollError.invalidCandidates
             }
         }
 
-        guard receivedGroupIDs == expectedGroupIDs else { throw DatePollError.invalidCandidates }
-        if isUnavailable && candidateIDs.isEmpty {
-            return []
+        guard receivedGroupIDs == expectedGroupIDs,
+              receivedUnavailable,
+              isUnavailable == candidateIDs.isEmpty else {
+            throw DatePollError.invalidCandidates
         }
         return candidateIDs
     }
