@@ -192,26 +192,8 @@ extension SchedulerEvent {
 // MARK: - Lock World
 extension SchedulerEvent {
     private func handleLockWorldSwitching(worldID: String, context: GuildContext) async throws {
-        guard let booking = await context.bookings.booking(associatedEventID: id) else {
-            Self.logger.warning("Skipping lock event \(id): no active booking owns it.")
-            return
-        }
-        guard booking.bookingIntervalEndDate(using: context.config) > .now else {
-            Self.logger.warning("Skipping lock event \(id): booking interval has ended.")
-            return
-        }
-
         Self.logger.debug("Locking world '\(worldID)'")
-        try WorldLockService.shared.lockWorldSwitching(guildID: context.guildID, bookingID: booking.id)
-        do {
-            try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
-        } catch {
-            _ = try? WorldLockService.shared.unlockWorldSwitching(
-                guildID: context.guildID,
-                bookingID: booking.id
-            )
-            throw error
-        }
+        try await context.bookings.startWorldSwitching(eventID: id, worldID: worldID)
     }
 }
 

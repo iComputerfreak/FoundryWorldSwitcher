@@ -22,6 +22,8 @@ actor BookingsService {
     let pinnedMessagesConfiguration: GuildConfig
     let guildID: GuildSnowflake
     let bookingConflicts: GlobalBookingConflictService
+    private var transitioningBookingIDs: Set<UUID> = []
+    private var transitionWaiters: [UUID: [CheckedContinuation<Void, Never>]] = [:]
     private(set) var bookings: [any Booking] {
         didSet {
             saveBookings()
@@ -114,8 +116,10 @@ actor BookingsService {
 
     /// Replaces a booking after reserving its new interval without releasing its existing one.
     func rescheduleBooking(id: UUID, to date: Date) async throws -> (any Booking)? {
-        guard let index = bookings.firstIndex(where: { $0.id == id }) else { return nil }
-        let originalBooking = bookings[index]
+        await beginTransition(for: id)
+        defer { endTransition(for: id) }
+
+        guard let originalBooking = bookings.first(where: { $0.id == id }) else { return nil }
         let replacementBooking: any Booking
         if let booking = originalBooking as? EventBooking {
             replacementBooking = EventBooking(
@@ -144,6 +148,22 @@ actor BookingsService {
         if replacementBooking.worldID != nil {
             try await bookingConflicts.reserve(replacementBooking, for: guildID, configuration: configuration)
         }
+
+        if originalBooking.worldID != nil {
+            do {
+                _ = try WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: originalBooking.id)
+            } catch {
+                try? await bookingConflicts.reserve(originalBooking, for: guildID, configuration: configuration)
+                throw error
+            }
+        }
+
+        guard let index = bookings.firstIndex(where: { $0.id == id }) else {
+            if originalBooking.worldID != nil {
+                try? await bookingConflicts.reserve(originalBooking, for: guildID, configuration: configuration)
+            }
+            return nil
+        }
         bookings[index] = replacementBooking
         await scheduler.unqueue(originalBooking.associatedEvents)
         await scheduler.schedule(replacementBooking.associatedEvents)
@@ -152,32 +172,46 @@ actor BookingsService {
     
     /// Deletes the given booking from the store and unqueues any associated events
     func deleteBooking(_ booking: any Booking) async {
-        removeBooking(id: booking.id)
-        await scheduler.unqueue(booking.associatedEvents)
-        if booking.worldID != nil {
-            await bookingConflicts.remove(bookingID: booking.id, guildID: guildID)
+        await beginTransition(for: booking.id)
+        defer { endTransition(for: booking.id) }
+        guard let index = bookings.firstIndex(where: { $0.id == booking.id }) else { return }
+        let currentBooking = bookings[index]
+
+        bookings.remove(at: index)
+        if currentBooking.worldID != nil {
+            _ = try? WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: currentBooking.id)
+        }
+        await scheduler.unqueue(currentBooking.associatedEvents)
+        if currentBooking.worldID != nil {
+            await bookingConflicts.remove(bookingID: currentBooking.id, guildID: guildID)
         }
     }
     
     /// Deletes the booking with the given ID from the store
     ///
     /// - NOTE: Does **not** unqueue any associated events.
-    func removeBooking(id: UUID) {
+    private func removeBooking(id: UUID) {
         bookings.removeAll(where: { $0.id == id })
         saveBookings()
     }
     
     /// Cancels the booking with the given ID and unqueues any associated events
     func cancelBooking(id: UUID) async {
+        await beginTransition(for: id)
+        defer { endTransition(for: id) }
         guard let bookingIndex = bookings.firstIndex(where: { $0.id == id }) else {
             Self.logger.warning("Trying to cancel booking with ID \(id), but no booking with that ID exists.")
             return
         }
-        await scheduler.unqueue(bookings[bookingIndex].associatedEvents)
+
+        let booking = bookings[bookingIndex]
         bookings[bookingIndex].wasCancelled = true
-        if bookings[bookingIndex].worldID != nil {
-            await bookingConflicts.remove(bookingID: bookings[bookingIndex].id, guildID: guildID)
-            _ = try? WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: bookings[bookingIndex].id)
+        if booking.worldID != nil {
+            _ = try? WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: booking.id)
+        }
+        await scheduler.unqueue(booking.associatedEvents)
+        if booking.worldID != nil {
+            await bookingConflicts.remove(bookingID: booking.id, guildID: guildID)
         }
     }
 
@@ -188,6 +222,50 @@ actor BookingsService {
             await cancelBooking(id: bookingID)
         }
         saveBookings()
+    }
+
+    /// Locks and starts the world for an event after serializing its booking lifecycle.
+    func startWorldSwitching(eventID: SchedulerEvent.ID, worldID: String) async throws {
+        guard let bookingID = booking(associatedEventID: eventID)?.id else {
+            Self.logger.warning("Skipping lock event \(eventID): no active booking owns it.")
+            return
+        }
+        await beginTransition(for: bookingID)
+        defer { endTransition(for: bookingID) }
+
+        guard let booking = booking(associatedEventID: eventID), booking.worldID == worldID else {
+            Self.logger.warning("Skipping lock event \(eventID): its booking changed.")
+            return
+        }
+        guard booking.bookingIntervalEndDate(using: configuration) > .now else {
+            Self.logger.warning("Skipping lock event \(eventID): booking interval has ended.")
+            return
+        }
+
+        try WorldLockService.shared.lockWorldSwitching(guildID: guildID, bookingID: booking.id)
+        do {
+            try await PterodactylAPI.shared.changeWorld(to: worldID, restart: true)
+        } catch {
+            _ = try? WorldLockService.shared.unlockWorldSwitching(guildID: guildID, bookingID: booking.id)
+            throw error
+        }
+    }
+
+    private func beginTransition(for bookingID: UUID) async {
+        while transitioningBookingIDs.contains(bookingID) {
+            await withCheckedContinuation { continuation in
+                transitionWaiters[bookingID, default: []].append(continuation)
+            }
+        }
+        transitioningBookingIDs.insert(bookingID)
+    }
+
+    private func endTransition(for bookingID: UUID) {
+        transitioningBookingIDs.remove(bookingID)
+        let waiters = transitionWaiters.removeValue(forKey: bookingID) ?? []
+        for waiter in waiters {
+            waiter.resume()
+        }
     }
 }
 
