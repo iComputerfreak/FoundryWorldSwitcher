@@ -24,6 +24,8 @@ actor BookingsService {
     let bookingConflicts: GlobalBookingConflictService
     private var transitioningBookingIDs: Set<UUID> = []
     private var transitionWaiters: [UUID: [CheckedContinuation<Void, Never>]] = [:]
+    private var reservingBookingDates: Set<Date> = []
+    private var dateReservationWaiters: [Date: [CheckedContinuation<Void, Never>]] = [:]
     private(set) var bookings: [any Booking] {
         didSet {
             saveBookings()
@@ -100,14 +102,21 @@ actor BookingsService {
         }
     }
     
-    /// Adds the given booking to the store
-    func createBooking(_ booking: any Booking) async {
+    /// Adds the given booking to the store and schedules its events.
+    private func createBooking(_ booking: any Booking) async {
         bookings.append(booking)
         saveBookings()
         await scheduler.schedule(booking.associatedEvents)
     }
 
     func createBookingIfAvailable(_ booking: any Booking) async throws {
+        let bookingDate = Calendar.current.startOfDay(for: booking.date)
+        await beginDateReservation(for: bookingDate)
+        defer { endDateReservation(for: bookingDate) }
+
+        guard self.booking(at: booking.date) == nil else {
+            throw DiscordCommandError.bookingAlreadyExists(atDate: booking.date)
+        }
         if booking.worldID != nil {
             try await bookingConflicts.reserve(booking, for: guildID, configuration: configuration)
         }
@@ -120,6 +129,16 @@ actor BookingsService {
         defer { endTransition(for: id) }
 
         guard let originalBooking = bookings.first(where: { $0.id == id }) else { return nil }
+        guard date > .now else { throw DiscordCommandError.dateIsInThePast(date) }
+        let bookingDate = Calendar.current.startOfDay(for: date)
+        await beginDateReservation(for: bookingDate)
+        defer { endDateReservation(for: bookingDate) }
+        guard !bookings.contains(where: {
+            $0.id != id && Calendar.current.isDate($0.date, inSameDayAs: date)
+        }) else {
+            throw DiscordCommandError.bookingAlreadyExists(atDate: date)
+        }
+
         let replacementBooking: any Booking
         if let booking = originalBooking as? EventBooking {
             replacementBooking = EventBooking(
@@ -263,6 +282,23 @@ actor BookingsService {
     private func endTransition(for bookingID: UUID) {
         transitioningBookingIDs.remove(bookingID)
         let waiters = transitionWaiters.removeValue(forKey: bookingID) ?? []
+        for waiter in waiters {
+            waiter.resume()
+        }
+    }
+
+    private func beginDateReservation(for date: Date) async {
+        while reservingBookingDates.contains(date) {
+            await withCheckedContinuation { continuation in
+                dateReservationWaiters[date, default: []].append(continuation)
+            }
+        }
+        reservingBookingDates.insert(date)
+    }
+
+    private func endDateReservation(for date: Date) {
+        reservingBookingDates.remove(date)
+        let waiters = dateReservationWaiters.removeValue(forKey: date) ?? []
         for waiter in waiters {
             waiter.resume()
         }

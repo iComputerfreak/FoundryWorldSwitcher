@@ -32,10 +32,6 @@ struct BookingModalHandler {
                     throw DiscordCommandError.worldDoesNotExist(worldID: form.worldID ?? "")
                 }
             }
-            guard await context.bookings.booking(at: form.date) == nil else {
-                throw DiscordCommandError.bookingAlreadyExists(atDate: form.date)
-            }
-
             let booking: any Booking
             var warning: String?
             switch form.kind {
