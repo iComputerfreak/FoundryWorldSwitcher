@@ -34,14 +34,14 @@ final class GuildContext {
         guildID: GuildSnowflake,
         applicationOwnerID: UserSnowflake?,
         bookingConflicts: GlobalBookingConflictService
-    ) {
+    ) throws {
         self.guildID = guildID
-        self.paths = .init(guildID: guildID)
-        self.config = .init(dataPath: paths.config)
-        self.permissions = .init(dataPath: paths.permissions, applicationOwnerID: applicationOwnerID)
-        self.scheduler = .init(dataPath: paths.events)
+        self.paths = try .init(guildID: guildID)
+        self.config = try .init(dataPath: paths.config)
+        self.permissions = try .init(dataPath: paths.permissions, applicationOwnerID: applicationOwnerID)
+        self.scheduler = try .init(dataPath: paths.events)
         self.bookingConflicts = bookingConflicts
-        self.bookings = .init(
+        self.bookings = try .init(
             scheduler: scheduler,
             dataPath: paths.bookings,
             configuration: config,
@@ -49,8 +49,8 @@ final class GuildContext {
             guildID: guildID,
             bookingConflicts: bookingConflicts
         )
-        self.datePolls = .init(scheduler: scheduler, dataPath: paths.datePolls, permissions: permissions)
-        self.datePollReminderPreferences = .init(dataPath: paths.datePollReminderPreferences)
+        self.datePolls = try .init(scheduler: scheduler, dataPath: paths.datePolls, permissions: permissions)
+        self.datePollReminderPreferences = try .init(dataPath: paths.datePollReminderPreferences)
     }
 
     /// Rebuilds this guild's entries in the shared booking-conflict index.

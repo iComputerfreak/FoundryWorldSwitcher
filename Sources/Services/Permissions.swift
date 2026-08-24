@@ -60,10 +60,10 @@ final class Permissions {
     }
     
     /// Loads persisted mappings and registers the runtime-only application owner.
-    init(dataPath: URL, applicationOwnerID: UserSnowflake?) {
+    init(dataPath: URL, applicationOwnerID: UserSnowflake?) throws {
         self.dataPath = dataPath
         self.applicationOwnerID = applicationOwnerID
-        let stored = Self.load(from: dataPath)
+        let stored = try Self.load(from: dataPath)
         self.userMap = stored.userMap
         self.roleMap = stored.roleMap
     }
@@ -124,16 +124,15 @@ final class Permissions {
         }
     }
 
-    /// Loads persisted guild mappings, returning empty mappings when unavailable.
-    private static func load(from dataPath: URL) -> Stored {
+    /// Loads persisted guild mappings, returning empty mappings only when no file exists.
+    private static func load(from dataPath: URL) throws -> Stored {
         guard FileManager.default.fileExists(atPath: dataPath.path) else {
             return .init(userMap: [:], roleMap: [:])
         }
         do {
             return try JSONDecoder().decode(Stored.self, from: Data(contentsOf: dataPath))
         } catch {
-            logger.error("Error loading permissions: \(error)")
-            return .init(userMap: [:], roleMap: [:])
+            throw PersistentStateError.load(dataPath, error)
         }
     }
 }

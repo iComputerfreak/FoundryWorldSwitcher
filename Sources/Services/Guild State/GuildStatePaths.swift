@@ -26,7 +26,7 @@ struct GuildStatePaths {
     let datePollReminderPreferences: URL
 
     /// Creates the guild state directory and resolves all file paths.
-    init(guildID: GuildSnowflake) {
+    init(guildID: GuildSnowflake) throws {
         directory = Utils.dataURL
             .appendingPathComponent("guilds", isDirectory: true)
             .appendingPathComponent(guildID.rawValue, isDirectory: true)
@@ -39,8 +39,11 @@ struct GuildStatePaths {
 
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let probe = directory.appendingPathComponent(".state-write-probe-\(UUID().uuidString)")
+            try Data().write(to: probe)
+            try FileManager.default.removeItem(at: probe)
         } catch {
-            Logger(label: "GuildStatePaths").error("Failed to create guild state directory: \(error)")
+            throw PersistentStateError.write(directory, error)
         }
     }
 }

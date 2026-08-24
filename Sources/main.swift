@@ -67,12 +67,17 @@ if BotConfig.shared.pterodactylServerID.isEmpty {
 }
 
 // MARK: - Register services
-private let guildRegistry = GuildRegistry(applicationOwnerID: applicationOwnerID)
-
-await guildRegistry.pruneBookingConflicts(guildIDs: Set(guilds.map(\.id)))
-
-for guild in guilds {
-    _ = await guildRegistry.context(for: guild.id)
+private let guildRegistry: GuildRegistry
+do {
+    guildRegistry = try GuildRegistry(applicationOwnerID: applicationOwnerID)
+    await guildRegistry.pruneBookingConflicts(guildIDs: Set(guilds.map(\.id)))
+    for guild in guilds {
+        _ = try await guildRegistry.context(for: guild.id)
+    }
+} catch {
+    await bot.disconnect()
+    logger.critical("Startup state initialization failed: \(error)")
+    fatalError("Startup state initialization failed: \(error)")
 }
 
 let cache = await DiscordCache(

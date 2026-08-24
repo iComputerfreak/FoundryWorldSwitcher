@@ -12,21 +12,23 @@ actor GuildRegistry {
     private var contexts: [GuildSnowflake: GuildContext] = [:]
 
     /// Creates a registry using the supplied application owner for every context.
-    init(
-        applicationOwnerID: UserSnowflake?,
-        bookingConflicts: GlobalBookingConflictService = .init()
-    ) {
+    init(applicationOwnerID: UserSnowflake?) throws {
+        self.applicationOwnerID = applicationOwnerID
+        self.bookingConflicts = try .init()
+    }
+
+    init(applicationOwnerID: UserSnowflake?, bookingConflicts: GlobalBookingConflictService) {
         self.applicationOwnerID = applicationOwnerID
         self.bookingConflicts = bookingConflicts
     }
 
     /// Returns the context for `guildID`, loading its persisted state once.
-    func context(for guildID: GuildSnowflake) async -> GuildContext {
+    func context(for guildID: GuildSnowflake) async throws -> GuildContext {
         if let context = contexts[guildID] {
             return context
         }
 
-        let context = GuildContext(
+        let context = try GuildContext(
             guildID: guildID,
             applicationOwnerID: applicationOwnerID,
             bookingConflicts: bookingConflicts

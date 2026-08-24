@@ -62,17 +62,17 @@ actor BookingsService {
         pinnedMessagesConfiguration: GuildConfig,
         guildID: GuildSnowflake,
         bookingConflicts: GlobalBookingConflictService
-    ) {
+    ) throws {
         self.scheduler = scheduler
         self.dataPath = dataPath
         self.configuration = configuration
         self.pinnedMessagesConfiguration = pinnedMessagesConfiguration
         self.guildID = guildID
         self.bookingConflicts = bookingConflicts
-        let loadedBookings = Self.loadBookings(from: dataPath, configuration: configuration)
+        let loadedBookings = try Self.loadBookings(from: dataPath, configuration: configuration)
         self.bookings = loadedBookings.bookings
         if loadedBookings.didInitializeIntervals {
-            saveBookings()
+            try Self.save(BookingList(bookings: bookings), at: dataPath)
         }
     }
     
@@ -196,7 +196,7 @@ extension BookingsService {
     func saveBookings() {
         do {
             let list = BookingList(bookings: bookings)
-            try save(list, at: dataPath)
+            try Self.save(list, at: dataPath)
         } catch {
             Self.logger.error("Failed to save bookings: \(error)")
         }
@@ -205,8 +205,8 @@ extension BookingsService {
     static func loadBookings(
         from url: URL,
         configuration: any BookingConfiguration
-    ) -> (bookings: [any Booking], didInitializeIntervals: Bool) {
-        let bookingList: BookingList? = try? Self.load(from: url, defaultValue: nil)
+    ) throws -> (bookings: [any Booking], didInitializeIntervals: Bool) {
+        let bookingList: BookingList? = try Self.load(from: url, defaultValue: nil)
         var bookings = bookingList?.allBookings ?? []
         var didInitializeIntervals = false
         for index in bookings.indices {
@@ -215,7 +215,7 @@ extension BookingsService {
         return (bookings, didInitializeIntervals)
     }
     
-    private func save<T: Encodable>(_ object: T, at url: URL) throws {
+    private static func save<T: Encodable>(_ object: T, at url: URL) throws {
         let data = try JSONEncoder().encode(object)
         try data.write(to: url)
     }

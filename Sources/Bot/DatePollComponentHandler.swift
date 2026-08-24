@@ -17,7 +17,7 @@ struct DatePollComponentHandler {
         }
         let context: GuildContext
         if let guildID = interaction.guild_id {
-            context = await guildRegistry.context(for: guildID)
+            context = try await guildRegistry.context(for: guildID)
         } else {
             guard action.action == .delay || action.action == .optOut else { throw DiscordCommandError.noGuild }
             context = try await guildRegistry.context(forDatePollID: action.pollID)

@@ -16,9 +16,9 @@ actor Scheduler {
     private(set) var events: [SchedulerEvent]
     private var isUpdating = false
     
-    init(dataPath: URL) {
+    init(dataPath: URL) throws {
         self.dataPath = dataPath
-        events = Self.loadEvents(from: dataPath)
+        events = try Self.loadEvents(from: dataPath)
     }
     
     func update(in context: GuildContext) async throws {
@@ -134,7 +134,7 @@ extension Scheduler {
         }
     }
     
-    static func loadEvents(from dataPath: URL) -> [SchedulerEvent] {
+    static func loadEvents(from dataPath: URL) throws -> [SchedulerEvent] {
         do {
             guard FileManager.default.fileExists(atPath: dataPath.path) else {
                 return []
@@ -142,8 +142,7 @@ extension Scheduler {
             let data = try Data(contentsOf: dataPath)
             return try JSONDecoder().decode([SchedulerEvent].self, from: data)
         } catch {
-            logger.error("Failed to load events: \(error)")
-            return []
+            throw PersistentStateError.load(dataPath, error)
         }
     }
 }

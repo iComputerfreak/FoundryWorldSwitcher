@@ -17,7 +17,7 @@ struct BookingModalHandler {
             guard let guildID = interaction.guild_id, let member = interaction.member, let user = member.user else {
                 throw DiscordCommandError.noGuild
             }
-            let context = await guildRegistry.context(for: guildID)
+            let context = try await guildRegistry.context(for: guildID)
             guard context.permissions.permissionsLevel(of: user.id, roles: member.roles) >= .dungeonMaster else {
                 throw DiscordCommandError.unauthorized(requiredLevel: .dungeonMaster)
             }

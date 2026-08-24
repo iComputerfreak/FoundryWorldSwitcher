@@ -55,9 +55,9 @@ final class GuildConfig: BookingConfiguration {
     )
 
     /// Loads configuration from `dataPath`, creating defaults when absent.
-    init(dataPath: URL) {
+    init(dataPath: URL) throws {
         self.dataPath = dataPath
-        let stored = Self.load(from: dataPath) ?? Self.defaultStored
+        let stored = try Self.load(from: dataPath) ?? Self.defaultStored
         sessionLength = stored.sessionLength
         bookingIntervalStartTime = stored.bookingIntervalStartTime
         bookingIntervalEndTime = stored.bookingIntervalEndTime
@@ -70,7 +70,7 @@ final class GuildConfig: BookingConfiguration {
         foundryFeaturesEnabled = stored.foundryFeaturesEnabled ?? true
 
         if !FileManager.default.fileExists(atPath: dataPath.path) {
-            save()
+            try Self.save(stored, to: dataPath)
         }
     }
 
@@ -182,20 +182,27 @@ final class GuildConfig: BookingConfiguration {
                 pinnedBookingMessages: pinnedBookingMessages,
                 foundryFeaturesEnabled: foundryFeaturesEnabled
             )
-            try JSONEncoder().encode(stored).write(to: dataPath)
+            try Self.save(stored, to: dataPath)
         } catch {
             Self.logger.error("Failed to save guild config: \(error)")
         }
     }
 
     /// Decodes persisted guild configuration when its file exists and is valid.
-    private static func load(from dataPath: URL) -> GuildConfigStored? {
+    private static func load(from dataPath: URL) throws -> GuildConfigStored? {
         guard FileManager.default.fileExists(atPath: dataPath.path) else { return nil }
         do {
             return try JSONDecoder().decode(GuildConfigStored.self, from: Data(contentsOf: dataPath))
         } catch {
-            logger.error("Failed to load guild config: \(error)")
-            return nil
+            throw PersistentStateError.load(dataPath, error)
+        }
+    }
+
+    private static func save(_ stored: GuildConfigStored, to dataPath: URL) throws {
+        do {
+            try JSONEncoder().encode(stored).write(to: dataPath)
+        } catch {
+            throw PersistentStateError.write(dataPath, error)
         }
     }
 }

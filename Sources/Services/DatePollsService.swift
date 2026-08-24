@@ -22,11 +22,11 @@ actor DatePollsService {
         scheduler: Scheduler,
         dataPath: URL,
         permissions: Permissions
-    ) {
+    ) throws {
         self.scheduler = scheduler
         self.dataPath = dataPath
         self.permissions = permissions
-        self.polls = Self.loadPolls(from: dataPath)
+        self.polls = try Self.loadPolls(from: dataPath)
     }
 
     func createPoll(
@@ -606,13 +606,12 @@ actor DatePollsService {
         }
     }
 
-    private static func loadPolls(from dataPath: URL) -> [DatePoll] {
+    private static func loadPolls(from dataPath: URL) throws -> [DatePoll] {
         guard FileManager.default.fileExists(atPath: dataPath.path) else { return [] }
         do {
             return try JSONDecoder().decode([DatePoll].self, from: Data(contentsOf: dataPath))
         } catch {
-            logger.error("Failed to load date polls: \(error)")
-            return []
+            throw PersistentStateError.load(dataPath, error)
         }
     }
 }

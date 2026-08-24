@@ -56,7 +56,7 @@ struct EventHandler: GatewayEventHandler {
             guard let guildID = interaction.guild_id else {
                 throw DiscordCommandError.noGuild
             }
-            let context = await guildRegistry.context(for: guildID)
+            let context = try await guildRegistry.context(for: guildID)
             guard let member = interaction.member else {
                 throw DiscordCommandError.noMember
             }

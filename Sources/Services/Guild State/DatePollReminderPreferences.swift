@@ -9,7 +9,7 @@ actor DatePollReminderPreferences {
     private let dataPath: URL
     private let logger = Logger(label: String(describing: DatePollReminderPreferences.self))
 
-    init(dataPath: URL) {
+    init(dataPath: URL) throws {
         self.dataPath = dataPath
         do {
             guard FileManager.default.fileExists(atPath: dataPath.path) else {
@@ -18,8 +18,7 @@ actor DatePollReminderPreferences {
             }
             optedOutUserIDs = try JSONDecoder().decode(Set<UserSnowflake>.self, from: Data(contentsOf: dataPath))
         } catch {
-            logger.error("Failed to load date-poll reminder preferences: \(error)")
-            optedOutUserIDs = []
+            throw PersistentStateError.load(dataPath, error)
         }
     }
 

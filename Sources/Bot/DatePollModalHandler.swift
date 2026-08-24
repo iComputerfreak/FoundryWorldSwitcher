@@ -27,7 +27,7 @@ struct DatePollModalHandler {
 
         do {
             guard let guildID = interaction.guild_id else { throw DiscordCommandError.noGuild }
-            let context = await guildRegistry.context(for: guildID)
+            let context = try await guildRegistry.context(for: guildID)
             switch action.action {
             case .create:
                 try await handleCreation(modal: modal, interaction: interaction, context: context)
@@ -48,7 +48,7 @@ struct DatePollModalHandler {
 
     private func handleVotesModalSubmission(pollID: String, interaction: Interaction) async throws {
         guard let guildID = interaction.guild_id else { throw DiscordCommandError.noGuild }
-        let context = await guildRegistry.context(for: guildID)
+        let context = try await guildRegistry.context(for: guildID)
         let poll = try await context.datePolls.pollForVotesModal(
             pollID: pollID,
             guildID: guildID,

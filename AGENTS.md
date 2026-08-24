@@ -15,7 +15,7 @@ Use DiscordBM for Discord API communication. Do not make manual Discord REST req
 
 ## Guild State
 
-Guild-local state uses `GuildContext` from `GuildRegistry` and persists below `data/guilds/<guild-id>/`. Pterodactyl target, world lock, and booking conflicts are global. Keep guild-local services instance-scoped; never add a singleton for them.
+Guild-local state uses `GuildContext` from `GuildRegistry` and persists below `data/guilds/<guild-id>/`. Pterodactyl target, world lock, and booking conflicts are global. Guild state initialization must fail on corrupt state or inaccessible storage; never replace persisted state with in-memory defaults. Keep guild-local services instance-scoped; never add a singleton for them.
 V3 root-state migration stays entirely in `V3StateMigration`. It runs only before `BotConfig.shared` reads root config, only when `data/guilds/` is absent, root `data/botConfig.json` exists, and Discord reports exactly one guild. Build and verify migration state under `data/.v3-migration-staging/`; migrate legacy split `event_bookings.json` and `reservation_bookings.json` when consolidated `bookings.json` is absent; write verified backups and global output before atomically moving staged guild state to `data/guilds/`. Incomplete staging restores source global output for retry; failed restoration retains staging and backup artifacts. The guild directory indicates migration completion; no marker exists. Do not add legacy root-state runtime fallbacks.
 Keep `Sources/Services/Guild State/` one-type-per-file. Document moved state types and persisted properties with `///`; retain source headers and meaningful existing comments when refactoring.
 

@@ -14,10 +14,14 @@ actor GlobalBookingConflictService {
     private var records: [GlobalBookingRecord]
 
     /// Loads global booking conflict records from `dataPath`.
-    init(dataPath: URL = Utils.dataURL.appendingPathComponent("booking_conflicts.json")) {
+    init(dataPath: URL = Utils.dataURL.appendingPathComponent("booking_conflicts.json")) throws {
         self.dataPath = dataPath
-        if let data = try? Data(contentsOf: dataPath) {
-            records = (try? JSONDecoder().decode([GlobalBookingRecord].self, from: data)) ?? []
+        if FileManager.default.fileExists(atPath: dataPath.path) {
+            do {
+                records = try JSONDecoder().decode([GlobalBookingRecord].self, from: Data(contentsOf: dataPath))
+            } catch {
+                throw PersistentStateError.load(dataPath, error)
+            }
         } else {
             records = []
         }
