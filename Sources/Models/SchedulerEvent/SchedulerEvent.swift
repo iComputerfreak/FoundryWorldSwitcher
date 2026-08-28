@@ -163,7 +163,10 @@ extension SchedulerEvent {
                 do {
                     try await bot.client.createMessage(
                         channelId: reminder.poll.channelID,
-                        payload: .init(content: content)
+                        payload: .init(
+                            content: content,
+                            components: DatePollRenderer.automaticReminderComponents(for: reminder.poll)
+                        )
                     ).guardSuccess()
                     await context.datePolls.markAutomaticReminderDelivered(pollID: pollID, eventID: id, userID: userID)
                 } catch {

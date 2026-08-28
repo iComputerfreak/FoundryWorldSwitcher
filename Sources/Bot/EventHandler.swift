@@ -34,6 +34,14 @@ struct EventHandler: GatewayEventHandler {
         }
     }
 
+    func onReady(_ payload: Gateway.Ready) async throws {
+        await presenceService.republish()
+    }
+
+    func onResumed() async throws {
+        await presenceService.republish()
+    }
+
     func onGuildDelete(_ guild: UnavailableGuild) async throws {
         guard guild.unavailable != true else { return }
         await guildRegistry.removeContext(for: guild.id)

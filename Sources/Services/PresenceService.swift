@@ -56,6 +56,11 @@ actor PresenceService {
         await publish(state: Self.state(worldName: cachedWorldName, lockState: lockState))
     }
 
+    func republish() async {
+        hasPublishedPresence = false
+        await refresh()
+    }
+
     private var shouldRefreshWorld: Bool {
         guard let lastWorldRefresh else { return true }
         return lastWorldRefresh.addingTimeInterval(Self.worldRefreshInterval) <= .now
