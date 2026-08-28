@@ -162,6 +162,7 @@ Debugging command to show the current event scheduler queue.
 
 You can also use the `/config` command to view and update these values.
 
+* `language`: Guild output language (`en` or `de`). New and legacy guilds default to English. Example: `/config set key:language value:de`
 * `pterodactylHost`: The hostname of the Pterodactyl panel
 * `pterodactylServerID`: The ID of the server on the Pterodactyl panel
 * `sessionLength`: The length of a session

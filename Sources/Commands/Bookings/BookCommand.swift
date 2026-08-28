@@ -51,7 +51,8 @@ struct BookCommand: DiscordCommand {
             payload: BookingRenderer.creationModal(
                 kind: kind,
                 worlds: worlds,
-                defaultEventBookingTime: context.config.defaultEventBookingTime
+                defaultEventBookingTime: context.config.defaultEventBookingTime,
+                localization: context.config.localization
             )
         ).guardSuccess()
     }

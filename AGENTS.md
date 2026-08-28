@@ -12,6 +12,7 @@ Read `AGENT_CONTEXT.md` before non-trivial work for architecture, runtime contra
 
 Respect the existing architecture, code quality, documentation standard, and established patterns. Keep code maintainable and human-readable. Prefer the lightest implementation that correctly meets the requirement.
 Use DiscordBM for Discord API communication. Do not make manual Discord REST requests.
+Runtime user-facing command output uses `context.config.localization` with native `.strings` tables. Keep canonical command, option, choice values, component IDs, and input formats unchanged; Discord registration localizes descriptions and choice labels by client locale.
 
 ## Guild State
 
@@ -22,6 +23,8 @@ Booking wall-clock times use calendar components, not fixed seconds from midnigh
 Foundry-disabled guilds still run date polls, worldless bookings, and session reminders. Initialize Pterodactyl cache only when at least one loaded guild enables Foundry.
 Date-poll close/repeat/reminder event IDs persist with each poll. Recover missing scheduler entries by ID on guild load; close handlers ignore stale IDs and retry Discord message sync while awaiting finalization. Repeating polls retain one pending occurrence per source repeat event. Publication uses a persisted Discord nonce and scheduler outbox to recover a message created before its ID is stored.
 Date-poll terminal state and series edits persist a message-sync event before Discord updates. Successful direct updates clear it; failures retry through the scheduler without blocking remaining series messages.
+All date-poll Discord message writes serialize per poll. Sync operations re-read current poll state after acquiring that serialization slot; never render a captured stale poll after waiting on Discord work.
+Pinned booking message refreshes serialize per guild so an older locale or booking snapshot cannot finish last.
 Finalized date-poll candidates store their booking IDs. Revalidate the candidate/date at modal submission and reconcile links after booking cancellation, deletion, rescheduling, and scheduled world activation.
 Repeating polls retain cadence from their scheduled event date and skip overdue occurrences. Voting cancels that voter's pending date-poll reminder; reminder execution also rechecks vote state.
 Date-poll availability submission requires selected dates XOR "No dates work."

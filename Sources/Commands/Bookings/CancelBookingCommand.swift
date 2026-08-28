@@ -58,7 +58,7 @@ struct CancelBookingCommand: DiscordCommand {
             }
         }
         
-        let bookingEmbed = try await Utils.createBookingEmbed(for: booking)
+        let bookingEmbed = try await Utils.createBookingEmbed(for: booking, localization: context.config.localization)
         
         await context.bookings.cancelBooking(id: booking.id)
         await presenceService.refresh()
@@ -66,14 +66,13 @@ struct CancelBookingCommand: DiscordCommand {
         await DatePollMessageSynchronizer.synchronize(
             updatedPolls,
             datePolls: context.datePolls,
-            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
             client: client
         )
         
         try await client.respond(
             token: interaction.token,
             payload: .init(
-                content: "The following booking has been cancelled:",
+                content: context.config.localization.string("booking.cancelled", table: "Commands"),
                 embeds: [bookingEmbed]
             )
         )

@@ -13,11 +13,16 @@ struct BookingModalHandler {
             payload: .deferredChannelMessageWithSource()
         ).guardSuccess()
 
+        var localization = LocalizationContext.english
         do {
-            guard let guildID = interaction.guild_id, let member = interaction.member, let user = member.user else {
+            guard let guildID = interaction.guild_id else {
                 throw DiscordCommandError.noGuild
             }
             let context = try await guildRegistry.context(for: guildID)
+            localization = context.config.localization
+            guard let member = interaction.member, let user = member.user else {
+                throw DiscordCommandError.noUser
+            }
             guard context.permissions.permissionsLevel(of: user.id, roles: member.roles) >= .dungeonMaster else {
                 throw DiscordCommandError.unauthorized(requiredLevel: .dungeonMaster)
             }
@@ -59,8 +64,7 @@ struct BookingModalHandler {
                 if booking.worldID != nil, booking.date > booking.bookingIntervalEndDate(using: context.config) {
                     let start = DiscordUtils.timestamp(date: booking.bookingIntervalStartDate(using: context.config), style: .shortDateTime)
                     let end = DiscordUtils.timestamp(date: booking.bookingIntervalEndDate(using: context.config), style: .shortDateTime)
-                    warning = "\nThe world will be locked from \(start) to \(end).\n" +
-                        "**Warning**: With the current configuration settings, the world will be unlocked before the event starts."
+                    warning = localization.string("booking.world_lock_warning", table: "Bot", start, end)
                 }
             }
 
@@ -91,15 +95,14 @@ struct BookingModalHandler {
                 await DatePollMessageSynchronizer.synchronize(
                     [sourcePoll],
                     datePolls: context.datePolls,
-                    foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
                     client: client
                 )
             }
             try await client.respond(
                 token: interaction.token,
                 payload: .init(
-                    content: "Booking created successfully.\(warning ?? "")",
-                    embeds: [Utils.createBookingEmbed(for: booking)]
+                    content: localization.string("booking.created", table: "Bot") + (warning ?? ""),
+                    embeds: [Utils.createBookingEmbed(for: booking, localization: localization)]
                 )
             )
         } catch {
@@ -107,7 +110,10 @@ struct BookingModalHandler {
                 logger.warning("Invalid booking form components: \(modalComponentSummary(modal))")
             }
             logger.warning("Failed to create booking from modal: \(error)")
-            try await client.respond(token: interaction.token, message: error.localizedDescription)
+            try await client.respond(
+                token: interaction.token,
+                message: UserFacingErrorRenderer.message(for: error, localization: localization)
+            )
         }
     }
 

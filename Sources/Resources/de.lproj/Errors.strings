@@ -1,0 +1,62 @@
+"generic.unexpected" = "Beim Verarbeiten deiner Anfrage ist ein unerwarteter Fehler aufgetreten. Bitte versuche es erneut.";
+
+"command.unknown" = "Der Befehl `%@` ist unbekannt.";
+"command.argument_missing" = "Das erforderliche Argument `%@` fehlt.";
+"command.subcommand_missing" = "Bitte wähle einen Unterbefehl aus.";
+"command.member_missing" = "Diesem Befehl ist kein Servermitglied zugeordnet.";
+"command.user_missing" = "Diesem Befehl ist kein Benutzer zugeordnet.";
+"command.guild_missing" = "Dieser Befehl muss auf einem Server verwendet werden.";
+"command.channel_missing" = "Diesem Befehl ist kein Kanal zugeordnet.";
+
+"world.not_found" = "Die Foundry-Welt `%@` existiert nicht.";
+"world.switching_locked" = "Der Wechsel der Foundry-Welt ist derzeit gesperrt.";
+"foundry.features_disabled" = "Foundry-Funktionen sind auf diesem Server deaktiviert.";
+
+"permission.level.user" = "Benutzer";
+"permission.level.dungeon_master" = "Spielleiter";
+"permission.level.admin" = "Admin";
+"permission.command_required" = "Du benötigst mindestens die Berechtigungsstufe `%@`, um diesen Befehl zu verwenden.";
+"permission.booking_cancel_required" = "Du benötigst die Berechtigungsstufe `%@`, um die Buchung eines anderen Benutzers abzusagen.";
+"permission.booking_reschedule_required" = "Du benötigst die Berechtigungsstufe `%@`, um die Buchung eines anderen Benutzers zu verschieben.";
+"permission.world_force_switch_required" = "Du benötigst die Berechtigungsstufe `%@`, um den Wechsel der Foundry-Welt zu erzwingen.";
+"permission.world_unlock_owner_required" = "Nur der Besitzer der Bot-Anwendung kann den Wechsel der Foundry-Welt entsperren.";
+
+"input.date_invalid" = "`%@` ist kein gültiges Datum. Verwende das Format `%@`.";
+"input.time_invalid" = "`%@` ist keine gültige Uhrzeit. Verwende das Format `%@`.";
+"input.date_in_past" = "Das Datum %@ liegt in der Vergangenheit.";
+"input.duration_invalid" = "`%@` ist keine gültige Dauer. Verwende ein Format wie `1h 2m`.";
+"duration.hours_or_minutes_missing" = "Gib mindestens Stunden oder Minuten in einem Format wie `1h 2m` an.";
+"duration.format_invalid" = "Gib eine Dauer in einem Format wie `1h 2m` an.";
+
+"booking.not_found" = "Am %@ gibt es keine Buchung.";
+"booking.already_exists" = "Am %@ gibt es bereits eine Buchung.";
+"booking.form_invalid" = "Das Buchungsformular ist unvollständig oder ungültig. Öffne es erneut und versuche es noch einmal.";
+"booking.world_missing" = "Wähle für diese Reservierung eine Foundry-Welt aus.";
+"booking.worlds_unavailable" = "Für eine Reservierung sind keine Foundry-Welten verfügbar.";
+"booking.role_missing" = "Wähle für dieses Ereignis eine Kampagnenrolle aus.";
+"booking.topic_missing" = "Gib ein Thema für dieses Ereignis ein.";
+
+"config.key_invalid" = "Der Konfigurationsschlüssel `%@` existiert nicht.";
+"config.value_invalid" = "`%@` ist kein gültiger Wert für `%@`.";
+"config.reminder_channel_wrong_guild" = "Der Erinnerungskanal muss zu diesem Server gehören.";
+
+"discord.message_reference_missing" = "Die Discord-Nachricht konnte nicht identifiziert werden.";
+"interaction.option_missing" = "Die erforderliche Option `%@` fehlt.";
+"interaction.component_missing" = "Das erforderliche Formularfeld `%@` wurde nicht gefunden. Öffne das Formular erneut und versuche es noch einmal.";
+"interaction.component_kind_invalid" = "Ein Formularfeld hat den falschen Typ (`%@`). Öffne das Formular erneut und versuche es noch einmal.";
+"interaction.data_kind_invalid" = "Diese Interaktion hat den falschen Typ (`%@`). Bitte versuche es erneut.";
+"interaction.value_type_invalid" = "`%@` ist kein gültiger Wert des Typs `%@`.";
+
+"date_poll.not_found" = "Es existiert keine Terminumfrage mit der ID `%@`.";
+"date_poll.voting_closed" = "Diese Terminumfrage ist nicht mehr zur Abstimmung geöffnet.";
+"date_poll.voter_unauthorized" = "Nur Mitglieder der Kampagnenrolle dieser Umfrage dürfen abstimmen.";
+"date_poll.candidates_invalid" = "Die ausgewählten Termine sind für diese Umfrage ungültig.";
+"date_poll.reminder_too_late" = "Die Erinnerung würde erst nach Ende dieser Umfrage gesendet.";
+"date_poll.reminder_already_scheduled" = "Du hast bereits eine Erinnerung für diese Umfrage angefordert.";
+"date_poll.reminder_delay_unavailable" = "Diese Erinnerung kann nicht verschoben werden.";
+"date_poll.finalized_date_invalid" = "Der ausgewählte Termin gehört nicht zu dieser Umfrage.";
+"date_poll.finalization_selection_invalid" = "Wähle mindestens einen Termin aus, um die Umfrage abzuschließen.";
+"date_poll.creation_form_invalid" = "Das Formular der Terminumfrage ist unvollständig oder ungültig.";
+"date_poll.deadline_days_invalid" = "Die Frist muss eine ganze Anzahl von Tagen zwischen 1 und 60 sein.";
+"date_poll.management_unauthorized" = "Nur der Ersteller der Umfrage, ein Admin oder ein Spielleiter dieser Kampagne darf diese Umfrage verwalten.";
+"date_poll.message_reference_missing" = "Die Discord-Nachricht der Terminumfrage konnte nicht identifiziert werden.";

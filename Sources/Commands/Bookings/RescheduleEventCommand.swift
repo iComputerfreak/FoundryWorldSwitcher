@@ -103,15 +103,14 @@ struct RescheduleEventCommand: DiscordCommand {
         await DatePollMessageSynchronizer.synchronize(
             updatedPolls,
             datePolls: context.datePolls,
-            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
             client: client
         )
         
         try await client.respond(
             token: interaction.token,
             payload: .init(
-                content: "Successfully rescheduled the event:",
-                embeds: [Utils.createBookingEmbed(for: booking)]
+                content: context.config.localization.string("booking.rescheduled", table: "Commands"),
+                embeds: [Utils.createBookingEmbed(for: booking, localization: context.config.localization)]
             )
         )
     }

@@ -1,0 +1,9 @@
+"session_reminder.content" = "%1$@ **Reminder**: Your session is booked for %2$@.";
+"session_start.content" = "%1$@ Your session starts in %2$@.";
+"session_start.content_with_location" = "%1$@ Your session starts in %2$@ in channel %3$@.";
+
+"date_poll_reminder.content" = "%1$@ please vote in the [%2$@](%3$@).";
+"date_poll_reminder.link_label" = "session date poll";
+
+"pinned_bookings.heading" = "Upcoming Events";
+"pinned_bookings.empty" = "There are no bookings scheduled right now.";

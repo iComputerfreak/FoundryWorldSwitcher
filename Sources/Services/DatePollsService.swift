@@ -7,6 +7,13 @@ import Foundation
 import Logging
 
 actor DatePollsService {
+    struct RenderConfiguration: Sendable, Equatable {
+        let foundryFeaturesEnabled: Bool
+        let language: GuildLanguage
+
+        var localization: LocalizationContext { LocalizationContext(language: language) }
+    }
+
     private enum Constants {
         static let identifierLength = 8
     }
@@ -16,17 +23,44 @@ actor DatePollsService {
     let scheduler: Scheduler
     let dataPath: URL
     let permissions: Permissions
+    let configuration: GuildConfig
+    private nonisolated let configUpdateCoordinator: GuildConfigUpdateCoordinator
     private var polls: [DatePoll]
+    private nonisolated let messageUpdateCoordinator = DatePollMessageUpdateCoordinator()
+
+    nonisolated func withSerializedMessageUpdate<T: Sendable>(
+        pollID: String,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await messageUpdateCoordinator.perform(pollID: pollID, operation: operation)
+    }
 
     init(
         scheduler: Scheduler,
         dataPath: URL,
-        permissions: Permissions
+        permissions: Permissions,
+        configuration: GuildConfig,
+        configUpdateCoordinator: GuildConfigUpdateCoordinator
     ) throws {
         self.scheduler = scheduler
         self.dataPath = dataPath
         self.permissions = permissions
+        self.configuration = configuration
+        self.configUpdateCoordinator = configUpdateCoordinator
         self.polls = try Self.loadPolls(from: dataPath)
+    }
+
+    nonisolated func withSerializedConfigUpdate<T: Sendable>(
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await configUpdateCoordinator.perform(operation: operation)
+    }
+
+    func renderConfiguration() -> RenderConfiguration {
+        RenderConfiguration(
+            foundryFeaturesEnabled: configuration.foundryFeaturesEnabled,
+            language: configuration.language
+        )
     }
 
     func createPoll(
@@ -637,6 +671,47 @@ actor DatePollsService {
         savePolls()
     }
 
+    func markMessageForSync(pollID: String) async {
+        guard let index = polls.firstIndex(where: { $0.id == pollID }),
+              let event = markMessageSyncPending(for: index) else {
+            return
+        }
+        savePolls()
+        await scheduler.schedule(event)
+    }
+
+    /// Persists message-sync events for every published poll before scheduling retries.
+    func markPublishedMessagesForSync() async throws -> [DatePoll] {
+        let prepared = try preparePublishedMessagesForSync()
+        guard !prepared.events.isEmpty else { return [] }
+        await scheduler.schedule(prepared.events)
+        return prepared.polls
+    }
+
+    /// Persists sync identities without scheduling them so related config can commit second.
+    func preparePublishedMessagesForSync() throws -> (polls: [DatePoll], events: [SchedulerEvent]) {
+        var events: [SchedulerEvent] = []
+        var updatedPolls: [DatePoll] = []
+        var originalEventIDs: [Int: UUID?] = [:]
+        for index in polls.indices where polls[index].messageID != nil {
+            originalEventIDs[index] = .some(polls[index].messageSyncEventID)
+            if let event = markMessageSyncPending(for: index) {
+                events.append(event)
+                updatedPolls.append(polls[index])
+            }
+        }
+        guard !events.isEmpty else { return ([], []) }
+        do {
+            try savePollsThrowing()
+        } catch {
+            for (index, eventID) in originalEventIDs {
+                polls[index].messageSyncEventID = eventID
+            }
+            throw error
+        }
+        return (updatedPolls, events)
+    }
+
     /// Restores missing persisted deadline, repeat, and reminder events after a restart.
     func restoreScheduling() async {
         var events: [SchedulerEvent] = []
@@ -814,10 +889,18 @@ actor DatePollsService {
 
     private func savePolls() {
         do {
+            try savePollsThrowing()
+        } catch {
+            Self.logger.error("Failed to save date polls: \(error)")
+        }
+    }
+
+    private func savePollsThrowing() throws {
+        do {
             let data = try JSONEncoder().encode(polls)
             try data.write(to: dataPath, options: .atomic)
         } catch {
-            Self.logger.error("Failed to save date polls: \(error)")
+            throw PersistentStateError.write(dataPath, error)
         }
     }
 

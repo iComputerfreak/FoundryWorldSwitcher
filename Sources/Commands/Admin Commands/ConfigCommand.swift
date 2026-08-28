@@ -75,6 +75,7 @@ struct ConfigCommand: DiscordCommand {
         context: GuildContext,
         client: any DiscordClient
     ) async throws {
+        let localization = context.config.localization
         // We handle "/config show" separately, as it's the only command that does not need a `key` argument
         if
             let showCommand = applicationCommand.option(named: "show"),
@@ -104,7 +105,7 @@ struct ConfigCommand: DiscordCommand {
         
         if let showCommand = applicationCommand.option(named: "show") {
             if let keyString = showCommand.option(named: "key")?.value?.stringValue {
-                try await respond("The value of `\(keyString)` is `\(value(for: keyString))`")
+                try await respond(localization.string("config.value", table: "Commands", keyString, try value(for: keyString)))
             } else {
                 try await respond(createFullConfigPayload(config: context.config))
             }
@@ -123,22 +124,37 @@ struct ConfigCommand: DiscordCommand {
                     throw DiscordCommandError.reminderChannelNotInGuild
                 }
             }
-            try context.config.setValue(valueString, for: configKey)
-            if configKey == .foundryFeaturesEnabled, !context.config.foundryFeaturesEnabled {
-                await context.bookings.cancelAllBookings()
-                let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
-                await DatePollMessageSynchronizer.synchronize(
-                    updatedPolls,
-                    datePolls: context.datePolls,
-                    foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
-                    client: client
-                )
+            if configKey == .language {
+                let message = try await context.configUpdates.perform {
+                    try await setLanguage(
+                        valueString,
+                        keyString: keyString,
+                        context: context,
+                        client: client
+                    )
+                }
+                try await respond(message)
+                return
             }
-            if configKey == .foundryFeaturesEnabled {
-                await refreshDatePollMessages(context: context, client: client)
-                await presenceService.refresh(forceWorldRefresh: context.config.foundryFeaturesEnabled)
+            let message = try await context.configUpdates.perform {
+                try context.config.setValue(valueString, for: configKey)
+                if configKey == .foundryFeaturesEnabled, !context.config.foundryFeaturesEnabled {
+                    await context.bookings.cancelAllBookings()
+                    let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
+                    await DatePollMessageSynchronizer.synchronize(
+                        updatedPolls,
+                        datePolls: context.datePolls,
+                        client: client
+                    )
+                }
+                if configKey == .foundryFeaturesEnabled {
+                    try await refreshDatePollMessages(context: context, client: client)
+                    await presenceService.refresh(forceWorldRefresh: context.config.foundryFeaturesEnabled)
+                }
+                let updatedLocalization = context.config.localization
+                return updatedLocalization.string("config.updated", table: "Commands", keyString, try context.config.value(for: configKey))
             }
-            try await respond("The value `\(keyString)` was updated to `\(valueString)`.")
+            try await respond(message)
         } else if let resetCommand = applicationCommand.option(named: "reset") {
             let keyString = try resetCommand.requireOption(named: "key").requireString()
             guard let configKey = ConfigKey(rawValue: keyString) else {
@@ -147,25 +163,37 @@ struct ConfigCommand: DiscordCommand {
             guard Self.guildConfigKeys.contains(configKey) else {
                 throw DiscordCommandError.invalidConfigKey(keyString)
             }
-            let newValue = try context.config.resetValue(for: configKey)
-            if configKey == .foundryFeaturesEnabled {
-                await refreshDatePollMessages(context: context, client: client)
-                await presenceService.refresh(forceWorldRefresh: context.config.foundryFeaturesEnabled)
+            if configKey == .language {
+                let message = try await context.configUpdates.perform {
+                    try await resetLanguage(keyString: keyString, context: context, client: client)
+                }
+                try await respond(message)
+                return
             }
-            try await respond("The value `\(keyString)` was reset to its default value `\(newValue)`.")
+            let message = try await context.configUpdates.perform {
+                let newValue = try context.config.resetValue(for: configKey)
+                if configKey == .foundryFeaturesEnabled {
+                    try await refreshDatePollMessages(context: context, client: client)
+                    await presenceService.refresh(forceWorldRefresh: context.config.foundryFeaturesEnabled)
+                }
+                let updatedLocalization = context.config.localization
+                return updatedLocalization.string("config.reset", table: "Commands", keyString, newValue)
+            }
+            try await respond(message)
         } else {
             throw DiscordCommandError.missingSubcommand
         }
     }
     
     private func createFullConfigPayload(config: GuildConfig) -> Payloads.EditWebhookMessage {
+        let localization = config.localization
         let embed = Embed(
-            title: "Bot Configuration",
-            description: "Here are the current configuration values",
+            title: localization.string("config.title", table: "Commands"),
+            description: localization.string("config.description", table: "Commands"),
             fields: Self.guildConfigKeys.compactMap { key in
                 Embed.Field(
                     name: key.rawValue,
-                    value: (try? config.value(for: key)) ?? "Unavailable",
+                    value: (try? config.value(for: key)) ?? localization.string("config.value_unavailable"),
                     inline: true
                 )
             }
@@ -173,23 +201,82 @@ struct ConfigCommand: DiscordCommand {
         return .init(embeds: [embed])
     }
 
-    private func refreshDatePollMessages(context: GuildContext, client: any DiscordClient) async {
-        let polls = await context.datePolls.publishedPolls()
-        for poll in polls {
-            guard let messageID = poll.messageID else { continue }
-            do {
-                try await client.updateMessage(
-                    channelId: poll.channelID,
-                    messageId: messageID,
-                    payload: DatePollRenderer.messagePayload(
-                        for: poll,
-                        foundryFeaturesEnabled: context.config.foundryFeaturesEnabled
-                    )
-                ).guardSuccess()
-            } catch {
-                logger.warning("Failed to refresh date poll after Foundry feature change: \(error)")
-            }
+    private func refreshDatePollMessages(context: GuildContext, client: any DiscordClient) async throws {
+        let polls = try await context.datePolls.markPublishedMessagesForSync()
+        await DatePollMessageSynchronizer.synchronize(
+            polls,
+            datePolls: context.datePolls,
+            client: client
+        )
+    }
+
+    private func refreshLocalizedMessages(
+        context: GuildContext,
+        preparedPolls: [DatePoll],
+        events: [SchedulerEvent],
+        client: any DiscordClient
+    ) async -> String? {
+        await context.scheduler.schedule(events)
+        await DatePollMessageSynchronizer.synchronize(
+            preparedPolls,
+            datePolls: context.datePolls,
+            client: client
+        )
+        do {
+            try await context.bookings.updatePinnedBookings()
+            return nil
+        } catch {
+            logger.warning("Failed to refresh pinned bookings after language change: \(error)")
+            return context.config.localization.string("config.language.pin_refresh_failed", table: "Commands")
         }
+    }
+
+    private func setLanguage(
+        _ value: String,
+        keyString: String,
+        context: GuildContext,
+        client: any DiscordClient
+    ) async throws -> String {
+        let prepared = try await context.datePolls.preparePublishedMessagesForSync()
+        do {
+            try context.config.setValue(value, for: .language)
+        } catch {
+            await context.scheduler.schedule(prepared.events)
+            throw error
+        }
+        let warning = await refreshLocalizedMessages(
+            context: context,
+            preparedPolls: prepared.polls,
+            events: prepared.events,
+            client: client
+        )
+        let localization = context.config.localization
+        return localization.string("config.updated", table: "Commands", keyString, context.config.language.rawValue)
+            + (warning.map { "\n\($0)" } ?? "")
+    }
+
+    private func resetLanguage(
+        keyString: String,
+        context: GuildContext,
+        client: any DiscordClient
+    ) async throws -> String {
+        let prepared = try await context.datePolls.preparePublishedMessagesForSync()
+        let value: String
+        do {
+            value = try context.config.resetValue(for: .language)
+        } catch {
+            await context.scheduler.schedule(prepared.events)
+            throw error
+        }
+        let warning = await refreshLocalizedMessages(
+            context: context,
+            preparedPolls: prepared.polls,
+            events: prepared.events,
+            client: client
+        )
+        let localization = context.config.localization
+        return localization.string("config.reset", table: "Commands", keyString, value)
+            + (warning.map { "\n\($0)" } ?? "")
     }
 
 }

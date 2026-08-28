@@ -17,29 +17,18 @@ struct UpdateCacheCommand: DiscordCommand {
         context: GuildContext,
         client: DiscordClient
     ) async throws {
-        try await client.respond(token: interaction.token, message: "Updating cache...")
+        let localization = context.config.localization
+        try await client.respond(
+            token: interaction.token,
+            message: localization.string("cache.updating", table: "Commands")
+        )
         
         try await PterodactylAPI.shared.updateCache()
         
-        try await client.respond(token: interaction.token, message: "Cache successfully updated.")
+        try await client.respond(
+            token: interaction.token,
+            message: localization.string("cache.updated", table: "Commands")
+        )
     }
     
-    private func formatMessage(_ pinnedMessage: PinnedBookingMessage, in guild: GuildSnowflake) -> String {
-        let guildID = guild.rawValue
-        let channelID = pinnedMessage.channelID.rawValue
-        let messageID = pinnedMessage.messageID.rawValue
-        let messageLink = "https://discord.com/channels/\(guildID)/\(channelID)/\(messageID)"
-        var messageString = "\(messageLink)"
-        if
-            let role = pinnedMessage.role,
-            let world = pinnedMessage.worldID
-        {
-            messageString += " (Role: \(role.rawValue), World: \(world))"
-        } else if let role = pinnedMessage.role {
-            messageString += " (Role: \(role.rawValue))"
-        } else if let world = pinnedMessage.worldID {
-            messageString += " (World: \(world))"
-        }
-        return messageString
-    }
 }

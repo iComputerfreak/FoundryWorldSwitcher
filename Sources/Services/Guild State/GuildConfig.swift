@@ -10,38 +10,45 @@ final class GuildConfig: BookingConfiguration {
     /// File containing the persisted guild configuration.
     private let dataPath: URL
 
+    /// Language used for this guild's user-facing output.
+    private(set) var language: GuildLanguage
+
+    /// Immutable localization snapshot for a guild operation.
+    var localization: LocalizationContext { LocalizationContext(language: language) }
+
     /// The length of a session.
-    var sessionLength: TimeInterval { didSet { save() } }
+    private(set) var sessionLength: TimeInterval
 
     /// The time at which the booking starts in seconds from midnight.
-    var bookingIntervalStartTime: TimeInterval { didSet { save() } }
+    private(set) var bookingIntervalStartTime: TimeInterval
 
     /// The time at which the booking ends in seconds from `bookingIntervalStartTime`.
-    var bookingIntervalEndTime: TimeInterval { didSet { save() } }
+    private(set) var bookingIntervalEndTime: TimeInterval
 
     /// The default event time used when a booking form date omits a time.
-    var defaultEventBookingTime: TimeInterval { didSet { save() } }
+    private(set) var defaultEventBookingTime: TimeInterval
 
     /// The time how much in advance the bot will remind players about a session.
-    var sessionReminderTime: TimeInterval { didSet { save() } }
+    private(set) var sessionReminderTime: TimeInterval
 
     /// Whether the bot should notify players at the start of the session.
-    var shouldNotifyAtSessionStart: Bool { didSet { save() } }
+    private(set) var shouldNotifyAtSessionStart: Bool
 
     /// The time how much in advance the bot will remind players that the session is about to start.
-    var sessionStartReminderTime: TimeInterval { didSet { save() } }
+    private(set) var sessionStartReminderTime: TimeInterval
 
     /// The channel where the bot will send reminders.
-    var reminderChannel: ChannelSnowflake? { didSet { save() } }
+    private(set) var reminderChannel: ChannelSnowflake?
 
     /// Messages pinned by this guild that show its booking list.
     var pinnedBookingMessages: [PinnedBookingMessage] { didSet { save() } }
 
     /// Whether this guild may use Foundry worlds, bookings, locks, and related commands.
-    var foundryFeaturesEnabled: Bool { didSet { save() } }
+    private(set) var foundryFeaturesEnabled: Bool
 
     /// Default values used for new guild configuration files and resets.
     private static let defaultStored = GuildConfigStored(
+        language: .english,
         sessionLength: 4 * GlobalConstants.secondsPerHour,
         bookingIntervalStartTime: 6 * GlobalConstants.secondsPerHour,
         bookingIntervalEndTime: 23 * GlobalConstants.secondsPerHour,
@@ -58,6 +65,7 @@ final class GuildConfig: BookingConfiguration {
     init(dataPath: URL) throws {
         self.dataPath = dataPath
         let stored = try Self.load(from: dataPath) ?? Self.defaultStored
+        language = stored.language ?? .english
         sessionLength = stored.sessionLength
         bookingIntervalStartTime = stored.bookingIntervalStartTime
         bookingIntervalEndTime = stored.bookingIntervalEndTime
@@ -77,6 +85,8 @@ final class GuildConfig: BookingConfiguration {
     /// Returns the display value for a guild-scoped configuration key.
     func value(for key: ConfigKey) throws -> String {
         switch key {
+        case .language:
+            return language.rawValue
         case .sessionLength:
             return Utils.durationString(for: sessionLength)
         case .bookingIntervalStartTime:
@@ -102,7 +112,15 @@ final class GuildConfig: BookingConfiguration {
 
     /// Validates and persists a new value for a guild-scoped configuration key.
     func setValue(_ value: String, for key: ConfigKey) throws {
+        let original = stored()
         switch key {
+        case .language:
+            guard let newLanguage = GuildLanguage(configValue: value) else {
+                throw DiscordCommandError.invalidConfigValue(key: key.rawValue, value: value)
+            }
+            try saveThrowing(language: newLanguage)
+            language = newLanguage
+            return
         case .sessionLength:
             sessionLength = try DurationParser.duration(from: value)
         case .bookingIntervalStartTime:
@@ -136,11 +154,23 @@ final class GuildConfig: BookingConfiguration {
         case .pterodactylHost, .pterodactylServerID:
             throw DiscordCommandError.invalidConfigKey(key.rawValue)
         }
+        do {
+            try saveThrowing()
+        } catch {
+            restore(original)
+            throw error
+        }
     }
 
     /// Restores a guild-scoped configuration key to its default and returns it.
     func resetValue(for key: ConfigKey) throws -> String {
+        let original = stored()
         switch key {
+        case .language:
+            let defaultLanguage = Self.defaultStored.language ?? .english
+            try saveThrowing(language: defaultLanguage)
+            language = defaultLanguage
+            return try value(for: key)
         case .sessionLength:
             sessionLength = Self.defaultStored.sessionLength
         case .bookingIntervalStartTime:
@@ -162,28 +192,59 @@ final class GuildConfig: BookingConfiguration {
         case .pterodactylHost, .pterodactylServerID:
             throw DiscordCommandError.invalidConfigKey(key.rawValue)
         }
+        do {
+            try saveThrowing()
+        } catch {
+            restore(original)
+            throw error
+        }
         return try value(for: key)
     }
 
     /// Persists all guild configuration values.
     private func save() {
         do {
-            let stored = GuildConfigStored(
-                sessionLength: sessionLength,
-                bookingIntervalStartTime: bookingIntervalStartTime,
-                bookingIntervalEndTime: bookingIntervalEndTime,
-                defaultEventBookingTime: defaultEventBookingTime,
-                sessionReminderTime: sessionReminderTime,
-                shouldNotifyAtSessionStart: shouldNotifyAtSessionStart,
-                sessionStartReminderTime: sessionStartReminderTime,
-                reminderChannel: reminderChannel,
-                pinnedBookingMessages: pinnedBookingMessages,
-                foundryFeaturesEnabled: foundryFeaturesEnabled
-            )
-            try Self.save(stored, to: dataPath)
+            try saveThrowing()
         } catch {
             Self.logger.error("Failed to save guild config: \(error)")
         }
+    }
+
+    private func saveThrowing() throws {
+        try saveThrowing(language: language)
+    }
+
+    private func saveThrowing(language: GuildLanguage) throws {
+        try Self.save(stored(language: language), to: dataPath)
+    }
+
+    private func stored(language: GuildLanguage? = nil) -> GuildConfigStored {
+        GuildConfigStored(
+            language: language ?? self.language,
+            sessionLength: sessionLength,
+            bookingIntervalStartTime: bookingIntervalStartTime,
+            bookingIntervalEndTime: bookingIntervalEndTime,
+            defaultEventBookingTime: defaultEventBookingTime,
+            sessionReminderTime: sessionReminderTime,
+            shouldNotifyAtSessionStart: shouldNotifyAtSessionStart,
+            sessionStartReminderTime: sessionStartReminderTime,
+            reminderChannel: reminderChannel,
+            pinnedBookingMessages: pinnedBookingMessages,
+            foundryFeaturesEnabled: foundryFeaturesEnabled
+        )
+    }
+
+    private func restore(_ stored: GuildConfigStored) {
+        language = stored.language ?? .english
+        sessionLength = stored.sessionLength
+        bookingIntervalStartTime = stored.bookingIntervalStartTime
+        bookingIntervalEndTime = stored.bookingIntervalEndTime
+        defaultEventBookingTime = stored.defaultEventBookingTime ?? 19 * GlobalConstants.secondsPerHour
+        sessionReminderTime = stored.sessionReminderTime
+        shouldNotifyAtSessionStart = stored.shouldNotifyAtSessionStart
+        sessionStartReminderTime = stored.sessionStartReminderTime
+        reminderChannel = stored.reminderChannel
+        foundryFeaturesEnabled = stored.foundryFeaturesEnabled ?? true
     }
 
     /// Decodes persisted guild configuration when its file exists and is valid.

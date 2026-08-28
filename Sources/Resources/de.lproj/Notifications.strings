@@ -1,0 +1,9 @@
+"session_reminder.content" = "%1$@ **Erinnerung**: Deine Sitzung ist für %2$@ gebucht.";
+"session_start.content" = "%1$@ Deine Sitzung beginnt in %2$@.";
+"session_start.content_with_location" = "%1$@ Deine Sitzung beginnt in %2$@ im Kanal %3$@.";
+
+"date_poll_reminder.content" = "%1$@ bitte stimme in der [%2$@](%3$@) ab.";
+"date_poll_reminder.link_label" = "Terminumfrage für die Sitzung";
+
+"pinned_bookings.heading" = "Bevorstehende Sitzungen";
+"pinned_bookings.empty" = "Derzeit sind keine Buchungen geplant.";

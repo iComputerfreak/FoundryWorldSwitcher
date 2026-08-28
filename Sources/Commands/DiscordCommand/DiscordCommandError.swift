@@ -28,6 +28,7 @@ enum DiscordCommandError: Error, LocalizedError {
     case noMessageID
     case dateIsInThePast(Date)
     case invalidConfigKey(String)
+    case invalidConfigValue(key: String, value: String)
     case reminderChannelNotInGuild
     case wrongDurationFormat(String)
     case noChannel
@@ -97,6 +98,9 @@ enum DiscordCommandError: Error, LocalizedError {
             
         case let .invalidConfigKey(key):
             return "The config key `\(key)` does not exist."
+
+        case let .invalidConfigValue(key, value):
+            return "`\(value)` is not a valid value for `\(key)`."
 
         case .reminderChannelNotInGuild:
             return "The reminder channel must belong to this server."

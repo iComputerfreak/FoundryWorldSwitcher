@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "FoundryWorldSwitcher",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v13)
     ],
@@ -26,7 +27,8 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .executableTarget(
         	name: "FoundryWorldSwitcher",
-        	dependencies: ["DiscordBM", "HTML2Markdown"]
+	        	dependencies: ["DiscordBM", "HTML2Markdown"],
+            resources: [.process("Resources")]
         ),
     ]
 )

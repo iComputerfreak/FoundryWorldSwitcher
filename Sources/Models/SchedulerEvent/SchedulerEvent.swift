@@ -49,7 +49,12 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             try await handleCloseDatePoll(pollID: pollID, context: context)
 
         case let .sendDatePollReminder(pollID: pollID, userID: userID):
-            try await handleDatePollReminder(pollID: pollID, userID: userID, datePolls: context.datePolls)
+            try await handleDatePollReminder(
+                pollID: pollID,
+                userID: userID,
+                datePolls: context.datePolls,
+                localization: context.config.localization
+            )
 
         case let .sendOutstandingDatePollReminders(pollID: pollID):
             try await handleOutstandingDatePollReminders(pollID: pollID, context: context)
@@ -73,46 +78,48 @@ extension SchedulerEvent {
         try await DatePollPublisher.publish(
             poll: poll,
             datePolls: context.datePolls,
-            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
             client: bot.client
         )
     }
 
     private func handleCloseDatePoll(pollID: String, context: GuildContext) async throws {
-        guard let poll = try await context.datePolls.closePoll(id: pollID, eventID: id) else { return }
-        guard let messageID = poll.messageID else { return }
-        try await bot.client.updateMessage(
-            channelId: poll.channelID,
-            messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
-        ).guardSuccess()
+        guard try await context.datePolls.closePoll(id: pollID, eventID: id) != nil else { return }
+        try await DatePollMessageSynchronizer.synchronizeLatest(
+            pollID: pollID,
+            datePolls: context.datePolls,
+            client: bot.client
+        )
         await context.datePolls.markCloseMessageSynced(pollID: pollID, eventID: id)
     }
 
     private func handleSyncDatePollMessage(pollID: String, context: GuildContext) async throws {
-        guard let poll = await context.datePolls.pollForMessageSync(pollID: pollID, eventID: id),
-              let messageID = poll.messageID else {
-            return
-        }
-        try await bot.client.updateMessage(
-            channelId: poll.channelID,
-            messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
-        ).guardSuccess()
-        await context.datePolls.markMessageSynced(pollID: pollID, eventID: id)
+        try await DatePollMessageSynchronizer.synchronize(
+            pollID: pollID,
+            eventID: id,
+            datePolls: context.datePolls,
+            client: bot.client
+        )
     }
 
     private func handleDatePollReminder(
         pollID: String,
         userID: UserSnowflake,
-        datePolls: DatePollsService
+        datePolls: DatePollsService,
+        localization: LocalizationContext
     ) async throws {
         guard let poll = try await datePolls.reminderPoll(pollID: pollID, userID: userID) else { return }
         guard let messageID = poll.messageID else { return }
         let pollLink = "https://discord.com/channels/\(poll.guildID.rawValue)/\(poll.channelID.rawValue)/\(messageID.rawValue)"
+        let linkLabel = localization.string("date_poll_reminder.link_label", table: "Notifications")
         let payload = Payloads.CreateMessage(
-            content: "\(DiscordUtils.mention(id: userID)) please vote in the [session date poll](\(pollLink)).",
-            components: DatePollRenderer.reminderComponents(for: poll)
+            content: localization.string(
+                "date_poll_reminder.content",
+                table: "Notifications",
+                DiscordUtils.mention(id: userID),
+                linkLabel,
+                pollLink
+            ),
+            components: DatePollRenderer.reminderComponents(for: poll, localization: localization)
         )
 
         do {
@@ -151,12 +158,25 @@ extension SchedulerEvent {
                 continue
             }
             let pollLink = "https://discord.com/channels/\(reminder.poll.guildID.rawValue)/\(reminder.poll.channelID.rawValue)/\(messageID.rawValue)"
-            let content = "\(DiscordUtils.mention(id: userID)) please vote in the [session date poll](\(pollLink))."
+            let localization = context.config.localization
+            let content = localization.string(
+                "date_poll_reminder.content",
+                table: "Notifications",
+                DiscordUtils.mention(id: userID),
+                localization.string("date_poll_reminder.link_label", table: "Notifications"),
+                pollLink
+            )
             do {
                 let channel = try await bot.client.createDm(payload: .init(recipient_id: userID)).decode()
                 try await bot.client.createMessage(
                     channelId: channel.id,
-                    payload: .init(content: content, components: DatePollRenderer.automaticReminderComponents(for: reminder.poll))
+                    payload: .init(
+                        content: content,
+                        components: DatePollRenderer.automaticReminderComponents(
+                            for: reminder.poll,
+                            localization: context.config.localization
+                        )
+                    )
                 ).guardSuccess()
                 await context.datePolls.markAutomaticReminderDelivered(pollID: pollID, eventID: id, userID: userID)
             } catch {
@@ -165,7 +185,10 @@ extension SchedulerEvent {
                         channelId: reminder.poll.channelID,
                         payload: .init(
                             content: content,
-                            components: DatePollRenderer.automaticReminderComponents(for: reminder.poll)
+                            components: DatePollRenderer.automaticReminderComponents(
+                                for: reminder.poll,
+                                localization: context.config.localization
+                            )
                         )
                     ).guardSuccess()
                     await context.datePolls.markAutomaticReminderDelivered(pollID: pollID, eventID: id, userID: userID)
@@ -199,7 +222,6 @@ extension SchedulerEvent {
         try await DatePollPublisher.publish(
             poll: poll,
             datePolls: context.datePolls,
-            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
             client: bot.client
         )
     }
@@ -222,7 +244,6 @@ extension SchedulerEvent {
         await DatePollMessageSynchronizer.synchronize(
             updatedPolls,
             datePolls: context.datePolls,
-            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
             client: bot.client
         )
     }
@@ -274,10 +295,13 @@ extension SchedulerEvent {
         try await bot.client.createMessage(
             channelId: reminderChannel,
             payload: .init(
-                content: """
-                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) **Reminder**: Your session is booked for \(DiscordUtils.timestamp(date: booking.date)).
-                """.trimmingCharacters(in: .whitespacesAndNewlines),
-                embeds: [Utils.createBookingEmbed(for: booking)]
+                content: config.localization.string(
+                    "session_reminder.content",
+                    table: "Notifications",
+                    DiscordUtils.mention(id: booking.campaignRoleSnowflake),
+                    DiscordUtils.timestamp(date: booking.date)
+                ),
+                embeds: [Utils.createBookingEmbed(for: booking, localization: config.localization)]
             )
         ).guardSuccess()
     }
@@ -301,16 +325,34 @@ extension SchedulerEvent {
             return
         }
         
-        let durationString = Utils.durationString(for: config.sessionStartReminderTime, unitStyle: .long)
-        let location = booking.location.map { " in channel \(DiscordUtils.mention(id: $0))" } ?? ""
+        let durationString = Utils.durationString(
+            for: config.sessionStartReminderTime,
+            unitStyle: .long,
+            localization: config.localization
+        )
+        let content: String
+        if let location = booking.location {
+            content = config.localization.string(
+                "session_start.content_with_location",
+                table: "Notifications",
+                DiscordUtils.mention(id: booking.campaignRoleSnowflake),
+                durationString,
+                DiscordUtils.mention(id: location)
+            )
+        } else {
+            content = config.localization.string(
+                "session_start.content",
+                table: "Notifications",
+                DiscordUtils.mention(id: booking.campaignRoleSnowflake),
+                durationString
+            )
+        }
         // Send a reminder to the role with the given snowflake
         try await bot.client.createMessage(
             channelId: reminderChannel,
             payload: .init(
-                content: """
-                \(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) Your session starts in \(durationString)\(location).
-                """.trimmingCharacters(in: .whitespacesAndNewlines),
-                embeds: [Utils.createBookingEmbed(for: booking)]
+                content: content,
+                embeds: [Utils.createBookingEmbed(for: booking, localization: config.localization)]
             )
         ).guardSuccess()
     }

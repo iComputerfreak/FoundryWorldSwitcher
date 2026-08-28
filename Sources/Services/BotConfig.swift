@@ -11,6 +11,7 @@ import Logging
 
 /// Keys accepted by the configuration command.
 enum ConfigKey: String, CaseIterable {
+    case language
     case pterodactylHost
     case pterodactylServerID
     case sessionLength

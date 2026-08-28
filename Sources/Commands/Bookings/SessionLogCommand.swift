@@ -35,14 +35,15 @@ struct SessionLogCommand: DiscordCommand {
                 return booking.campaignRoleSnowflake == role
             }
 
-        let bookingMessages = try await Utils.createBookingMessages(for: pastEvents)
+        let bookingMessages = try await Utils.createBookingMessages(for: pastEvents, localization: context.config.localization)
+        let localization = context.config.localization
 
         let payload: Payloads.EditWebhookMessage
         if bookingMessages.isEmpty {
-            payload = .init(content: "There are no past event bookings.")
+            payload = .init(content: localization.string("session_log.empty", table: "Commands"))
         } else {
             payload = .init(
-                content: "## Past Sessions (latest 10 sessions)\n" + bookingMessages.joined(separator: "\n\n"),
+                content: localization.string("session_log.list", table: "Commands", bookingMessages.joined(separator: "\n\n")),
                 allowed_mentions: .init()
             )
         }

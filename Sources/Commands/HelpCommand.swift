@@ -24,15 +24,13 @@ struct HelpCommand: DiscordCommand {
         let commands = DiscordCommands.commands
             .filter { context.config.foundryFeaturesEnabled || !$0.requiresFoundryFeatures }
             .sorted { $0.name < $1.name }
-        let commandList = commands.map { "- `/\($0.name)` - \($0.description)" }.joined(separator: "\n")
+        let localization = context.config.localization
+        let commandList = commands.map {
+            "- `/\($0.name)` - \($0.localizedDescription(in: localization))"
+        }.joined(separator: "\n")
         try await client.respond(
             token: interaction.token,
-            message: """
-            ## Available commands
-            \(commandList)
-
-            *Bot version: \(version)*
-            """
+            message: localization.string("help.response", table: "Commands", commandList, version)
         )
     }
 }

@@ -62,15 +62,21 @@ struct LockWorldCommand: DiscordCommand {
         }
         await presenceService.refresh(forceWorldRefresh: world != nil)
         
-        var message = "The world has been "
-        if let world {
-            message += "switched to \(world.title) and "
+        let localization = context.config.localization
+        let durationString = duration.map {
+            Utils.durationString(for: $0, unitStyle: .long, localization: localization)
         }
-        message += "locked"
-        if let duration {
-            message += " for \(Utils.durationString(for: duration))"
+        let message: String
+        switch (world, durationString) {
+        case (.some(let world), .some(let durationString)):
+            message = localization.string("world.locked.switched_timed", table: "Commands", world.title, durationString)
+        case (.some(let world), .none):
+            message = localization.string("world.locked.switched", table: "Commands", world.title)
+        case (.none, .some(let durationString)):
+            message = localization.string("world.locked.timed", table: "Commands", durationString)
+        case (.none, .none):
+            message = localization.string("world.locked", table: "Commands")
         }
-        message += "."
         
         try await client.respond(
             token: interaction.token,

@@ -316,6 +316,7 @@ enum V3StateMigration {
 
         var guildConfig: GuildConfigStored {
             .init(
+                language: .english,
                 sessionLength: sessionLength,
                 bookingIntervalStartTime: bookingIntervalStartTime,
                 bookingIntervalEndTime: bookingIntervalEndTime,

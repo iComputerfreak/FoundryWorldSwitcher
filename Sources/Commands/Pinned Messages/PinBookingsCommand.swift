@@ -53,7 +53,7 @@ struct PinBookingsCommand: DiscordCommand {
         // Create an empty message and save its ID
         let pinnedMessage = try await client.createMessage(
             channelId: channelID,
-            payload: .init(content: "Loading bookings...")
+            payload: .init(content: context.config.localization.string("pins.loading", table: "Commands"))
         ).decode()
         logger.info("Pinning message \(pinnedMessage.id.rawValue) in channel \(pinnedMessage.channel_id.rawValue).")
         context.config.pinnedBookingMessages.append(

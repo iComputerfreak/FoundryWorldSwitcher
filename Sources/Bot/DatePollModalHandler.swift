@@ -25,24 +25,29 @@ struct DatePollModalHandler {
             payload: .deferredChannelMessageWithSource(isEphemeral: true)
         ).guardSuccess()
 
+        var localization = LocalizationContext.english
         do {
             guard let guildID = interaction.guild_id else { throw DiscordCommandError.noGuild }
             let context = try await guildRegistry.context(for: guildID)
+            localization = context.config.localization
             switch action.action {
             case .create:
                 try await handleCreation(modal: modal, interaction: interaction, context: context)
             case .vote:
-                try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
+                try await handleVote(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             case .finalize:
-                try await handleFinalization(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
+                try await handleFinalization(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             case .edit:
-                try await handleEdit(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
+                try await handleEdit(pollID: action.pollID, modal: modal, interaction: interaction, datePolls: context.datePolls)
             default:
                 throw DatePollError.notFound(modal.custom_id)
             }
         } catch {
             logger.warning("Failed to handle date poll modal: \(error)")
-            try await client.respond(token: interaction.token, message: error.localizedDescription)
+            try await client.respond(
+                token: interaction.token,
+                message: UserFacingErrorRenderer.message(for: error, localization: localization)
+            )
         }
     }
 
@@ -55,18 +60,16 @@ struct DatePollModalHandler {
             channelID: interaction.channel_id,
             messageID: interaction.message?.id
         )
-        guard let messageID = poll.messageID else { throw DatePollError.missingMessageReference }
-
         try await client.createInteractionResponse(
             id: interaction.id,
             token: interaction.token,
             payload: .deferredUpdateMessage()
         ).guardSuccess()
-        try await client.updateMessage(
-            channelId: poll.channelID,
-            messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
-        ).guardSuccess()
+        try await DatePollMessageSynchronizer.synchronizeLatest(
+            pollID: poll.id,
+            datePolls: context.datePolls,
+            client: client
+        )
     }
 
     private func handleCreation(
@@ -106,14 +109,16 @@ struct DatePollModalHandler {
         try await DatePollPublisher.publish(
             poll: poll,
             datePolls: context.datePolls,
-            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
             client: client
         )
 
-        try await client.respond(token: interaction.token, message: "Date poll created.")
+        try await client.respond(
+            token: interaction.token,
+            message: context.config.localization.string("date_poll.created", table: "DatePoll")
+        )
     }
 
-    private func handleVote(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
+    private func handleVote(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService) async throws {
         guard let member = interaction.member, let userID = member.user?.id, let guildID = interaction.guild_id else {
             throw DiscordCommandError.noUser
         }
@@ -139,11 +144,11 @@ struct DatePollModalHandler {
             channelID: interaction.channel_id,
             messageID: interaction.message?.id
         )
-        try await updatePollMessage(for: updatedPoll, datePolls: datePolls, foundryFeaturesEnabled: foundryFeaturesEnabled)
+        try await updatePollMessage(for: updatedPoll, datePolls: datePolls)
         await removeResponse(token: interaction.token, action: "vote")
     }
 
-    private func handleFinalization(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
+    private func handleFinalization(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -162,11 +167,11 @@ struct DatePollModalHandler {
             userID: userID,
             roles: member.roles
         )
-        try await updatePollMessage(for: updatedPoll, datePolls: datePolls, foundryFeaturesEnabled: foundryFeaturesEnabled)
+        try await updatePollMessage(for: updatedPoll, datePolls: datePolls)
         await removeResponse(token: interaction.token, action: "finalization")
     }
 
-    private func handleEdit(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
+    private func handleEdit(pollID: String, modal: Interaction.ModalSubmit, interaction: Interaction, datePolls: DatePollsService) async throws {
         guard let member = interaction.member, let userID = member.user?.id, let guildID = interaction.guild_id else {
             throw DiscordCommandError.noUser
         }
@@ -198,7 +203,7 @@ struct DatePollModalHandler {
         )
         for poll in polls {
             do {
-                try await updatePollMessage(for: poll, datePolls: datePolls, foundryFeaturesEnabled: foundryFeaturesEnabled)
+                try await updatePollMessage(for: poll, datePolls: datePolls)
             } catch {
                 logger.warning("Failed to update edited date poll \(poll.id): \(error)")
             }
@@ -206,14 +211,12 @@ struct DatePollModalHandler {
         await removeResponse(token: interaction.token, action: "edit")
     }
 
-    private func updatePollMessage(for poll: DatePoll, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
-        guard let messageID = poll.messageID else { throw DatePollError.missingMessageReference }
-        try await client.updateMessage(
-            channelId: poll.channelID,
-            messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
-        ).guardSuccess()
-        await datePolls.markMessageSynced(pollID: poll.id, eventID: poll.messageSyncEventID)
+    private func updatePollMessage(for poll: DatePoll, datePolls: DatePollsService) async throws {
+        try await DatePollMessageSynchronizer.synchronizeLatest(
+            pollID: poll.id,
+            datePolls: datePolls,
+            client: client
+        )
     }
 
     private func removeResponse(token: String, action: String) async {

@@ -1,0 +1,79 @@
+"common.none" = "*None*";
+"common.unknown" = "Unknown";
+
+"hello.response" = "Hello, I am listening!\n*Bot version %@*";
+"help.response" = "## Available commands\n%@\n\n*Bot version: %@*";
+
+"cache.updating" = "Updating cache...";
+"cache.updated" = "Cache successfully updated.";
+
+"event_queue.empty" = "There are currently no events in the queue.";
+"event_queue.list" = "The following events are currently in the event queue:\n%@";
+"event_queue.type.console_message" = "Console message: %@";
+"event_queue.type.lock_world" = "Lock world switching for world `%@`";
+"event_queue.type.unlock_world" = "Unlock world switching";
+"event_queue.type.unlock_manual_world" = "Unlock manual world-switching lock";
+"event_queue.type.session_reminder" = "Send session reminder for booking `%@`";
+"event_queue.type.session_start_reminder" = "Send session-start reminder for booking `%@`";
+"event_queue.type.remove_booking" = "Remove booking `%@`";
+"event_queue.type.close_date_poll" = "Close date poll `%@`";
+"event_queue.type.date_poll_user_reminder" = "Send date-poll `%@` reminder to %@";
+"event_queue.type.date_poll_reminders" = "Send outstanding reminders for date poll `%@`";
+"event_queue.type.repeat_date_poll" = "Repeat date poll `%@`";
+"event_queue.type.sync_date_poll" = "Sync date-poll `%@` message";
+"event_queue.type.publish_date_poll" = "Publish date poll `%@`";
+
+"permission_level.user" = "User";
+"permission_level.dungeon_master" = "Dungeon Master";
+"permission_level.admin" = "Admin";
+"permissions.current" = "Your current permission level is `%@`";
+"permissions.user_updated" = "User %@ now has permission level `%@`.";
+"permissions.role_updated" = "Role %@ now has `%@` permissions.";
+"permissions.list" = "## Admin Permissions\n%@\n\n## Dungeon Master Permissions\n%@";
+
+"world.restart" = "Restarting the Foundry VTT server. This should only take a second.";
+"world.lock_state.locked" = "World switching is currently **locked**. If you believe this is a mistake or need to switch the active world, please contact a server administrator.";
+"world.lock_state.unlocked" = "World switching is currently **unlocked**.";
+"world.stopping" = "Stopping the server...";
+"world.switching" = "Switching to the world `%@`...";
+"world.starting" = "Starting the server...";
+"world.switched" = "Successfully switched the world to `%@`.";
+"world.locked" = "The world has been locked.";
+"world.locked.timed" = "The world has been locked for %@.";
+"world.locked.switched" = "The world has been switched to %@ and locked.";
+"world.locked.switched_timed" = "The world has been switched to %@ and locked for %@.";
+"world.unlocked" = "World switching has been unlocked.";
+"world.list" = "## Worlds\n%@";
+"world.info.not_found" = "There was an error trying to get information about the world. Are you sure a world with the ID `%@` exists?";
+"world.info.no_description" = "*No Description*";
+"world.info.current" = "Here is some information about the current world.";
+"world.info.selected" = "Here is some information about the world `%@`.";
+"world.info.field.id" = "ID";
+"world.info.field.core_version" = "Core Version";
+"world.info.field.system" = "System";
+"world.info.field.system_version" = "System Version";
+"world.info.field.last_played" = "Last Played";
+"world.info.field.note" = "Note";
+"world.info.locked" = "World switching is currently **locked**.";
+"world.info.unlocked" = "World switching is currently unlocked.";
+
+"pins.loading" = "Loading bookings...";
+"pins.empty" = "*There are no pinned messages.*";
+"pins.list" = "## Pinned Booking Messages\n%@";
+"pins.filters.role_world" = " (Role: %@, World: %@)";
+"pins.filters.role" = " (Role: %@)";
+"pins.filters.world" = " (World: %@)";
+"pins.updated" = "Updated all pinned booking messages.";
+
+"booking.cancelled" = "The following booking has been cancelled:";
+"booking.deleted" = "The following booking has been deleted and removed from the session log:";
+"booking.empty" = "There are no bookings scheduled right now.";
+"booking.rescheduled" = "Successfully rescheduled the event:";
+"session_log.empty" = "There are no past event bookings.";
+"session_log.list" = "## Past Sessions (latest 10 sessions)\n%@";
+"config.value" = "The value of `%1$@` is `%2$@`.";
+"config.updated" = "The value `%1$@` was updated to `%2$@`.";
+"config.reset" = "The value `%1$@` was reset to its default value `%2$@`.";
+"config.title" = "Bot Configuration";
+"config.description" = "Here are the current configuration values.";
+"config.language.pin_refresh_failed" = "Some pinned booking messages could not be refreshed. Run `/updatepins` to retry.";

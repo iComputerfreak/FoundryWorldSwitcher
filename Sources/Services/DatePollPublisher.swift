@@ -4,26 +4,40 @@ enum DatePollPublisher {
     static func publish(
         poll: DatePoll,
         datePolls: DatePollsService,
-        foundryFeaturesEnabled: Bool,
         client: any DiscordClient
     ) async throws {
-        if let message = try await existingMessage(for: poll, client: client) {
-            try await datePolls.publishPoll(id: poll.id, messageID: message.id)
-            return
-        }
+        try await datePolls.withSerializedConfigUpdate {
+            try await datePolls.withSerializedMessageUpdate(pollID: poll.id) {
+                let currentPoll = try await datePolls.poll(id: poll.id)
+                if let message = try await existingMessage(for: currentPoll, client: client) {
+                    try await datePolls.publishPoll(id: currentPoll.id, messageID: message.id)
+                    await datePolls.markMessageForSync(pollID: currentPoll.id)
+                    return
+                }
 
-        do {
-            let message = try await client.createMessage(
-                channelId: poll.channelID,
-                payload: DatePollRenderer.createMessagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
-            ).decode()
-            try await datePolls.publishPoll(id: poll.id, messageID: message.id)
-        } catch {
-            if let message = try await existingMessage(for: poll, client: client) {
-                try await datePolls.publishPoll(id: poll.id, messageID: message.id)
-                return
+                let renderedConfiguration = await datePolls.renderConfiguration()
+                do {
+                    let message = try await client.createMessage(
+                        channelId: currentPoll.channelID,
+                        payload: DatePollRenderer.createMessagePayload(
+                            for: currentPoll,
+                            foundryFeaturesEnabled: renderedConfiguration.foundryFeaturesEnabled,
+                            localization: renderedConfiguration.localization
+                        )
+                    ).decode()
+                    try await datePolls.publishPoll(id: currentPoll.id, messageID: message.id)
+                    if await datePolls.renderConfiguration() != renderedConfiguration {
+                        await datePolls.markMessageForSync(pollID: currentPoll.id)
+                    }
+                } catch {
+                    if let message = try await existingMessage(for: currentPoll, client: client) {
+                        try await datePolls.publishPoll(id: currentPoll.id, messageID: message.id)
+                        await datePolls.markMessageForSync(pollID: currentPoll.id)
+                        return
+                    }
+                    throw error
+                }
             }
-            throw error
         }
     }
 

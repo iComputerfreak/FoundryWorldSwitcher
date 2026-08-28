@@ -18,6 +18,7 @@ Swift Discord bot with one global Foundry/Pterodactyl target. Dungeon Masters bo
 
 - Command registry: `DiscordCommands.commands`. Registration bulk-replaces application commands on bot startup.
 - Command/subcommand/option descriptions are user-facing runtime contracts. Keep them accurate for current form flow, date formats, permission restrictions, and Foundry-disabled behavior; Discord caps each description at 100 characters.
+- Runtime responses, embeds, forms, poll UI, and reminders use the guild's `context.config.localization` and native `.strings` tables. Discord registration provides client-locale German descriptions and choice labels while canonical command/option names and values remain English.
 - Permission levels: `user`, `dungeonMaster`, `admin`. User and role mappings persist in `permissions.json`; highest assigned level wins.
 - Application owners receive runtime-only admin from `Permissions`; their IDs never enter guild `permissions.json` mappings.
 - Date-poll role snapshots require Guild Members intent enabled in code and Discord Developer Portal.
@@ -56,6 +57,7 @@ Runtime data directory: executable sibling `data/`; Docker mounts it at `/home/c
 - Version 3.0 performs a one-time root-to-guild migration before `BotConfig.shared` can read or create `botConfig.json`. It runs only when `data/guilds/` does not exist, root `botConfig.json` already exists, and Discord reports exactly one bot guild. Migration builds and verifies state in `data/.v3-migration-staging/`, imports split legacy `event_bookings.json` and `reservation_bookings.json` when `bookings.json` is absent, verifies backups in `data/migration-backups/v3/`, safely writes global output, then atomically moves staged guild state to `data/guilds/`. Incomplete staging restores root global output and is removed for retry; failed restoration retains recovery artifacts. `data/guilds/` is the completion indicator; no marker exists.
 - Root `botConfig.json` and root secrets retain global Pterodactyl target configuration. Runtime services have no legacy root-state fallback.
 - Guild state belongs in `data/guilds/<guild-id>/`: `config.json`, `permissions.json`, `bookings.json`, `events.json`, `date_polls.json`, and `date_poll_reminder_preferences.json`.
+- Guild `config.json` stores `language` as `en` or `de`; missing legacy values resolve to English, while unsupported persisted values fail guild loading. Language changes persist date-poll sync intents before config mutation, then queue rerenders and immediately refresh pinned booking schedules. Startup refreshes all pinned schedules after Pterodactyl cache initialization.
 - Guild context creation validates directory write access and fails closed when any existing guild-state file cannot decode. Corrupt state must be repaired from backup; do not substitute empty in-memory state.
 - Root `booking_conflicts.json` indexes active world-booking intervals across guilds because the Foundry target and world lock are global. Context publication follows conflict rebuilding. Startup prunes records for guilds the bot no longer belongs to before loading current guild contexts; permanent `GUILD_DELETE` unloads the context, its records, and its owned lock while retaining guild files for a later rejoin.
 - Per-booking lifecycle transitions serialize scheduler activation with cancel, delete, and reschedule operations. A blocked world-lock event remains queued until its lock can be acquired.
@@ -83,6 +85,7 @@ Guild state types live one-per-file under `Sources/Services/Guild State/`. Docum
 - Reminder config: `sessionReminderTime`, `shouldNotifyAtSessionStart`, `sessionStartReminderTime`, and `reminderChannel`. `/config set reminderChannel` fetches the channel and accepts only one owned by the invoking guild.
 - Secrets prefer runtime data files, then environment variables: `FOUNDRY_BOT_TOKEN` and `FOUNDRY_PTERODACTYL_TOKEN`.
 - Runtime timezone controls parsed dates, booking intervals, and scheduled messages. Set `TZ` explicitly in Docker/Pterodactyl.
+- Localization resources live in `Sources/Resources/<language>.lproj/*.strings`. Runtime output uses the persisted guild language; global Discord command metadata uses client-locale localization dictionaries. Fixed input formats and protocol identifiers are never translated.
 
 ## Pterodactyl And Foundry Contract
 
@@ -95,6 +98,7 @@ Guild state types live one-per-file under `Sources/Services/Guild State/`. Docum
 
 - After code changes, build with Xcode MCP. Manual runtime checks require configured runtime secrets/config.
 - Dockerfile uses Swift 6 Jammy multi-stage build, runs non-root `container`, and expects `/home/container/data` to persist.
+- SwiftPM builds localization resources into the executable target's `.resources` bundle. Docker staging must continue copying `*.resources` beside the executable.
 - GitHub workflow builds and pushes Docker Hub image for every tag. It does not run tests, linting, or security scans.
 - Pterodactyl bot egg installs/releases bot separately. Validate egg install commands after changing package/build behavior.
 - No `Tests` target exists. For behavior changes, at minimum build, test command registration in a non-production guild, test Pterodactyl API against a safe server, and verify persisted data across restart.

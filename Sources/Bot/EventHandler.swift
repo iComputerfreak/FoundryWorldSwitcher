@@ -53,7 +53,13 @@ struct EventHandler: GatewayEventHandler {
         interaction: Interaction
     ) async throws {
         var deferredResponse = false
+        var localization = LocalizationContext.english
         do {
+            guard let guildID = interaction.guild_id else {
+                throw DiscordCommandError.noGuild
+            }
+            let context = try await guildRegistry.context(for: guildID)
+            localization = context.config.localization
             guard let command = DiscordCommands.commands.first(where: { $0.name == applicationCommand.name }) else {
                 throw DiscordCommandError.unknownCommand(commandName: applicationCommand.name)
             }
@@ -67,39 +73,25 @@ struct EventHandler: GatewayEventHandler {
                 ).guardSuccess()
                 deferredResponse = true
             }
-            guard let guildID = interaction.guild_id else {
-                throw DiscordCommandError.noGuild
-            }
-            let context = try await guildRegistry.context(for: guildID)
             guard let member = interaction.member else {
                 throw DiscordCommandError.noMember
             }
             guard let username = member.user?.username else {
                 throw DiscordCommandError.noUser
             }
+            // Check user permissions
             do {
-                // Check user permissions
                 try permissionsHandler.checkAuthorization(of: member, for: command, in: context)
-                try await command.handle(applicationCommand, interaction: interaction, context: context, client: client)
-            } catch DiscordCommandError.unauthorized {
-                logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions.")
-                try await respond(
-                    to: interaction,
-                    message: "You need at least permission level `\(command.permissionsLevel)` to execute this command.",
-                    immediately: requiresImmediateResponse
-                )
-            } catch DiscordCommandError.missingArgument(argumentName: let argName) {
-                try await respond(
-                    to: interaction,
-                    message: "Error: You need to specify the argument `\(argName)`.",
-                    immediately: requiresImmediateResponse
-                )
+            } catch {
+                logger.warning("User \(username) has been denied of executing command \(command.name) due to insufficient permissions: \(error)")
+                throw error
             }
+            try await command.handle(applicationCommand, interaction: interaction, context: context, client: client)
         } catch {
             logger.error("Error handling command /\(applicationCommand.name): \(error)")
             try await respond(
                 to: interaction,
-                message: "There was an error running your command:\n\(error.localizedDescription)",
+                message: UserFacingErrorRenderer.message(for: error, localization: localization),
                 immediately: !deferredResponse
             )
         }

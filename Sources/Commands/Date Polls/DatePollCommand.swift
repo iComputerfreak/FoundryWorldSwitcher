@@ -21,7 +21,7 @@ struct DatePollCommand: DiscordCommand {
         try await client.createInteractionResponse(
             id: interaction.id,
             token: interaction.token,
-            payload: DatePollRenderer.creationModal()
+            payload: DatePollRenderer.creationModal(localization: context.config.localization)
         ).guardSuccess()
     }
 }

@@ -1,0 +1,31 @@
+"modal.no_foundry_world" = "Keine Foundry-Welt";
+"modal.external_session_description" = "Externe Sitzung oder Treffen vor Ort";
+"modal.foundry_world" = "Foundry-Welt";
+"modal.select_world" = "Welt auswählen";
+"modal.create_reservation" = "Reservierung erstellen";
+"modal.reservation_date" = "Reservierungsdatum";
+"modal.date_format_description" = "Format: DD.MM.YYYY";
+"modal.create_event_booking" = "Sitzung buchen";
+"modal.event_date_time" = "Datum und Uhrzeit";
+"modal.date_time_format_description" = "Format: DD.MM.YYYY [HH:MM]; ohne Uhrzeit gilt %@";
+"modal.voice_channel" = "Sprachkanal";
+"modal.select_voice_channel" = "Sprachkanal auswählen";
+"modal.session_topic" = "Sitzungsthema";
+"modal.session_topic_placeholder" = "Sitzung 12";
+"modal.campaign_role" = "Kampagnenrolle";
+"modal.select_campaign_role" = "Kampagnenrolle auswählen";
+
+"embed.cancelled_suffix" = " (Abgesagt)";
+"embed.created_by" = "Erstellt von %@";
+"embed.event_world" = "%@ spielt in der Welt „%@“.";
+"embed.event_external" = "%@ hat eine Sitzung.";
+"embed.voice_channel" = "Sprachkanal: %@.";
+"embed.reservation_world" = "%@ bereitet die Welt „%@“ vor.";
+"embed.reservation_external" = "%@ hat eine externe Reservierung.";
+"history.cancelled_topic" = "~~%@~~ (abgesagt)";
+
+"duration.minute" = "%@ Minute";
+"duration.minutes" = "%@ Minuten";
+"duration.hour" = "%@ Stunde";
+"duration.hours" = "%@ Stunden";
+"duration.components" = "%@ %@";

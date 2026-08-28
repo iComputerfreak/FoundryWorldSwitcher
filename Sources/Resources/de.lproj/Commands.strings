@@ -1,0 +1,79 @@
+"common.none" = "*Keine*";
+"common.unknown" = "Unbekannt";
+
+"hello.response" = "Hallo, ich höre zu!\n*Bot-Version %@*";
+"help.response" = "## Verfügbare Befehle\n%@\n\n*Bot-Version: %@*";
+
+"cache.updating" = "Cache wird aktualisiert...";
+"cache.updated" = "Cache wurde erfolgreich aktualisiert.";
+
+"event_queue.empty" = "Die Warteschlange enthält derzeit keine Ereignisse.";
+"event_queue.list" = "Die Warteschlange enthält folgende Ereignisse:\n%@";
+"event_queue.type.console_message" = "Konsolennachricht: %@";
+"event_queue.type.lock_world" = "Weltwechsel für Welt `%@` sperren";
+"event_queue.type.unlock_world" = "Weltwechsel entsperren";
+"event_queue.type.unlock_manual_world" = "Manuelle Weltwechselsperre aufheben";
+"event_queue.type.session_reminder" = "Sitzungserinnerung für Buchung `%@` senden";
+"event_queue.type.session_start_reminder" = "Sitzungsstarterinnerung für Buchung `%@` senden";
+"event_queue.type.remove_booking" = "Buchung `%@` entfernen";
+"event_queue.type.close_date_poll" = "Terminumfrage `%@` schließen";
+"event_queue.type.date_poll_user_reminder" = "Erinnerung für Terminumfrage `%@` an %@ senden";
+"event_queue.type.date_poll_reminders" = "Ausstehende Erinnerungen für Terminumfrage `%@` senden";
+"event_queue.type.repeat_date_poll" = "Terminumfrage `%@` wiederholen";
+"event_queue.type.sync_date_poll" = "Nachricht der Terminumfrage `%@` synchronisieren";
+"event_queue.type.publish_date_poll" = "Terminumfrage `%@` veröffentlichen";
+
+"permission_level.user" = "Benutzer";
+"permission_level.dungeon_master" = "Spielleitung";
+"permission_level.admin" = "Admin";
+"permissions.current" = "Deine aktuelle Berechtigungsstufe ist `%@`";
+"permissions.user_updated" = "Benutzer %@ hat jetzt die Berechtigungsstufe `%@`.";
+"permissions.role_updated" = "Rolle %@ hat jetzt `%@`-Berechtigungen.";
+"permissions.list" = "## Admin-Berechtigungen\n%@\n\n## Spielleitungsberechtigungen\n%@";
+
+"world.restart" = "Der Foundry-VTT-Server wird neu gestartet. Dies sollte nur einen Moment dauern.";
+"world.lock_state.locked" = "Der Weltwechsel ist derzeit **gesperrt**. Falls dies ein Fehler ist oder die aktive Welt gewechselt werden muss, wende dich an einen Server-Admin.";
+"world.lock_state.unlocked" = "Der Weltwechsel ist derzeit **entsperrt**.";
+"world.stopping" = "Server wird gestoppt...";
+"world.switching" = "Welt wird zu `%@` gewechselt...";
+"world.starting" = "Server wird gestartet...";
+"world.switched" = "Welt wurde erfolgreich zu `%@` gewechselt.";
+"world.locked" = "Die Welt wurde gesperrt.";
+"world.locked.timed" = "Die Welt wurde für %@ gesperrt.";
+"world.locked.switched" = "Die Welt wurde zu %@ gewechselt und gesperrt.";
+"world.locked.switched_timed" = "Die Welt wurde zu %@ gewechselt und für %@ gesperrt.";
+"world.unlocked" = "Der Weltwechsel wurde entsperrt.";
+"world.list" = "## Welten\n%@";
+"world.info.not_found" = "Beim Abrufen der Weltinformationen ist ein Fehler aufgetreten. Existiert eine Welt mit der ID `%@`?";
+"world.info.no_description" = "*Keine Beschreibung*";
+"world.info.current" = "Hier sind Informationen zur aktuellen Welt.";
+"world.info.selected" = "Hier sind Informationen zur Welt `%@`.";
+"world.info.field.id" = "ID";
+"world.info.field.core_version" = "Core-Version";
+"world.info.field.system" = "System";
+"world.info.field.system_version" = "Systemversion";
+"world.info.field.last_played" = "Zuletzt gespielt";
+"world.info.field.note" = "Hinweis";
+"world.info.locked" = "Der Weltwechsel ist derzeit **gesperrt**.";
+"world.info.unlocked" = "Der Weltwechsel ist derzeit entsperrt.";
+
+"pins.loading" = "Buchungen werden geladen...";
+"pins.empty" = "*Es gibt keine angehefteten Nachrichten.*";
+"pins.list" = "## Angeheftete Buchungsnachrichten\n%@";
+"pins.filters.role_world" = " (Rolle: %@, Welt: %@)";
+"pins.filters.role" = " (Rolle: %@)";
+"pins.filters.world" = " (Welt: %@)";
+"pins.updated" = "Alle angehefteten Buchungsnachrichten wurden aktualisiert.";
+
+"booking.cancelled" = "Die folgende Buchung wurde abgesagt:";
+"booking.deleted" = "Die folgende Buchung wurde gelöscht und aus dem Sitzungsprotokoll entfernt:";
+"booking.empty" = "Derzeit sind keine Buchungen geplant.";
+"booking.rescheduled" = "Die Sitzung wurde erfolgreich verschoben:";
+"session_log.empty" = "Es gibt keine vergangenen Sitzungsbuchungen.";
+"session_log.list" = "## Vergangene Sitzungen (letzte 10 Sitzungen)\n%@";
+"config.value" = "Der Wert von `%1$@` ist `%2$@`.";
+"config.updated" = "Der Wert `%1$@` wurde auf `%2$@` geändert.";
+"config.reset" = "Der Wert `%1$@` wurde auf den Standardwert `%2$@` zurückgesetzt.";
+"config.title" = "Bot-Konfiguration";
+"config.description" = "Dies sind die aktuellen Konfigurationswerte.";
+"config.language.pin_refresh_failed" = "Einige angeheftete Buchungsübersichten konnten nicht aktualisiert werden. Führe `/updatepins` aus, um es erneut zu versuchen.";

@@ -40,11 +40,36 @@ extension DiscordCommand {
     }
     
     func createApplicationCommand() -> Payloads.ApplicationCommandCreate {
-        Payloads.ApplicationCommandCreate(
+        let german = LocalizationContext(language: .german)
+        return Payloads.ApplicationCommandCreate(
             name: self.name,
             description: self.description,
-            options: self.options
+            description_localizations: [.german: localizedDescription(in: german)],
+            options: self.options?.map { localizedOption($0, localization: german) }
         )
+    }
+
+    func localizedDescription(in localization: LocalizationContext) -> String {
+        localization.string(description, table: "CommandMetadata")
+    }
+
+    private func localizedOption(
+        _ option: ApplicationCommand.Option,
+        localization: LocalizationContext
+    ) -> ApplicationCommand.Option {
+        var localized = option
+        localized.description_localizations = [
+            .german: localization.string(option.description, table: "CommandMetadata")
+        ]
+        localized.options = option.options?.map { localizedOption($0, localization: localization) }
+        localized.choices = option.choices?.map { choice in
+            var localizedChoice = choice
+            localizedChoice.name_localizations = [
+                .german: localization.string(choice.name, table: "CommandMetadata")
+            ]
+            return localizedChoice
+        }
+        return localized
     }
     
     /// Tries to parse and return a `FoundryWorld` from the given command's arguments.

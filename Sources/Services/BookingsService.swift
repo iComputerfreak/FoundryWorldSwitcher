@@ -26,6 +26,7 @@ actor BookingsService {
     private var transitionWaiters: [UUID: [CheckedContinuation<Void, Never>]] = [:]
     private var reservingBookingDates: Set<Date> = []
     private var dateReservationWaiters: [Date: [CheckedContinuation<Void, Never>]] = [:]
+    private nonisolated let pinnedMessageUpdateCoordinator = PinnedBookingMessageUpdateCoordinator()
     private(set) var bookings: [any Booking] {
         didSet {
             saveBookings()
@@ -352,18 +353,26 @@ extension BookingsService {
 // MARK: - Pinned Bookings
 extension BookingsService {
     func updatePinnedBookings() async throws {
+        try await pinnedMessageUpdateCoordinator.perform {
+            try await self.updatePinnedBookingsUnserialized()
+        }
+    }
+
+    private func updatePinnedBookingsUnserialized() async throws {
         let messages = pinnedMessagesConfiguration.pinnedBookingMessages
         Self.logger.info("Updating \(messages.count) pinned booking messages.")
         func payload(for bookings: [any Booking]) async throws -> Payloads.EditMessage {
+            let localization = pinnedMessagesConfiguration.localization
+            let heading = localization.string("pinned_bookings.heading", table: "Notifications")
             if bookings.isEmpty {
                 return .init(
-                    content: "# Upcoming Events\nThere are no bookings scheduled right now.",
+                    content: "# \(heading)\n\(localization.string("pinned_bookings.empty", table: "Notifications"))",
                     embeds: []
                 )
             } else {
                 return try await .init(
-                    content: "# Upcoming Events",
-                    embeds: Utils.createBookingEmbeds(for: bookings)
+                    content: "# \(heading)",
+                    embeds: Utils.createBookingEmbeds(for: bookings, localization: localization)
                 )
             }
         }

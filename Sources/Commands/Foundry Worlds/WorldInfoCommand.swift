@@ -31,6 +31,7 @@ struct WorldInfoCommand: DiscordCommand {
         context: GuildContext,
         client: DiscordClient
     ) async throws {
+        let localization = context.config.localization
         var world: FoundryWorld?
         var isCurrentWorld: Bool? = nil
         
@@ -40,8 +41,7 @@ struct WorldInfoCommand: DiscordCommand {
         } catch DiscordCommandError.worldDoesNotExist(worldID: let worldID) {
             try await client.respond(
                 token: interaction.token,
-                message: "There was an error trying to get information about the world. " +
-                "Are you sure a world with the ID `\(worldID)` exists?"
+                message: localization.string("world.info.not_found", table: "Commands", worldID)
             )
             return
         }
@@ -83,7 +83,7 @@ struct WorldInfoCommand: DiscordCommand {
                 description = descriptionHTML
             }
         } else {
-            description = "*No Description*"
+            description = localization.string("world.info.no_description", table: "Commands")
         }
         
         // MARK: Get a download link for the background image
@@ -101,7 +101,9 @@ struct WorldInfoCommand: DiscordCommand {
         try await client.updateOriginalInteractionResponse(
             token: interaction.token,
             payload: .init(
-                content: "Here is some information about the \(isCurrentWorld == true ? "current world" : "world `\(world.title)`").",
+                content: isCurrentWorld == true
+                    ? localization.string("world.info.current", table: "Commands")
+                    : localization.string("world.info.selected", table: "Commands", world.title),
                 embeds: [
                     .init(
                         title: world.title,
@@ -110,15 +112,21 @@ struct WorldInfoCommand: DiscordCommand {
                         color: messageColor,
 //                        thumbnail: backgroundURL.map({ .init(url: .exact($0)) }),
                         fields: [
-                            .init(name: "ID", value: world.id),
-                            .init(name: "Core Version", value: world.coreVersion),
-                            .init(name: "System", value: world.system),
-                            .init(name: "System Version", value: world.systemVersion),
+                            .init(name: localization.string("world.info.field.id", table: "Commands"), value: world.id),
+                            .init(name: localization.string("world.info.field.core_version", table: "Commands"), value: world.coreVersion),
+                            .init(name: localization.string("world.info.field.system", table: "Commands"), value: world.system),
+                            .init(name: localization.string("world.info.field.system_version", table: "Commands"), value: world.systemVersion),
                             .init(
-                                name: "Last Played",
-                                value: world.lastPlayed.map(Utils.outputDateFormatter.string(from:)) ?? "Unknown"
+                                name: localization.string("world.info.field.last_played", table: "Commands"),
+                                value: world.lastPlayed.map(localization.dateTime) ?? localization.string("common.unknown", table: "Commands")
                             ),
-                            .init(name: "Note", value: "World switching is currently \(lockState ? "**locked**" : "unlocked")."),
+                            .init(
+                                name: localization.string("world.info.field.note", table: "Commands"),
+                                value: localization.string(
+                                    lockState ? "world.info.locked" : "world.info.unlocked",
+                                    table: "Commands"
+                                )
+                            ),
                         ]
                     )
                 ]

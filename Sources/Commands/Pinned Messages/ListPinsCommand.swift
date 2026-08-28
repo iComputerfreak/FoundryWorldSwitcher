@@ -20,27 +20,29 @@ struct ListPinsCommand: DiscordCommand {
         let pinnedMessages = context.config.pinnedBookingMessages.filter {
             context.config.foundryFeaturesEnabled || $0.worldID == nil
         }
+        let localization = context.config.localization
         
         func formattedMessages() -> String {
             if pinnedMessages.isEmpty {
-                return "*There are no pinned messages.*"
+                return localization.string("pins.empty", table: "Commands")
             }
             return pinnedMessages.map { message in
-                "* \(formatMessage(message, in: guild))"
+                "* \(formatMessage(message, in: guild, localization: localization))"
             }
             .joined(separator: "\n")
         }
         
         try await client.respond(
             token: interaction.token,
-            message: """
-            ## Pinned Booking Messages
-            \(formattedMessages())
-            """
+            message: localization.string("pins.list", table: "Commands", formattedMessages())
         )
     }
     
-    private func formatMessage(_ pinnedMessage: PinnedBookingMessage, in guild: GuildSnowflake) -> String {
+    private func formatMessage(
+        _ pinnedMessage: PinnedBookingMessage,
+        in guild: GuildSnowflake,
+        localization: LocalizationContext
+    ) -> String {
         let guildID = guild.rawValue
         let channelID = pinnedMessage.channelID.rawValue
         let messageID = pinnedMessage.messageID.rawValue
@@ -50,11 +52,11 @@ struct ListPinsCommand: DiscordCommand {
             let role = pinnedMessage.role,
             let world = pinnedMessage.worldID
         {
-            messageString += " (Role: \(role.rawValue), World: \(world))"
+            messageString += localization.string("pins.filters.role_world", table: "Commands", role.rawValue, world)
         } else if let role = pinnedMessage.role {
-            messageString += " (Role: \(role.rawValue))"
+            messageString += localization.string("pins.filters.role", table: "Commands", role.rawValue)
         } else if let world = pinnedMessage.worldID {
-            messageString += " (World: \(world))"
+            messageString += localization.string("pins.filters.world", table: "Commands", world)
         }
         return messageString
     }

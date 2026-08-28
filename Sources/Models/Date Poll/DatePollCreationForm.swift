@@ -84,19 +84,19 @@ struct DatePollCreationForm {
             let day = Int(components[0]),
             let month = Int(components[1])
         else {
-            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM or DD.MM.YYYY")
+            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM / DD.MM.YYYY")
         }
 
         let calendar = Calendar.current
         let currentYear = calendar.component(.year, from: .now)
         guard let thisYearDate = date(day: day, month: month, year: currentYear, calendar: calendar) else {
-            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM or DD.MM.YYYY")
+            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM / DD.MM.YYYY")
         }
         if calendar.startOfDay(for: thisYearDate).addingTimeInterval(GlobalConstants.secondsPerDay) > .now {
             return thisYearDate
         }
         guard let nextYearDate = date(day: day, month: month, year: currentYear + 1, calendar: calendar) else {
-            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM or DD.MM.YYYY")
+            throw DiscordCommandError.wrongDateFormat(value, format: "DD.MM / DD.MM.YYYY")
         }
         return nextYearDate
     }

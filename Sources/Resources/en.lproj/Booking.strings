@@ -1,0 +1,31 @@
+"modal.no_foundry_world" = "No Foundry world";
+"modal.external_session_description" = "External or in-person session";
+"modal.foundry_world" = "Foundry world";
+"modal.select_world" = "Select world";
+"modal.create_reservation" = "Create reservation";
+"modal.reservation_date" = "Reservation date";
+"modal.date_format_description" = "Format: DD.MM.YYYY";
+"modal.create_event_booking" = "Create event booking";
+"modal.event_date_time" = "Event date and time";
+"modal.date_time_format_description" = "Format: DD.MM.YYYY [HH:MM]; missing time defaults to %@";
+"modal.voice_channel" = "Voice channel";
+"modal.select_voice_channel" = "Select voice channel";
+"modal.session_topic" = "Session topic";
+"modal.session_topic_placeholder" = "Session 12";
+"modal.campaign_role" = "Campaign role";
+"modal.select_campaign_role" = "Select campaign role";
+
+"embed.cancelled_suffix" = " (Cancelled)";
+"embed.created_by" = "Created by %@";
+"embed.event_world" = "%@ is playing in the world '%@'.";
+"embed.event_external" = "%@ has a session.";
+"embed.voice_channel" = "Voice channel: %@.";
+"embed.reservation_world" = "%@ is preparing the world '%@'.";
+"embed.reservation_external" = "%@ has an external booking.";
+"history.cancelled_topic" = "~~%@~~ (cancelled)";
+
+"duration.minute" = "%@ minute";
+"duration.minutes" = "%@ minutes";
+"duration.hour" = "%@ hour";
+"duration.hours" = "%@ hours";
+"duration.components" = "%@ %@";

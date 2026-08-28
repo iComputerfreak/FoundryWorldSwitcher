@@ -104,6 +104,7 @@ if await guildRegistry.hasFoundryFeaturesEnabled() {
     }
     try await PterodactylAPI.shared.updateCache()
 }
+await guildRegistry.refreshPinnedBookings()
 
 let presenceService = PresenceService(gatewayManager: bot, guildRegistry: guildRegistry)
 await presenceService.refresh(forceWorldRefresh: true)

@@ -43,7 +43,7 @@ struct DeleteBookingCommand: DiscordCommand {
             throw DiscordCommandError.foundryFeaturesDisabled
         }
         
-        let bookingEmbed = try await Utils.createBookingEmbed(for: booking)
+        let bookingEmbed = try await Utils.createBookingEmbed(for: booking, localization: context.config.localization)
         
         await context.bookings.deleteBooking(booking)
         await presenceService.refresh()
@@ -51,14 +51,13 @@ struct DeleteBookingCommand: DiscordCommand {
         await DatePollMessageSynchronizer.synchronize(
             updatedPolls,
             datePolls: context.datePolls,
-            foundryFeaturesEnabled: context.config.foundryFeaturesEnabled,
             client: client
         )
         
         try await client.respond(
             token: interaction.token,
             payload: .init(
-                content: "The following booking has been deleted and removed from the session log:",
+                content: context.config.localization.string("booking.deleted", table: "Commands"),
                 embeds: [bookingEmbed]
             )
         )

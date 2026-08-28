@@ -34,7 +34,7 @@ struct UnlockWorldCommand: DiscordCommand {
         
         try await client.respond(
             token: interaction.token,
-            message: "World switching has been unlocked."
+            message: context.config.localization.string("world.unlocked", table: "Commands")
         )
     }
 }

@@ -1,0 +1,2 @@
+"booking.created" = "Booking created successfully.";
+"booking.world_lock_warning" = "\nThe world will be locked from %@ to %@.\n**Warning**: With the current configuration settings, the world will be unlocked before the event starts.";

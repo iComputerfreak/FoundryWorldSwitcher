@@ -67,6 +67,17 @@ actor GuildRegistry {
         contexts.values.contains { $0.config.foundryFeaturesEnabled }
     }
 
+    /// Refreshes persisted booking schedules after startup resources become available.
+    func refreshPinnedBookings() async {
+        for context in contexts.values {
+            do {
+                try await context.bookings.updatePinnedBookings()
+            } catch {
+                Self.logger.warning("Failed to refresh pinned bookings for guild \(context.guildID): \(error)")
+            }
+        }
+    }
+
     /// Resolves the global lock and its known expiry for Discord presence.
     func presenceLockState() async throws -> PresenceLockState {
         guard let lock = try WorldLockService.shared.currentLock() else {

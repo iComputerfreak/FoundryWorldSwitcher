@@ -22,6 +22,8 @@ enum Utils {
     /// A date formatter for user-typed dates
     static let inputDateFormatter: DateFormatter = {
         let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
         f.dateFormat = "dd.MM.yyyy"
         return f
     }()
@@ -29,6 +31,8 @@ enum Utils {
     /// A date formatter for time strings
     static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
         f.dateFormat = "HH:mm"
         return f
     }()
@@ -62,32 +66,39 @@ extension Utils {
     enum UnitStyle {
         case short
         case long
-        
-        var minutesString: String {
-            switch self {
-            case .short: return "m"
-            case .long: return " minutes"
-            }
-        }
-        
-        var hoursString: String {
-            switch self {
-            case .short: return "h"
-            case .long: return " hours"
-            }
-        }
     }
     
     /// Returns a duration string for a given time interval
-    static func durationString(for duration: TimeInterval, unitStyle: UnitStyle = .short) -> String {
+    static func durationString(for duration: TimeInterval) -> String {
         let seconds = Int(duration.rounded())
         let minutes = (seconds / 60) % 60
         let hours = seconds / 3600
-        var string = "\(minutes)\(unitStyle.minutesString)"
+        var string = "\(minutes)m"
         if hours > 0 {
-            string = "\(hours)\(unitStyle.hoursString) \(string)"
+            string = "\(hours)h \(string)"
         }
         return string
+    }
+
+    /// Returns a localized, user-facing duration string.
+    static func durationString(
+        for duration: TimeInterval,
+        unitStyle: UnitStyle,
+        localization: LocalizationContext
+    ) -> String {
+        if case .short = unitStyle { return durationString(for: duration) }
+
+        let seconds = Int(duration.rounded())
+        let minutes = (seconds / 60) % 60
+        let hours = seconds / 3600
+        let minuteKey = minutes == 1 ? "duration.minute" : "duration.minutes"
+        let minuteString = localization.string(minuteKey, table: "Booking", String(minutes))
+        guard hours > 0 else { return minuteString }
+
+        let hourKey = hours == 1 ? "duration.hour" : "duration.hours"
+        let hourString = localization.string(hourKey, table: "Booking", String(hours))
+        guard minutes > 0 else { return hourString }
+        return localization.string("duration.components", table: "Booking", hourString, minuteString)
     }
     
     /// Returns a time string for a given time in seconds from midnight
@@ -120,17 +131,23 @@ extension Utils {
         ) ?? calendar.startOfDay(for: day)
     }
     
-    static func createBookingEmbeds(for bookings: [any Booking]) async throws -> [Embed] {
+    static func createBookingEmbeds(
+        for bookings: [any Booking],
+        localization: LocalizationContext
+    ) async throws -> [Embed] {
         let bookings = bookings.sorted(by: { $0.date < $1.date })
         
         var bookingEmbeds: [Embed] = []
         for booking in bookings {
-            bookingEmbeds.append(try await Utils.createBookingEmbed(for: booking))
+            bookingEmbeds.append(try await Utils.createBookingEmbed(for: booking, localization: localization))
         }
         return bookingEmbeds
     }
 
-    static func createBookingEmbed(for booking: any Booking) async throws -> Embed {
+    static func createBookingEmbed(
+        for booking: any Booking,
+        localization: LocalizationContext
+    ) async throws -> Embed {
         let world: FoundryWorld?
         if let worldID = booking.worldID {
             world = try await PterodactylAPI.shared.world(for: worldID)
@@ -141,39 +158,59 @@ extension Utils {
         var embed: Embed
         
         if let eventBooking = booking as? EventBooking {
-            embed = createBookingEmbed(for: eventBooking, world: world?.title)
+            embed = createBookingEmbed(for: eventBooking, world: world?.title, localization: localization)
         } else {
-            embed = createBookingEmbed(for: booking, world: world?.title)
+            embed = createBookingEmbed(for: booking, world: world?.title, localization: localization)
         }
         
         if booking.wasCancelled {
-            embed.title? += " (Cancelled)"
+            embed.title? += localization.string("embed.cancelled_suffix", table: "Booking")
         }
         embed.type = .rich
         
         if let author = try? await bot.client.getUser(id: booking.author).decode() {
-            embed.footer = .init(text: "Created by \(author.global_name ?? author.username)")
+            embed.footer = .init(text: localization.string(
+                "embed.created_by",
+                table: "Booking",
+                author.global_name ?? author.username
+            ))
         }
         
         return embed
     }
 
-    static private func createBookingEmbed(for booking: EventBooking, world: String?) -> Embed {
-        let date = Utils.outputDateFormatter.string(from: booking.date)
-        let time = Utils.timeFormatter.string(from: booking.date)
-
+    static private func createBookingEmbed(
+        for booking: EventBooking,
+        world: String?,
+        localization: LocalizationContext
+    ) -> Embed {
         return .init(
-            title: "\(date) at \(time)",
+            title: localization.dateTime(booking.date),
             description: ([
-                world.map { "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\($0)'." }
-                    ?? "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) has a session.",
-                booking.location.map { "Voice channel: \(DiscordUtils.mention(id: $0))." },
+                world.map {
+                    localization.string(
+                        "embed.event_world",
+                        table: "Booking",
+                        DiscordUtils.mention(id: booking.campaignRoleSnowflake),
+                        $0
+                    )
+                } ?? localization.string(
+                    "embed.event_external",
+                    table: "Booking",
+                    DiscordUtils.mention(id: booking.campaignRoleSnowflake)
+                ),
+                booking.location.map {
+                    localization.string("embed.voice_channel", table: "Booking", DiscordUtils.mention(id: $0))
+                },
                 "> \(booking.topic)",
             ].compactMap { $0 }).joined(separator: "\n")
         )
     }
 
-    static func createBookingMessages(for bookings: [EventBooking]) async throws -> [String] {
+    static func createBookingMessages(
+        for bookings: [EventBooking],
+        localization: LocalizationContext
+    ) async throws -> [String] {
         let bookings = bookings.sorted(by: { $0.date < $1.date })
         let worlds = bookings.contains { $0.worldID != nil } ? try await PterodactylAPI.shared.worlds() : []
 
@@ -181,28 +218,52 @@ extension Utils {
         // We only show the last 10 bookings to avoid hitting Discord's character limit
         // TODO: Add pagination?
         for booking in bookings.suffix(10) {
-            let date = Utils.outputDateFormatter.string(from: booking.date)
-            let time = Utils.timeFormatter.string(from: booking.date)
             let world = booking.worldID.flatMap { worldID in worlds.first(where: { $0.id == worldID })?.title }
+            let summary = world.map {
+                localization.string(
+                    "embed.event_world",
+                    table: "Booking",
+                    DiscordUtils.mention(id: booking.campaignRoleSnowflake),
+                    $0
+                )
+            } ?? localization.string(
+                "embed.event_external",
+                table: "Booking",
+                DiscordUtils.mention(id: booking.campaignRoleSnowflake)
+            )
+            let topic = booking.wasCancelled
+                ? localization.string("history.cancelled_topic", table: "Booking", booking.topic)
+                : booking.topic
             bookingMessages.append(
                 """
-                > \(date) at \(time)
-                > \(world.map { "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) is playing in the world '\($0)'." } ?? "\(DiscordUtils.mention(id: booking.campaignRoleSnowflake)) has a session.")
-                > \(booking.wasCancelled ? "~~\(booking.topic)~~ (cancelled)" : booking.topic)
+                > \(localization.dateTime(booking.date))
+                > \(summary)
+                > \(topic)
                 """.trimmingCharacters(in: .whitespacesAndNewlines)
             )
         }
         return bookingMessages
     }
     
-    static private func createBookingEmbed(for booking: any Booking, world: String?) -> Embed {
-        let date = Utils.outputDateFormatter.string(from: booking.date)
-        
+    static private func createBookingEmbed(
+        for booking: any Booking,
+        world: String?,
+        localization: LocalizationContext
+    ) -> Embed {
         return .init(
-            title: date,
+            title: localization.formatDate(booking.date),
             description: world.map {
-                "\(DiscordUtils.mention(id: booking.author)) is preparing the world '\($0)'."
-            } ?? "\(DiscordUtils.mention(id: booking.author)) has an external booking."
+                localization.string(
+                    "embed.reservation_world",
+                    table: "Booking",
+                    DiscordUtils.mention(id: booking.author),
+                    $0
+                )
+            } ?? localization.string(
+                "embed.reservation_external",
+                table: "Booking",
+                DiscordUtils.mention(id: booking.author)
+            )
         )
     }
 }

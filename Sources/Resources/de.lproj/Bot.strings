@@ -1,0 +1,2 @@
+"booking.created" = "Buchung erfolgreich erstellt.";
+"booking.world_lock_warning" = "\nDie Foundry-Welt wird von %@ bis %@ gesperrt.\n**Warnung**: Mit den aktuellen Einstellungen wird die Foundry-Welt entsperrt, bevor die Sitzung beginnt.";

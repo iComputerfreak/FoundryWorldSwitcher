@@ -11,6 +11,9 @@ final class GuildContext {
     /// Guild booking and reminder settings.
     let config: GuildConfig
 
+    /// Serializes config transitions that also update Discord state.
+    let configUpdates = GuildConfigUpdateCoordinator()
+
     /// Guild user and role permission mappings.
     let permissions: Permissions
 
@@ -49,7 +52,13 @@ final class GuildContext {
             guildID: guildID,
             bookingConflicts: bookingConflicts
         )
-        self.datePolls = try .init(scheduler: scheduler, dataPath: paths.datePolls, permissions: permissions)
+        self.datePolls = try .init(
+            scheduler: scheduler,
+            dataPath: paths.datePolls,
+            permissions: permissions,
+            configuration: config,
+            configUpdateCoordinator: configUpdates
+        )
         self.datePollReminderPreferences = try .init(dataPath: paths.datePollReminderPreferences)
     }
 

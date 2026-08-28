@@ -24,11 +24,11 @@ struct BookingsCommand: DiscordCommand {
         let bookings = await context.bookings.allBookings.filter {
             context.config.foundryFeaturesEnabled || $0.worldID == nil
         }
-        let bookingEmbeds = try await Utils.createBookingEmbeds(for: bookings)
+        let bookingEmbeds = try await Utils.createBookingEmbeds(for: bookings, localization: context.config.localization)
         
         let payload: Payloads.EditWebhookMessage
         if bookingEmbeds.isEmpty {
-            payload = .init(content: "There are no bookings scheduled right now.")
+            payload = .init(content: context.config.localization.string("booking.empty", table: "Commands"))
         } else {
             payload = .init(embeds: bookingEmbeds, allowed_mentions: .init())
         }

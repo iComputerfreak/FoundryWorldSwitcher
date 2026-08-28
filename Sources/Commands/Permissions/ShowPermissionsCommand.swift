@@ -30,23 +30,23 @@ struct ShowPermissionsCommand: DiscordCommand {
             perms.dungeonMasterUsers.map(DiscordUtils.mention(id:)) +
             perms.dungeonMasterRoles.map(DiscordUtils.mention(id:))
         )
+        let localization = context.config.localization
         
         func formatMentions(_ mentions: [String]) -> String {
             guard !mentions.isEmpty else {
-                return "*None*"
+                return localization.string("common.none", table: "Commands")
             }
             return mentions.map { "* \($0)" }.joined(separator: "\n")
         }
         
         try await client.respond(
             token: interaction.token,
-            message: """
-            ## Admin Permissions
-            \(formatMentions(admins))
-            
-            ## Dungeon Master Permissions
-            \(formatMentions(dms))
-            """
+            message: localization.string(
+                "permissions.list",
+                table: "Commands",
+                formatMentions(admins),
+                formatMentions(dms)
+            )
         )
     }
 }

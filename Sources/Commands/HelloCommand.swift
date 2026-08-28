@@ -23,7 +23,7 @@ struct HelloCommand: DiscordCommand {
     ) async throws {
         try await client.respond(
             token: interaction.token,
-            message: "Hello, I am listening!\n*Bot version \(version)*"
+            message: context.config.localization.string("hello.response", table: "Commands", version)
         )
     }
 }

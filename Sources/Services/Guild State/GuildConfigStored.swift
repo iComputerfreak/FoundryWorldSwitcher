@@ -3,6 +3,9 @@ import Foundation
 
 /// Codable representation of guild booking configuration.
 struct GuildConfigStored: Codable {
+    /// Guild output language. Missing legacy values default to English.
+    var language: GuildLanguage?
+
     /// Displayed duration of a session.
     var sessionLength: TimeInterval
 

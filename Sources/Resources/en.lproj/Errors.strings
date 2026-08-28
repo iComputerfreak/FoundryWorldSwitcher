@@ -1,0 +1,62 @@
+"generic.unexpected" = "An unexpected error occurred while processing your request. Please try again.";
+
+"command.unknown" = "The command `%@` is unknown.";
+"command.argument_missing" = "The required argument `%@` is missing.";
+"command.subcommand_missing" = "Please select a subcommand.";
+"command.member_missing" = "No server member is associated with this command.";
+"command.user_missing" = "No user is associated with this command.";
+"command.guild_missing" = "This command must be used on a server.";
+"command.channel_missing" = "No channel is associated with this command.";
+
+"world.not_found" = "The Foundry world `%@` does not exist.";
+"world.switching_locked" = "World switching is currently locked.";
+"foundry.features_disabled" = "Foundry features are disabled on this server.";
+
+"permission.level.user" = "User";
+"permission.level.dungeon_master" = "Dungeon Master";
+"permission.level.admin" = "Admin";
+"permission.command_required" = "You need at least the `%@` permission level to use this command.";
+"permission.booking_cancel_required" = "You need the `%@` permission level to cancel another user's booking.";
+"permission.booking_reschedule_required" = "You need the `%@` permission level to reschedule another user's booking.";
+"permission.world_force_switch_required" = "You need the `%@` permission level to force a world switch.";
+"permission.world_unlock_owner_required" = "Only the bot application owner can unlock world switching.";
+
+"input.date_invalid" = "`%@` is not a valid date. Use the format `%@`.";
+"input.time_invalid" = "`%@` is not a valid time. Use the format `%@`.";
+"input.date_in_past" = "The date %@ is in the past.";
+"input.duration_invalid" = "`%@` is not a valid duration. Use a format such as `1h 2m`.";
+"duration.hours_or_minutes_missing" = "Enter at least hours or minutes in a format such as `1h 2m`.";
+"duration.format_invalid" = "Enter a duration in a format such as `1h 2m`.";
+
+"booking.not_found" = "No booking exists on %@.";
+"booking.already_exists" = "A booking already exists on %@.";
+"booking.form_invalid" = "The booking form is incomplete or invalid. Reopen it and try again.";
+"booking.world_missing" = "Select a Foundry world for this reservation.";
+"booking.worlds_unavailable" = "No Foundry worlds are available for a reservation.";
+"booking.role_missing" = "Select a campaign role for this event.";
+"booking.topic_missing" = "Enter a topic for this event.";
+
+"config.key_invalid" = "The configuration key `%@` does not exist.";
+"config.value_invalid" = "`%@` is not a valid value for `%@`.";
+"config.reminder_channel_wrong_guild" = "The reminder channel must belong to this server.";
+
+"discord.message_reference_missing" = "The Discord message could not be identified.";
+"interaction.option_missing" = "The required option `%@` is missing.";
+"interaction.component_missing" = "The required form field `%@` could not be found. Reopen the form and try again.";
+"interaction.component_kind_invalid" = "A form field has the wrong type (`%@`). Reopen the form and try again.";
+"interaction.data_kind_invalid" = "This interaction has the wrong type (`%@`). Please try again.";
+"interaction.value_type_invalid" = "`%@` is not a valid value of type `%@`.";
+
+"date_poll.not_found" = "No date poll with ID `%@` exists.";
+"date_poll.voting_closed" = "This date poll is no longer open for voting.";
+"date_poll.voter_unauthorized" = "Only members of this poll's campaign role can vote.";
+"date_poll.candidates_invalid" = "The selected dates are not valid for this poll.";
+"date_poll.reminder_too_late" = "The reminder would be sent after this poll closes.";
+"date_poll.reminder_already_scheduled" = "You already requested a reminder for this poll.";
+"date_poll.reminder_delay_unavailable" = "This reminder cannot be delayed.";
+"date_poll.finalized_date_invalid" = "The selected date is not part of this poll.";
+"date_poll.finalization_selection_invalid" = "Select at least one date to finalize the poll.";
+"date_poll.creation_form_invalid" = "The date poll form is incomplete or invalid.";
+"date_poll.deadline_days_invalid" = "The deadline must be a whole number from 1 to 60 days.";
+"date_poll.management_unauthorized" = "Only the poll owner, an admin, or a Dungeon Master for this campaign can manage this poll.";
+"date_poll.message_reference_missing" = "The date poll's Discord message could not be identified.";

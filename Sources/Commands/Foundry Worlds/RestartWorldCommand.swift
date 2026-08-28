@@ -26,7 +26,7 @@ struct RestartWorldCommand: DiscordCommand {
         try await PterodactylAPI.shared.restartServer()
         try await client.respond(
             token: interaction.token,
-            message: "Restaring the Foundry VTT server. This should just take a second."
+            message: context.config.localization.string("world.restart", table: "Commands")
         )
     }
 }

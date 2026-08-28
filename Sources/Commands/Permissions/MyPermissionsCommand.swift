@@ -31,9 +31,22 @@ struct MyPermissionsCommand: DiscordCommand {
         let roles: [RoleSnowflake] = member.roles
         
         let userPermissions = context.permissions.permissionsLevel(of: userID, roles: roles)
+        let localization = context.config.localization
         try await client.respond(
             token: interaction.token,
-            message: "Your current permission level is `\(userPermissions)`"
+            message: localization.string(
+                "permissions.current",
+                table: "Commands",
+                localizedPermissionLevel(userPermissions, localization: localization)
+            )
         )
+    }
+
+    private func localizedPermissionLevel(_ level: BotPermissionLevel, localization: LocalizationContext) -> String {
+        switch level {
+        case .user: localization.string("permission_level.user", table: "Commands")
+        case .dungeonMaster: localization.string("permission_level.dungeon_master", table: "Commands")
+        case .admin: localization.string("permission_level.admin", table: "Commands")
+        }
     }
 }

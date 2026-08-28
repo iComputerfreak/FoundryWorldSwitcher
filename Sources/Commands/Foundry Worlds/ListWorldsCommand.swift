@@ -23,9 +23,10 @@ struct ListWorldsCommand: DiscordCommand {
         client: DiscordClient
     ) async throws {
         let worlds: [FoundryWorld] = try await PterodactylAPI.shared.worlds()
+        let localization = context.config.localization
         func formattedWorlds() -> String {
             if worlds.isEmpty {
-                return "*None*"
+                return localization.string("common.none", table: "Commands")
             }
             return worlds.map { world in
                 "* \(world.title) (`\(world.id)`)"
@@ -35,10 +36,7 @@ struct ListWorldsCommand: DiscordCommand {
         
         try await client.respond(
             token: interaction.token,
-            message: """
-            ## Worlds
-            \(formattedWorlds())
-            """
+            message: localization.string("world.list", table: "Commands", formattedWorlds())
         )
     }
 }

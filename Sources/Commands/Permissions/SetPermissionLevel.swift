@@ -86,7 +86,8 @@ struct SetPermissionLevel: DiscordCommand {
                 interaction: interaction,
                 client: client,
                 user: user,
-                newPermissionLevel: newLevel
+                newPermissionLevel: newLevel,
+                localization: context.config.localization
             )
         } else if let roleSubcommand = applicationCommand.option(named: "role") {
             guard let roleID = try roleSubcommand.option(named: "role")?.value?.requireString() else {
@@ -99,7 +100,8 @@ struct SetPermissionLevel: DiscordCommand {
                 interaction: interaction,
                 client: client,
                 role: role,
-                newPermissionLevel: newLevel
+                newPermissionLevel: newLevel,
+                localization: context.config.localization
             )
         } else {
             throw DiscordCommandError.missingSubcommand
@@ -110,12 +112,18 @@ struct SetPermissionLevel: DiscordCommand {
         interaction: Interaction,
         client: DiscordClient,
         user: UserSnowflake,
-        newPermissionLevel: BotPermissionLevel
+        newPermissionLevel: BotPermissionLevel,
+        localization: LocalizationContext
     ) async throws {
         let mention = DiscordUtils.mention(id: user)
         try await client.respond(
             token: interaction.token,
-            message: "User \(mention) now has permission level `\(newPermissionLevel.description)`."
+            message: localization.string(
+                "permissions.user_updated",
+                table: "Commands",
+                mention,
+                localizedPermissionLevel(newPermissionLevel, localization: localization)
+            )
         )
     }
     
@@ -123,12 +131,26 @@ struct SetPermissionLevel: DiscordCommand {
         interaction: Interaction,
         client: DiscordClient,
         role: RoleSnowflake,
-        newPermissionLevel: BotPermissionLevel
+        newPermissionLevel: BotPermissionLevel,
+        localization: LocalizationContext
     ) async throws {
         let mention = DiscordUtils.mention(id: role)
         try await client.respond(
             token: interaction.token,
-            message: "Role \(mention) now has `\(newPermissionLevel.description)` permissions."
+            message: localization.string(
+                "permissions.role_updated",
+                table: "Commands",
+                mention,
+                localizedPermissionLevel(newPermissionLevel, localization: localization)
+            )
         )
+    }
+
+    private func localizedPermissionLevel(_ level: BotPermissionLevel, localization: LocalizationContext) -> String {
+        switch level {
+        case .user: localization.string("permission_level.user", table: "Commands")
+        case .dungeonMaster: localization.string("permission_level.dungeon_master", table: "Commands")
+        case .admin: localization.string("permission_level.admin", table: "Commands")
+        }
     }
 }

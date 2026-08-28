@@ -23,19 +23,19 @@ struct DatePollComponentHandler {
             context = try await guildRegistry.context(forDatePollID: action.pollID)
         }
         if action.action == .vote {
-            try await showAvailabilityModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            try await showAvailabilityModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, localization: context.config.localization)
             return
         }
         if action.action == .finalize {
-            try await showFinalizationModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            try await showFinalizationModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, localization: context.config.localization)
             return
         }
         if action.action == .edit {
-            try await showEditModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            try await showEditModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, localization: context.config.localization)
             return
         }
         if action.action == .view {
-            try await showVotesModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+            try await showVotesModal(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, localization: context.config.localization)
             return
         }
         if action.action == .book, let candidateID = action.candidateID {
@@ -57,25 +57,28 @@ struct DatePollComponentHandler {
         do {
             switch action.action {
             case .remind:
-                try await handleReminder(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+                try await handleReminder(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, localization: context.config.localization)
             case .delay:
-                try await handleReminderDelay(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
+                try await handleReminderDelay(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, localization: context.config.localization)
             case .optOut:
-                try await handleAutomaticReminderOptOut(interaction: interaction, preferences: context.datePollReminderPreferences)
+                try await handleAutomaticReminderOptOut(interaction: interaction, preferences: context.datePollReminderPreferences, localization: context.config.localization)
             case .cancel:
-                try await handleCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
+                try await handleCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             case .cancelRepeat:
-                try await handleRepeatCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls, foundryFeaturesEnabled: context.config.foundryFeaturesEnabled)
+                try await handleRepeatCancellation(pollID: action.pollID, interaction: interaction, datePolls: context.datePolls)
             default:
                 throw DatePollError.notFound(component.custom_id)
             }
         } catch {
             logger.warning("Failed to handle date poll interaction: \(error)")
-            try await client.respond(token: interaction.token, message: error.localizedDescription)
+            try await client.respond(
+                token: interaction.token,
+                message: UserFacingErrorRenderer.message(for: error, localization: context.config.localization)
+            )
         }
     }
 
-    private func showAvailabilityModal(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func showAvailabilityModal(pollID: String, interaction: Interaction, datePolls: DatePollsService, localization: LocalizationContext) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -90,18 +93,21 @@ struct DatePollComponentHandler {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: DatePollRenderer.availabilityModal(for: poll, voterID: userID)
+                payload: DatePollRenderer.availabilityModal(for: poll, voterID: userID, localization: localization)
             ).guardSuccess()
         } catch {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+                payload: .channelMessageWithSource(.init(
+                    content: UserFacingErrorRenderer.message(for: error, localization: localization),
+                    flags: [.ephemeral]
+                ))
             ).guardSuccess()
         }
     }
 
-    private func handleReminder(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func handleReminder(pollID: String, interaction: Interaction, datePolls: DatePollsService, localization: LocalizationContext) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -113,29 +119,30 @@ struct DatePollComponentHandler {
             messageID: interaction.message?.id
         )
         _ = try await datePolls.requestReminder(pollID: pollID, voterID: userID)
-        try await client.respond(token: interaction.token, message: "I will remind you in 24 hours.")
+        try await client.respond(token: interaction.token, message: localization.string("date_poll.reminder.scheduled", table: "DatePoll"))
     }
 
-    private func handleReminderDelay(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func handleReminderDelay(pollID: String, interaction: Interaction, datePolls: DatePollsService, localization: LocalizationContext) async throws {
         guard let userID = interaction.user?.id ?? interaction.member?.user?.id else {
             throw DiscordCommandError.noUser
         }
         _ = try await datePolls.delayReminder(pollID: pollID, userID: userID)
-        try await client.respond(token: interaction.token, message: "I will remind you once more in 24 hours.")
+        try await client.respond(token: interaction.token, message: localization.string("date_poll.reminder.delayed", table: "DatePoll"))
     }
 
     private func handleAutomaticReminderOptOut(
         interaction: Interaction,
-        preferences: DatePollReminderPreferences
+        preferences: DatePollReminderPreferences,
+        localization: LocalizationContext
     ) async throws {
         guard let userID = interaction.user?.id ?? interaction.member?.user?.id else {
             throw DiscordCommandError.noUser
         }
         await preferences.optOut(userID)
-        try await client.respond(token: interaction.token, message: "Automatic date-poll reminders are disabled for this server.")
+        try await client.respond(token: interaction.token, message: localization.string("date_poll.reminder.disabled", table: "DatePoll"))
     }
 
-    private func showFinalizationModal(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func showFinalizationModal(pollID: String, interaction: Interaction, datePolls: DatePollsService, localization: LocalizationContext) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -151,18 +158,18 @@ struct DatePollComponentHandler {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: DatePollRenderer.finalizationModal(for: poll)
+                payload: DatePollRenderer.finalizationModal(for: poll, localization: localization)
             ).guardSuccess()
         } catch {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+                payload: .channelMessageWithSource(.init(content: UserFacingErrorRenderer.message(for: error, localization: localization), flags: [.ephemeral]))
             ).guardSuccess()
         }
     }
 
-    private func showEditModal(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func showEditModal(pollID: String, interaction: Interaction, datePolls: DatePollsService, localization: LocalizationContext) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -178,18 +185,18 @@ struct DatePollComponentHandler {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: DatePollRenderer.editModal(for: poll)
+                payload: DatePollRenderer.editModal(for: poll, localization: localization)
             ).guardSuccess()
         } catch {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+                payload: .channelMessageWithSource(.init(content: UserFacingErrorRenderer.message(for: error, localization: localization), flags: [.ephemeral]))
             ).guardSuccess()
         }
     }
 
-    private func showVotesModal(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
+    private func showVotesModal(pollID: String, interaction: Interaction, datePolls: DatePollsService, localization: LocalizationContext) async throws {
         do {
             let poll = try await datePolls.pollForVotesModal(
                 pollID: pollID,
@@ -200,13 +207,13 @@ struct DatePollComponentHandler {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: DatePollRenderer.votesModal(for: poll)
+                payload: DatePollRenderer.votesModal(for: poll, localization: localization)
             ).guardSuccess()
         } catch {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+                payload: .channelMessageWithSource(.init(content: UserFacingErrorRenderer.message(for: error, localization: localization), flags: [.ephemeral]))
             ).guardSuccess()
         }
     }
@@ -240,6 +247,7 @@ struct DatePollComponentHandler {
                     kind: .event,
                     worlds: worlds,
                     defaultEventBookingTime: context.config.defaultEventBookingTime,
+                    localization: context.config.localization,
                     dateTime: dateTime,
                     campaignRoleID: result.poll.campaignRoleID,
                     sourcePollID: pollID,
@@ -250,12 +258,12 @@ struct DatePollComponentHandler {
             try await client.createInteractionResponse(
                 id: interaction.id,
                 token: interaction.token,
-                payload: .channelMessageWithSource(.init(content: error.localizedDescription, flags: [.ephemeral]))
+                payload: .channelMessageWithSource(.init(content: UserFacingErrorRenderer.message(for: error, localization: context.config.localization), flags: [.ephemeral]))
             ).guardSuccess()
         }
     }
 
-    private func handleCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
+    private func handleCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -268,13 +276,11 @@ struct DatePollComponentHandler {
             messageID: interaction.message?.id
         )
         let poll = try await datePolls.cancelPoll(id: pollID, userID: userID, roles: member.roles)
-        guard let messageID = poll.messageID else { throw DatePollError.missingMessageReference }
-        try await client.updateMessage(
-            channelId: poll.channelID,
-            messageId: messageID,
-            payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
-        ).guardSuccess()
-        await datePolls.markMessageSynced(pollID: poll.id, eventID: poll.messageSyncEventID)
+        try await DatePollMessageSynchronizer.synchronizeLatest(
+            pollID: poll.id,
+            datePolls: datePolls,
+            client: client
+        )
         do {
             try await client.deleteOriginalInteractionResponse(token: interaction.token).guardSuccess()
         } catch {
@@ -282,7 +288,7 @@ struct DatePollComponentHandler {
         }
     }
 
-    private func handleRepeatCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService, foundryFeaturesEnabled: Bool) async throws {
+    private func handleRepeatCancellation(pollID: String, interaction: Interaction, datePolls: DatePollsService) async throws {
         guard let member = interaction.member, let userID = member.user?.id else {
             throw DiscordCommandError.noUser
         }
@@ -296,14 +302,12 @@ struct DatePollComponentHandler {
         )
         let polls = try await datePolls.cancelRepeat(id: pollID, userID: userID, roles: member.roles)
         for poll in polls {
-            guard let messageID = poll.messageID else { continue }
             do {
-                try await client.updateMessage(
-                    channelId: poll.channelID,
-                    messageId: messageID,
-                    payload: DatePollRenderer.messagePayload(for: poll, foundryFeaturesEnabled: foundryFeaturesEnabled)
-                ).guardSuccess()
-                await datePolls.markMessageSynced(pollID: poll.id, eventID: poll.messageSyncEventID)
+                try await DatePollMessageSynchronizer.synchronizeLatest(
+                    pollID: poll.id,
+                    datePolls: datePolls,
+                    client: client
+                )
             } catch {
                 logger.warning("Failed to update date poll after repeat cancellation: \(error)")
             }

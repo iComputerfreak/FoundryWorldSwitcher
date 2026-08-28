@@ -37,6 +37,7 @@ struct SwitchWorldCommand: DiscordCommand {
         context: GuildContext,
         client: DiscordClient
     ) async throws {
+        let localization = context.config.localization
         guard
             let member = interaction.member,
             let user = member.user
@@ -60,27 +61,27 @@ struct SwitchWorldCommand: DiscordCommand {
         
         try await client.respond(
             token: interaction.token,
-            message: "Stopping the server..."
+            message: localization.string("world.stopping", table: "Commands")
         )
         try await PterodactylAPI.shared.stopServer()
         
         // Update the startup variable
         try await client.respond(
             token: interaction.token,
-            message: "Switching to the world `\(world.title)`..."
+            message: localization.string("world.switching", table: "Commands", world.title)
         )
         try await PterodactylAPI.shared.changeWorld(to: world.id, restart: true)
         
         try await client.respond(
             token: interaction.token,
-            message: "Starting the server..."
+            message: localization.string("world.starting", table: "Commands")
         )
         try await PterodactylAPI.shared.startServer()
         await presenceService.refresh(forceWorldRefresh: true)
         
         try await client.respond(
             token: interaction.token,
-            message: "Successfully switched the world to `\(world.title)`."
+            message: localization.string("world.switched", table: "Commands", world.title)
         )
     }
 }

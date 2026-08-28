@@ -6,6 +6,7 @@ enum BookingRenderer {
         kind: BookingCreationForm.Kind,
         worlds: [FoundryWorld],
         defaultEventBookingTime: TimeInterval,
+        localization: LocalizationContext,
         dateTime: Date? = nil,
         campaignRoleID: RoleSnowflake? = nil,
         sourcePollID: String? = nil,
@@ -14,20 +15,22 @@ enum BookingRenderer {
         let maximumWorldOptions = kind == .event ? 24 : 25
         let worldOptions = (kind == .event ? [
             Interaction.ActionRow.StringSelectMenu.Option(
-                label: "No Foundry world",
+                label: localization.string("modal.no_foundry_world", table: "Booking"),
                 value: BookingCreationForm.noFoundryWorldValue,
-                description: "External or in-person session",
+                description: localization.string("modal.external_session_description", table: "Booking"),
                 default: true
             )
         ] : []) + worlds.filter { $0.id.count <= 100 }.prefix(maximumWorldOptions).map {
             .init(label: String($0.title.prefix(100)), value: $0.id, description: String($0.id.prefix(100)))
         }
         let worldSelect = Interaction.ModalComponent.label(.init(
-            label: "Foundry world",
+            label: localization.string("modal.foundry_world", table: "Booking"),
             component: .stringSelect(.init(
                 custom_id: BookingCreationForm.worldComponentID,
                 options: worldOptions,
-                placeholder: kind == .event ? "No Foundry world" : "Select world",
+                placeholder: kind == .event
+                    ? localization.string("modal.no_foundry_world", table: "Booking")
+                    : localization.string("modal.select_world", table: "Booking"),
                 min_values: 1,
                 max_values: 1,
                 required: true
@@ -38,12 +41,12 @@ enum BookingRenderer {
         case .reservation:
             return .modal(.init(
                 custom_id: modalID(kind: kind, sourcePollID: sourcePollID, sourceCandidateID: sourceCandidateID),
-                title: "Create reservation",
+                title: localization.string("modal.create_reservation", table: "Booking"),
                 componentsV2: [
                     worldSelect,
                     .label(.init(
-                        label: "Reservation date",
-                        description: "Format: DD.MM.YYYY",
+                        label: localization.string("modal.reservation_date", table: "Booking"),
+                        description: localization.string("modal.date_format_description", table: "Booking"),
                         component: .textInput(.init(
                             custom_id: BookingCreationForm.dateID,
                             style: .short,
@@ -59,12 +62,16 @@ enum BookingRenderer {
             let defaultTime = Utils.timeString(for: defaultEventBookingTime)
             return .modal(.init(
                 custom_id: modalID(kind: kind, sourcePollID: sourcePollID, sourceCandidateID: sourceCandidateID),
-                title: "Create event booking",
+                title: localization.string("modal.create_event_booking", table: "Booking"),
                 componentsV2: [
                     worldSelect,
                     .label(.init(
-                        label: "Event date and time",
-                        description: "Format: DD.MM.YYYY [HH:MM]; missing time defaults to \(defaultTime)",
+                        label: localization.string("modal.event_date_time", table: "Booking"),
+                        description: localization.string(
+                            "modal.date_time_format_description",
+                            table: "Booking",
+                            defaultTime
+                        ),
                         component: .textInput(.init(
                             custom_id: BookingCreationForm.dateTimeID,
                             style: .short,
@@ -75,31 +82,31 @@ enum BookingRenderer {
                         ))
                     )),
                     .label(.init(
-                        label: "Voice channel",
+                        label: localization.string("modal.voice_channel", table: "Booking"),
                         component: .channelSelect(.init(
                             custom_id: BookingCreationForm.locationID,
                             channel_types: [.guildVoice],
-                            placeholder: "Select voice channel",
+                            placeholder: localization.string("modal.select_voice_channel", table: "Booking"),
                             min_values: 0,
                             max_values: 1,
                             required: false
                         ))
                     )),
                     .label(.init(
-                        label: "Session topic",
+                        label: localization.string("modal.session_topic", table: "Booking"),
                         component: .textInput(.init(
                             custom_id: BookingCreationForm.topicID,
                             style: .short,
                             max_length: 100,
                             required: true,
-                            placeholder: "Session 12"
+                            placeholder: localization.string("modal.session_topic_placeholder", table: "Booking")
                         ))
                     )),
                     .label(.init(
-                        label: "Campaign role",
+                        label: localization.string("modal.campaign_role", table: "Booking"),
                         component: .roleSelect(.init(
                             custom_id: BookingCreationForm.roleID,
-                            placeholder: "Select campaign role",
+                            placeholder: localization.string("modal.select_campaign_role", table: "Booking"),
                             default_values: campaignRoleID.map { [.init(id: $0)] },
                             min_values: campaignRoleID == nil ? 0 : 1,
                             max_values: 1,
@@ -124,6 +131,8 @@ enum BookingRenderer {
 
     private static let dateTimeFormatter = {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "dd.MM.yyyy HH:mm"
         return formatter
     }()

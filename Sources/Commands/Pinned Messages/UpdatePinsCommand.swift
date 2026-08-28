@@ -24,7 +24,7 @@ class UpdatePinsCommand: DiscordCommand {
         try await context.bookings.updatePinnedBookings()
         try await client.respond(
             token: interaction.token,
-            message: "Updated all pinned booking messages."
+            message: context.config.localization.string("pins.updated", table: "Commands")
         )
     }
 }
