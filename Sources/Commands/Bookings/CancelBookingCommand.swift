@@ -61,6 +61,7 @@ struct CancelBookingCommand: DiscordCommand {
         let bookingEmbed = try await Utils.createBookingEmbed(for: booking)
         
         await context.bookings.cancelBooking(id: booking.id)
+        await presenceService.refresh()
         let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
         await DatePollMessageSynchronizer.synchronize(
             updatedPolls,

@@ -34,7 +34,7 @@ struct SchedulerEvent: Codable, Hashable, Identifiable {
             try await handleUnlockWorld(context: context)
 
         case let .unlockManualWorldSwitching(acquiredAt: acquiredAt):
-            try handleUnlockManualWorld(acquiredAt: acquiredAt)
+            try await handleUnlockManualWorld(acquiredAt: acquiredAt)
 
         case let .sendSessionReminder(bookingID: bookingID):
             try await handleSendSessionReminder(bookingID: bookingID, bookings: context.bookings, config: context.config)
@@ -214,6 +214,7 @@ extension SchedulerEvent {
     private func handleLockWorldSwitching(worldID: String, context: GuildContext) async throws {
         Self.logger.debug("Locking world '\(worldID)'")
         try await context.bookings.startWorldSwitching(eventID: id, worldID: worldID)
+        await presenceService.refresh(forceWorldRefresh: true)
         let updatedPolls = await context.datePolls.reconcileBookingLinks(bookings: await context.bookings.allBookings)
         await DatePollMessageSynchronizer.synchronize(
             updatedPolls,
@@ -239,10 +240,12 @@ extension SchedulerEvent {
         if !unlocked {
             Self.logger.debug("Skipping unlock event \(id): current lock has a different owner.")
         }
+        await presenceService.refresh()
     }
 
-    private func handleUnlockManualWorld(acquiredAt: Date) throws {
+    private func handleUnlockManualWorld(acquiredAt: Date) async throws {
         _ = try WorldLockService.shared.unlockManualWorldSwitching(acquiredAt: acquiredAt)
+        await presenceService.refresh()
     }
 }
 

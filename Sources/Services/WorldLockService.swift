@@ -117,6 +117,13 @@ final class WorldLockService {
         fileManager.fileExists(atPath: Self.lockFilePath.path)
     }
 
+    /// Returns the persisted global lock owner, if world switching is locked.
+    func currentLock() throws -> WorldLockRecord? {
+        lock.lock()
+        defer { lock.unlock() }
+        return try record()
+    }
+
     private func writeLock(guildID: GuildSnowflake?, bookingID: UUID?) throws -> WorldLockRecord {
         lock.lock()
         defer { lock.unlock() }

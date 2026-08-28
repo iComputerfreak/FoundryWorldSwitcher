@@ -67,6 +67,36 @@ actor GuildRegistry {
         contexts.values.contains { $0.config.foundryFeaturesEnabled }
     }
 
+    /// Resolves the global lock and its known expiry for Discord presence.
+    func presenceLockState() async throws -> PresenceLockState {
+        guard let lock = try WorldLockService.shared.currentLock() else {
+            return .unlocked
+        }
+        if
+            let guildID = lock.guildID,
+            let bookingID = lock.bookingID,
+            let context = contexts[guildID],
+            let booking = await context.bookings.booking(id: bookingID)
+        {
+            return .locked(until: booking.bookingIntervalEndDate(using: context.config))
+        }
+
+        if lock.guildID == nil, lock.bookingID == nil {
+            for context in contexts.values {
+                let events = await context.scheduler.events
+                if let unlockEvent = events.first(where: { event in
+                    if case let .unlockManualWorldSwitching(acquiredAt) = event.eventType {
+                        return acquiredAt == lock.acquiredAt
+                    }
+                    return false
+                }) {
+                    return .locked(until: unlockEvent.dueDate)
+                }
+            }
+        }
+        return .locked(until: nil)
+    }
+
     /// Stops serving a guild after the bot is removed and releases its global resources.
     func removeContext(for guildID: GuildSnowflake) async {
         contexts.removeValue(forKey: guildID)

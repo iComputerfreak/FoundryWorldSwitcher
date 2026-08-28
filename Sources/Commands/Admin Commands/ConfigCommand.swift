@@ -136,6 +136,7 @@ struct ConfigCommand: DiscordCommand {
             }
             if configKey == .foundryFeaturesEnabled {
                 await refreshDatePollMessages(context: context, client: client)
+                await presenceService.refresh(forceWorldRefresh: context.config.foundryFeaturesEnabled)
             }
             try await respond("The value `\(keyString)` was updated to `\(valueString)`.")
         } else if let resetCommand = applicationCommand.option(named: "reset") {
@@ -149,6 +150,7 @@ struct ConfigCommand: DiscordCommand {
             let newValue = try context.config.resetValue(for: configKey)
             if configKey == .foundryFeaturesEnabled {
                 await refreshDatePollMessages(context: context, client: client)
+                await presenceService.refresh(forceWorldRefresh: context.config.foundryFeaturesEnabled)
             }
             try await respond("The value `\(keyString)` was reset to its default value `\(newValue)`.")
         } else {

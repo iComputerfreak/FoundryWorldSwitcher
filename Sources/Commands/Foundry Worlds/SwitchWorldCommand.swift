@@ -76,6 +76,7 @@ struct SwitchWorldCommand: DiscordCommand {
             message: "Starting the server..."
         )
         try await PterodactylAPI.shared.startServer()
+        await presenceService.refresh(forceWorldRefresh: true)
         
         try await client.respond(
             token: interaction.token,

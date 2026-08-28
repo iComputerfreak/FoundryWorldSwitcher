@@ -105,6 +105,9 @@ if await guildRegistry.hasFoundryFeaturesEnabled() {
     try await PterodactylAPI.shared.updateCache()
 }
 
+let presenceService = PresenceService(gatewayManager: bot, guildRegistry: guildRegistry)
+await presenceService.refresh(forceWorldRefresh: true)
+
 logger.info("Bot started successfully.")
 
 // Keep persisted deadlines and reminders moving while the gateway is idle.
@@ -115,6 +118,7 @@ Task(priority: .background) {
         } catch {
             logger.error("Error running scheduler: \(error.localizedDescription)\n\(error)")
         }
+        await presenceService.refresh()
         try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
     }
 }
@@ -147,5 +151,6 @@ for await event in await bot.events {
         } catch {
             logger.error("Error running scheduler: \(error.localizedDescription)\n\(error)")
         }
+        await presenceService.refresh()
     }
 }

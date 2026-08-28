@@ -60,6 +60,7 @@ struct LockWorldCommand: DiscordCommand {
                 .init(dueDate: unlockTime, eventType: .unlockManualWorldSwitching(acquiredAt: lock.acquiredAt))
             )
         }
+        await presenceService.refresh(forceWorldRefresh: world != nil)
         
         var message = "The world has been "
         if let world {

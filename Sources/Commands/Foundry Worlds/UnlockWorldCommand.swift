@@ -30,6 +30,7 @@ struct UnlockWorldCommand: DiscordCommand {
         }
 
         try WorldLockService.shared.unlockWorldSwitching()
+        await presenceService.refresh()
         
         try await client.respond(
             token: interaction.token,

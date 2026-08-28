@@ -71,6 +71,7 @@ Runtime data directory: executable sibling `data/`; Docker mounts it at `/home/c
 - `GuildRegistry` supplies the process-scoped application owner ID to each context's `Permissions`. `Permissions.isApplicationOwner(_:)` authorizes forced world switching and owner admin access is never persisted.
 - `world-lock.json`: global manual-switch block record. V3 migration converts legacy `.worldlock` to a manual record before archiving it.
 - `BOT_TOKEN` and `PTERODACTYL_API_KEY`: optional file-based secrets in runtime data dir.
+- Discord presence remains `Playing Foundry VTT`; its activity state shows the humanized current world title and global lock state. Timed locks display their end as `EEE HH:mm` in the bot runtime timezone. Presence refreshes immediately for bot-driven world/lock transitions and polls Pterodactyl every five minutes for external world changes.
 
 All state uses direct JSON writes. No atomic-write, corruption recovery, schema migration framework, or multi-process coordination exists. Do not commit runtime state or secrets.
 
